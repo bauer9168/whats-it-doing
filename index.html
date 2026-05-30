@@ -1,0 +1,1298 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="What's it Doing?" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#2d5bff" />
+  <title>What's it Doing? — Customer Shell V3 Stabilized 09</title>
+  <style>
+    :root {
+      --bg-top: #f5f8fc;
+      --bg-bottom: #e9eef7;
+      --card: rgba(255, 255, 255, 0.84);
+      --card-strong: rgba(255, 255, 255, 0.95);
+      --text: #111114;
+      --muted: #5f6470;
+      --border: rgba(148, 163, 184, 0.28);
+      --soft: #edf2f8;
+      --soft-2: #e7edf7;
+      --dark: #111114;
+      --ok: #166534;
+      --accent: #2d5bff;
+      --accent-dark: #173ea9;
+      --yellow: #fff7d4;
+      --yellow-border: #e0cf73;
+      --danger-soft: #ffe7e7;
+      --danger-border: #efb1b1;
+      --radius-xl: 28px;
+      --radius-lg: 18px;
+      --shell-shadow: 0 0 0 1px rgba(17,24,39,.06), 0 18px 40px rgba(15, 23, 42, 0.12);
+      --card-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100%;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(45,91,255,.08), transparent 26%),
+        radial-gradient(circle at 100% 18%, rgba(45,91,255,.06), transparent 24%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+    }
+
+    body { display: flex; justify-content: center; }
+
+    .app {
+      position: relative;
+      width: 100vw;
+      max-width: 100vw;
+      min-height: 100dvh;
+      box-shadow: none;
+      padding-bottom: calc(34px + env(safe-area-inset-bottom, 0px));
+      overflow: hidden;
+      background: transparent;
+    }
+
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: .42;
+      background-image:
+        radial-gradient(circle at 14px 14px, rgba(76,112,255,.14) 0 1.5px, transparent 2px),
+        radial-gradient(circle at 14px 14px, transparent 0 13px, rgba(76,112,255,.08) 13.5px 14.5px, transparent 15px),
+        linear-gradient(45deg, transparent 47%, rgba(76,112,255,.05) 48% 52%, transparent 53%),
+        linear-gradient(-45deg, transparent 47%, rgba(76,112,255,.04) 48% 52%, transparent 53%);
+      background-size: 210px 210px;
+      background-position: 0 0, 0 0, 0 0, 105px 105px;
+    }
+
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      padding: 0 0 calc(96px + env(safe-area-inset-bottom, 0px));
+      width: 100%;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 100%;
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 16px;
+      transition: transform .22s ease, box-shadow .22s ease, opacity .18s ease;
+    }
+
+    .screen { display: none; opacity: 0; transform: translateY(8px); }
+    .screen.active { display: block; opacity: 1; transform: translateY(0); }
+
+    .big-center {
+      min-height: calc(74vh - env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      text-align: center;
+      padding: 8px 18px calc(28px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .hero-title {
+      font-size: 33px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.02;
+      white-space: nowrap;
+      margin-top: 48px;
+      margin-bottom: 34px;
+      color: var(--text);
+    }
+
+    .hero-sub {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 0;
+    }
+
+    .hero-lead {
+      font-size: 18px;
+      color: #353840;
+      line-height: 1.42;
+      margin-top: 120px;
+      max-width: 290px;
+    }
+
+    .hero-actions {
+      margin-top: 44px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .bottom-choice {
+      min-height: calc(74vh - env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding-top: 8px;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 33px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.38;
+      margin: 0 0 14px;
+    }
+
+    .grid { display: grid; gap: 10px; }
+
+    .btn, .opt, .input, textarea {
+      width: 100%;
+      border-radius: var(--radius-lg);
+      border: 1px solid #cfd3da;
+      background: var(--card-strong);
+      padding: 16px 16px;
+      font-size: 17px;
+      color: var(--text);
+      transition: background-color .22s ease, color .22s ease, border-color .22s ease, box-shadow .22s ease, transform .18s ease;
+    }
+
+    .btn, .opt { cursor: pointer; }
+    .btn:active, .opt:active { transform: translateY(1px); }
+
+    .btn.dark, .opt.active, .btn.listening {
+      background: linear-gradient(180deg, #244fbe, #173a93 58%, #122f77);
+      color: #fff;
+      border-color: rgba(15,23,42,.42);
+      box-shadow: 0 10px 22px rgba(23, 58, 146, .18);
+    }
+
+    .btn.captured {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn:disabled, .opt:disabled {
+      opacity: .62;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .voice-btn {
+      font-size: 18px;
+      padding: 18px 16px;
+      font-weight: 700;
+    }
+
+
+    .btn-row { display: flex; gap: 12px; }
+    .btn-row > * { flex: 1; }
+
+    .soft {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      font-size: 15px;
+      line-height: 1.42;
+    }
+
+    .summary-bubble {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 16px;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .input-accent {
+      background: linear-gradient(180deg, #fffdf2, #fff7d2) !important;
+      border-color: rgba(224,207,115,.95) !important;
+      box-shadow: 0 0 0 3px rgba(255,232,130,.12) !important;
+    }
+
+    .upload-selected {
+      background: linear-gradient(180deg, #eef4ff, #e1ebff) !important;
+      border-color: rgba(31,41,55,.28) !important;
+      color: var(--accent-dark) !important;
+      font-weight: 700;
+    }
+
+    .warning-box {
+      background: var(--danger-soft) !important;
+      border-color: var(--danger-border) !important;
+    }
+
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.42;
+      outline: none;
+    }
+
+    .utility-row-main {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr auto 1fr;
+      margin-top: 12px;
+      align-items: stretch;
+    }
+
+    .utility-row-followup {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+      margin-top: 12px;
+      align-items: stretch;
+    }
+
+    .small {
+      padding: 10px 12px;
+      font-size: 14px;
+      border-radius: 16px;
+    }
+
+    .limit-box {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .example-box {
+      border-radius: 18px;
+      padding: 12px 14px;
+      background: linear-gradient(180deg, rgba(31,41,55,.08), rgba(31,41,55,.035));
+      color: #3c4c64;
+      font-size: 16px;
+      line-height: 1.45;
+      margin-bottom: 10px;
+      border: 1px solid rgba(31,41,55,.12);
+    }
+
+    .example-box strong { color: var(--text); }
+    .stack > * + * { margin-top: 8px; }
+
+    .meta-line {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .summary-line, .summary-inline {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.35;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .hidden { display: none !important; }
+
+    .saved-note {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .saved-note.saved {
+      color: var(--ok);
+      font-weight: 600;
+    }
+
+    .queue-price {
+      font-size: 13px;
+      margin-top: 6px;
+      opacity: .9;
+    }
+
+    .queue-meta {
+      margin-top: 14px;
+    }
+
+    .bottom-callout {
+      margin-top: 16px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .update-attention {
+      color: var(--ok) !important;
+      -webkit-text-fill-color: var(--ok);
+      font-weight: 700;
+    }
+
+    .btn.update-attention:not(.dark) {
+      color: var(--ok) !important;
+      -webkit-text-fill-color: var(--ok);
+      font-weight: 700;
+    }
+
+    .review-attention {
+      color: var(--ok) !important;
+      -webkit-text-fill-color: var(--ok);
+      font-weight: 700;
+    }
+
+    .save-details-attention {
+      color: var(--accent-dark) !important;
+      -webkit-text-fill-color: var(--accent-dark);
+      font-weight: 700;
+    }
+
+    .tap-note {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.35;
+      margin-top: 8px;
+    }
+    @media (max-width: 430px) {
+      .page-wrap { padding-left: 0; padding-right: 0; }
+      .card { border-radius: 0; padding-left: 14px; padding-right: 14px; }
+      .btn, .opt, .input, textarea { font-size: 18px; }
+      .example-box { font-size: 16px; }
+      .summary-bubble { font-size: 20px; }
+    }
+
+
+
+    /* v8: hard-hide any leftover prototype chrome/nav if older markup is reintroduced. */
+    .sticky,
+    .header,
+    .chips,
+    .screen-tab,
+    .dev-nav,
+    .prototype-nav,
+    [data-dev-nav="true"] {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+      min-height: 0 !important;
+      max-height: 0 !important;
+      overflow: hidden !important;
+      pointer-events: none !important;
+    }
+
+    /* v8: give mobile Safari enough scroll room to collapse browser chrome after first interaction. */
+    html, body { min-height: calc(100dvh + 2px); }
+    body { overscroll-behavior-y: contain; }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="page-wrap">
+      <div class="card screen active" data-screen="0">
+        <div class="big-center">
+          <div class="hero-title">What's it Doing?</div>
+          <div class="hero-sub">an Automotive Consultation Service</div>
+          <div class="hero-lead">I explain what it means, or what I'd do next.</div>
+          <div class="hero-actions">
+            <button class="btn dark" id="continueBtn" style="max-width: 210px;">Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card screen" data-screen="1">
+        <div class="bottom-choice">
+          <div style="margin-top: 60px; margin-bottom: 40px; text-align: center;">
+            <h2>Who's working on it?</h2>
+          </div>
+          <div class="grid" style="margin: 180px 0 0 0;">
+            <button class="btn who-btn" data-who="I'm working on it">I am</button>
+            <button class="btn who-btn" data-who="Someone else is working on it">Someone else is</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card screen" data-screen="2">
+        <h2>What's it Doing?</h2>
+        <div class="example-box">
+          <strong>Examples of helpful descriptions</strong><br><br>
+          <strong>If you're working on it:</strong><br>
+          2011 Civic, 142k - check engine light is on and it runs rough sometimes when I first start it.<br>
+          Once it warms up it usually smooths out.<br>
+          I already did plugs and looked over a few obvious things.<br>
+          Part store says the code is P0300, and I’m not sure what to check next.<br><br>
+          <strong>If someone else is working on it:</strong><br>
+          2016 Explorer, 122k — it jerks or shakes sometimes when driving. One shop mentioned one possibility, now another is leaning toward the transmission, but the problem comes and goes and the estimate is getting bigger.<br>
+          I have the estimate and notes from the conversations if that helps.<br>
+          Looking for a second opinion before I go any farther with it.
+        </div>
+        <p class="section-sub" id="ymmPrompt" style="margin-bottom:6px;">Year model mileage - what's going on?</p>
+        <textarea id="inputText" class="input-accent" placeholder="Pretend I'm standing in front of you, and tell me what it's doing, what's been done recently, and/or what you're concerned with."></textarea>
+        <div class="tap-note">Prefer talking? Use the microphone on your phone keyboard in this box, then review the text before continuing.</div>
+        <div class="utility-row-main" style="grid-template-columns: 1fr;">
+          <button class="btn small" id="mainClearBtn" type="button">Clear / start over</button>
+        </div>
+        <div class="soft" style="margin-top:10px;">
+          <div style="font-size:16px; font-weight:700; margin-bottom:8px;">Optional voice note</div>
+          <div style="font-size:13px; color: var(--muted); line-height:1.35; margin-bottom:10px;">
+            Do you have a noise that might help, or want me to hear it the way you would explain it?
+          </div>
+          <div class="btn-row">
+            <button class="btn dark voice-btn" type="button" id="recordAudioBtn">Record voice note</button>
+            <button class="btn voice-btn" type="button" id="stopAudioBtn" disabled>Stop recording</button>
+          </div>
+          <div id="audioStatus" class="saved-note" style="margin-top:8px;">Optional. Up to about 2 minutes works best. This saves a voice note in the current session.</div>
+          <audio id="audioPlayback" class="hidden" controls style="width:100%; margin-top:10px;"></audio>
+        </div>
+                <button class="btn" type="button" id="uploadBtn" style="margin-top:10px; text-align:left;">Optional upload (code scan / photo / video / estimate)</button>
+        <input type="file" id="uploadInput" class="hidden" accept="image/*,video/*,.pdf,.txt,.csv,.jpg,.jpeg,.png,.webp" />
+        <input class="input input-accent" id="customerName" placeholder="Your name" style="margin-top:10px;" />
+        <div class="soft" style="margin-top:10px;">
+          <label style="display:flex; align-items:center; gap:10px; font-size:14px; line-height:1.35;"><input type="checkbox" id="phoneConsultOk" style="width:18px; height:18px;" /> Willing to accept phone consult if necessary</label>
+          <input class="input input-accent hidden" id="phoneConsultNumber" placeholder="Best phone number" style="margin-top:10px;" />
+        </div>
+        <div class="btn-row" style="margin-top:18px;">
+          <button class="btn" data-back="1">Back</button>
+          <button class="btn dark" id="toSummaryBtn">Continue</button>
+        </div>
+      </div>
+
+      <div class="card screen" data-screen="3">
+        <div class="meta-line" id="sumMeta"></div>
+        <div class="summary-inline" id="sumSingleLine"></div>
+
+        <h2 style="margin-top:10px;">Name</h2>
+        <input class="input input-accent" id="sumNameEdit" />
+        
+        <div style="margin-top:16px;">
+          <div style="font-size:14px; font-weight:700; margin-bottom:8px;" id="summaryHeading">SUMMARY:</div>
+          <div class="soft" id="sumRestatement" style="min-height:260px;"></div>
+        </div>
+
+        <div id="summaryConfirmWrap" style="margin-top:16px;">
+          <div class="summary-bubble" id="summaryBubble">Close enough to submit?</div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn" id="summaryBackBtn">Go Back</button>
+            <button class="btn dark" id="summaryConfirmBtn">Close Enough</button>
+          </div>
+        </div>
+
+        <div id="abilityWrap" class="hidden" style="margin-top:16px;">
+          <div style="font-size:14px; font-weight:700; margin-bottom:8px;">How hands-on are you?</div>
+          <div class="grid" id="abilityGrid"></div>
+        </div>
+
+        <div id="followupSection" class="hidden" style="margin-top:16px;">
+          <div style="font-size:14px; font-weight:700; margin-bottom:8px;">Additional details</div>
+          <div class="soft" id="followupPrompt"><strong>Still helpful suggestions:</strong> <span id="followupPromptText"></span></div>
+          <textarea id="followupText" class="input-accent" placeholder="Add follow-up details here" style="min-height:160px; margin-top:10px;"></textarea>
+          <div class="tap-note">You can use the microphone on your phone keyboard here too, then review the added text before saving.</div>
+          <div class="utility-row-followup" style="grid-template-columns: 1fr;">
+            <button class="btn small" type="button" id="followupClearBtn">Clear / start over</button>
+          </div>
+          <div class="saved-note" id="followupSavedNote">Nothing saved yet.</div>
+          <div class="btn-row" style="margin-top:16px;">
+            <button class="btn" id="detailsBackBtn">Go Back</button>
+            <button class="btn" id="saveFollowupBtn">Save details</button>
+          </div>
+        </div>
+
+        <button class="btn hidden" id="queueBtn" style="margin-top:14px;">No additional Details</button>
+      </div>
+
+      <div class="card screen" data-screen="4">
+        <h2>Advanced Driveability Technician</h2>
+        <p class="section-sub">Written diagnostic review with back-and-forth text follow-up when needed. If text is not enough, I may move it to a phone consult.</p>
+        <div class="grid">
+          <button class="opt active queue-btn" data-queue="guided">
+            <div style="font-weight:600; text-align:left;">Guided consult</div>
+            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Written review with text follow-up as needed</div>
+            <div class="queue-price" style="text-align:left;">$39 · avg. reply 1–2 business days</div>
+          </button>
+          <button class="opt queue-btn" data-queue="priority">
+            <div style="font-weight:600; text-align:left;">Priority</div>
+            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Same consult path, moved ahead in line</div>
+            <div class="queue-price" style="text-align:left;">$79 · avg. reply same day / next business day</div>
+          </button>
+          <button class="opt queue-btn" data-queue="extended">
+            <div style="font-weight:600; text-align:left;">Extended vehicle thread · 3 days</div>
+            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Back-and-forth text thread for the same vehicle/symptom path; phone consult if needed</div>
+            <div class="queue-price" style="text-align:left;">$249 · avg. first reply same day / next business day</div>
+          </button>
+        </div>
+        <div class="soft queue-meta">
+          <div><strong>Current queue:</strong> 3 ahead of you</div>
+          <div style="margin-top:6px;"><strong>Replies during business hours:</strong> Mon–Fri 9am–5pm</div>
+          <div style="margin-top:6px;"><strong>Status:</strong> Available now</div>
+          <div class="bottom-callout">Not necessarily live chat. Not emergency service. After-hours requests roll to the next available window unless priority.</div>
+        </div>
+        <div class="btn-row" style="margin-top:18px;">
+          <button class="btn" data-back="3">Back</button>
+          <button class="btn dark" type="button" id="paySubmitBtn">Pay &amp; submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <script>
+    const state = {
+      screen: 0,
+      who: "",
+      ability: "",
+      caseId: "WID-0001",
+      summaryConfirmed: false,
+      followupSaved: false,
+      queue: 'guided',
+      activeRecognition: null,
+      activeMicButtonId: '',
+      dictationBaseText: '',
+      mediaRecorder: null,
+      audioChunks: [],
+      audioUrl: ''
+    };
+
+    const abilityOptions = ['I just need advice', 'Can do basic checks', "I'm IN IT", 'Advanced Troubleshooting'];
+
+    const els = {
+      screens: [...document.querySelectorAll('.screen')],
+      inputText: document.getElementById('inputText'),
+      customerName: document.getElementById('customerName'),
+      phoneConsultOk: document.getElementById('phoneConsultOk'),
+      phoneConsultNumber: document.getElementById('phoneConsultNumber'),
+      sumNameEdit: document.getElementById('sumNameEdit'),
+      sumMeta: document.getElementById('sumMeta'),
+      sumSingleLine: document.getElementById('sumSingleLine'),
+      sumRestatement: document.getElementById('sumRestatement'),
+      summaryHeading: document.getElementById('summaryHeading'),
+      summaryBubble: document.getElementById('summaryBubble'),
+      summaryConfirmBtn: document.getElementById('summaryConfirmBtn'),
+      abilityWrap: document.getElementById('abilityWrap'),
+      abilityGrid: document.getElementById('abilityGrid'),
+      followupSection: document.getElementById('followupSection'),
+      followupText: document.getElementById('followupText'),
+      followupPromptText: document.getElementById('followupPromptText'),
+      followupSavedNote: document.getElementById('followupSavedNote'),
+      queueBtn: document.getElementById('queueBtn'),
+      uploadBtn: document.getElementById('uploadBtn'),
+      uploadInput: document.getElementById('uploadInput'),
+      recordAudioBtn: document.getElementById('recordAudioBtn'),
+      stopAudioBtn: document.getElementById('stopAudioBtn'),
+      audioStatus: document.getElementById('audioStatus'),
+      audioPlayback: document.getElementById('audioPlayback'),
+      paySubmitBtn: document.getElementById('paySubmitBtn'),
+      ymmPrompt: document.getElementById('ymmPrompt')
+    };
+
+    const MAKES = ['acura','alfa romeo','audi','bmw','buick','cadillac','chevrolet','chevy','chrysler','dodge','ford','gmc','honda','hyundai','infiniti','isuzu','jeep','kia','lexus','lincoln','mazda','mercedes','mercedes-benz','mercury','mini','mitsubishi','nissan','oldsmobile','pontiac','porsche','ram','saturn','scion','subaru','suzuki','toyota','volkswagen','vw','volvo'];
+    const COMMON_MODELS = ['tahoe','suburban','yukon','s10','s-10','blazer','trailblazer','civic','accord','camry','corolla','cruze','malibu','impala','explorer','escape','focus','fusion','pilot','odyssey','rav4','highlander','forester','outback','wrangler','cherokee','grand cherokee','silverado','sierra','expedition','durango','charger','challenger','altima','sentra','maxima','frontier','tacoma','tundra','4runner'];
+    const STOPWORDS = new Set(['with','w','has','have','had','runs','run','running','started','start','sometimes','most','time','light','lights','code','codes','after','before','because','but','and','it','is','was','were','needs','need','when','where','that','this','on','off','at','for','my','me','a','an','the']);
+
+    function showScreen(index, behavior = 'smooth') {
+      state.screen = index;
+      els.screens.forEach((screen, i) => screen.classList.toggle('active', i === index));
+      window.scrollTo({ top: 0, behavior });
+    }
+
+    function smoothScrollTo(el, block = 'start') {
+      if (!el) return;
+      requestAnimationFrame(() => {
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block }), 120);
+      });
+    }
+
+    function syncWhoButtons() {
+      document.querySelectorAll('.who-btn').forEach(other => other.classList.toggle('dark', !!state.who && other.dataset.who === state.who));
+    }
+
+    function normalizeText(value) {
+      let text = String(value || '');
+      const digitMap = { zero:'0', oh:'0', o:'0', one:'1', two:'2', to:'2', too:'2', three:'3', four:'4', for:'4', five:'5', six:'6', seven:'7', eight:'8', ate:'8', nine:'9', ten:'10' };
+      text = text.replace(/,/g, '');
+      text = text.replace(/\b(\d{2,3})\s+thousand\s+miles?\b/gi, (_, n) => `${n}k miles`);
+      text = text.replace(/\bone hundred (?:and )?(\d{1,2}) thousand miles\b/gi, (_, n) => `${100 + Number(n)}k miles`);
+      text = text.replace(/\b([PBCU])\s*0\s+300\b/gi, (_, p) => p.toUpperCase() + '0300');
+      text = text.replace(/\b([PBCU])\s*0\s+([0-9]{3})\b/gi, (_, p, digits) => p.toUpperCase() + '0' + digits);
+      text = text.replace(/\b([PBCU])\s+(zero|oh|o)\s+three[\s-]*hundred\b/gi, (_, p) => p.toUpperCase() + '0300');
+      text = text.replace(/\b([PBCU])\s+(zero|oh|o|one|two|to|too|three|four|for|five|six|seven|eight|ate|nine)\s+(zero|oh|o|one|two|to|too|three|four|for|five|six|seven|eight|ate|nine)\s+(zero|oh|o|one|two|to|too|three|four|for|five|six|seven|eight|ate|nine)\s+(zero|oh|o|one|two|to|too|three|four|for|five|six|seven|eight|ate|nine)\b/gi,
+        (_, p, a, b, c, d) => p.toUpperCase() + (digitMap[a.toLowerCase()] || '') + (digitMap[b.toLowerCase()] || '') + (digitMap[c.toLowerCase()] || '') + (digitMap[d.toLowerCase()] || '')
+      );
+      return text.replace(/\s+/g, ' ').trim();
+    }
+
+    function formatPhoneDisplay(value) {
+      const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return `(${digits.slice(0,3)}) ${digits.slice(3)}`;
+      return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+    }
+
+    function compactMileageFromText(text) {
+      if (!text) return '';
+      const lower = text.toLowerCase();
+      const kMatch = lower.match(/\b(\d{2,3})k\b/);
+      if (kMatch) return `${kMatch[1]}k`;
+      const milesMatch = lower.match(/\b(\d{4,6})\s*miles?\b/);
+      if (milesMatch) return `${Math.round(Number(milesMatch[1]) / 1000)}k`;
+      return '';
+    }
+
+    function inferYear(raw) {
+      const fullYear = raw.match(/\b(?:19|20)\d{2}\b/);
+      if (fullYear) return fullYear[0];
+      const shortYear = raw.match(/(?:^|\s)(\d{2})(?=\s+[a-z])/i);
+      if (!shortYear) return '';
+      const yy = Number(shortYear[1]);
+      return String(yy <= 29 ? 2000 + yy : 1900 + yy);
+    }
+
+    function normalizeMakeDisplay(make) {
+      const m = (make || '').toLowerCase();
+      if (m === 'chevrolet') return 'Chevy';
+      if (m === 'vw') return 'VW';
+      if (m === 'mercedes-benz') return 'Mercedes';
+      return make ? make.charAt(0).toUpperCase() + make.slice(1) : '';
+    }
+
+    function titleWords(s) {
+      return s.split(' ').filter(Boolean).map(w => {
+        if (/^[f]\d{3}$/i.test(w)) return w.toUpperCase();
+        if (/^\d\/\d$/.test(w)) return w;
+        if (w === '1ton') return '1ton';
+        return w.charAt(0).toUpperCase() + w.slice(1);
+      }).join(' ');
+    }
+
+    function detectVehicle(raw) {
+      const lower = raw.toLowerCase();
+      const year = inferYear(raw);
+      const mileage = compactMileageFromText(raw);
+
+      let make = '';
+      for (const mk of MAKES.sort((a,b)=>b.length-a.length)) {
+        if (new RegExp(`\\b${mk.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i').test(lower)) { make = mk; break; }
+      }
+
+      let model = '';
+      if (/\bdodge\s+1\s*ton\b|\bdodge\s+one\s*ton\b|\bdodge\s+3500\b/i.test(lower)) {
+        make = 'dodge';
+        model = '1 Ton';
+      } else if (/\bdodge\s+3\/4\b|\bdodge\s+2500\b/i.test(lower)) {
+        make = 'dodge';
+        model = '3/4';
+      } else if (/\bdodge\s+1\/2\b|\bdodge\s+1500\b/i.test(lower)) {
+        make = 'dodge';
+        model = '1/2';
+      } else if (/\bram\s+1\s*ton\b|\bram\s+one\s*ton\b|\bram\s+3500\b/i.test(lower)) {
+        make = 'ram';
+        model = '1 Ton';
+      } else if (/\bram\s+3\/4\b|\bram\s+2500\b/i.test(lower)) {
+        make = 'ram';
+        model = '3/4';
+      } else if (/\bram\s+1\/2\b|\bram\s+1500\b/i.test(lower)) {
+        make = 'ram';
+        model = '1/2';
+      } else if (/\b([ck])\s?2500\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = `${lower.match(/\b([ck])\s?2500\b/i)[1].toUpperCase()}2500`;
+      } else if (/\b([ck])\s?1500\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = `${lower.match(/\b([ck])\s?1500\b/i)[1].toUpperCase()}1500`;
+      } else if (/\b([ck])\s?3500\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = `${lower.match(/\b([ck])\s?3500\b/i)[1].toUpperCase()}3500`;
+      } else if (/\bdodge\s+ram\b/i.test(lower)) {
+        make = 'ram';
+        const series = lower.match(/\bdodge\s+ram\s+(1500|2500|3500)\b/i);
+        model = series ? `Ram ${series[1]}` : 'Ram';
+      } else if (/\bram\s+(1500|2500|3500)\b/i.test(lower)) {
+        make = 'ram';
+        model = `Ram ${lower.match(/\bram\s+(1500|2500|3500)\b/i)[1]}`;
+      } else if (/\bsilverado\s+(1500|2500|3500)\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = `Silverado ${lower.match(/\bsilverado\s+(1500|2500|3500)\b/i)[1]}`;
+      } else if (/\bf[- ]?(150|250|350)\b/i.test(lower)) {
+        make = 'ford';
+        model = `F${lower.match(/\bf[- ]?(150|250|350)\b/i)[1]}`;
+      }
+
+      if (!model) {
+        for (const cm of COMMON_MODELS.sort((a,b)=>b.length-a.length)) {
+          if (new RegExp(`\\b${cm.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i').test(lower)) {
+            model = titleWords(cm);
+            if (!make && /\\b(tahoe|suburban)\\b/i.test(cm)) make = 'chevy';
+            if (!make && /\\byukon\\b/i.test(cm)) make = 'gmc';
+            break;
+          }
+        }
+      }
+
+      if (!model && make) {
+        const makePattern = new RegExp(`\\b${make.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b\\s+([a-z0-9/-]+)(?:\\s+([a-z0-9/-]+))?`, 'i');
+        const m = lower.match(makePattern);
+        if (m) {
+          const t1 = m[1] || '';
+          const t2 = m[2] || '';
+          let parts = [];
+          if (t1 && !STOPWORDS.has(t1) && !/^\d+k$/.test(t1)) parts.push(t1);
+          if (t2 && !STOPWORDS.has(t2) && !/^\d+k$/.test(t2) && !/^\d{4,6}$/.test(t2)) parts.push(t2);
+          if (parts.length) model = titleWords(parts.join(' '));
+        }
+      }
+
+      const displayMake = normalizeMakeDisplay(make);
+      let vehicle = [year ? `'${String(year).slice(-2)}` : '', model || displayMake, mileage].filter(Boolean).join(' ');
+      if (!vehicle && (displayMake || mileage)) vehicle = [year ? `'${String(year).slice(-2)}` : '', displayMake, mileage].filter(Boolean).join(' ');
+      return { year, make: displayMake, model, mileage, vehicle: vehicle || 'Vehicle not clear yet' };
+    }
+
+    function buildSummary() {
+      const raw = normalizeText(els.inputText.value);
+      const followup = normalizeText(els.followupText.value);
+      const combined = [raw, followup].filter(Boolean).join(' ');
+      const lower = combined.toLowerCase();
+      const phone = els.phoneConsultOk.checked ? formatPhoneDisplay(els.phoneConsultNumber.value) : '';
+      const nameOnly = normalizeText((document.activeElement === els.sumNameEdit ? els.sumNameEdit.value : els.customerName.value)) || 'Name needed';
+      const rawCodeMatches = combined.match(/\b[A-Za-z]\d{4,5}\b/g) || [];
+      const codeMatch = rawCodeMatches.filter(v => !/^[CK]\d{4}$/i.test(v));
+      const lightMentioned = /check engine|engine light|cel|warning light|light came on|light is on|light on/i.test(lower);
+      const noLightsMentioned = /no lights on|no light on|no warning lights?|no check engine light/i.test(lower);
+      const unknownCodeMentioned = /don\'t know what code|do not know what code|not sure what code|can\'t scan|cannot scan|no scanner|don\'t have a scanner/i.test(lower);
+      const hasCodeInfo = /code|codes/i.test(lower) || lightMentioned || noLightsMentioned || (codeMatch && codeMatch.length);
+      const { vehicle, mileage } = detectVehicle(combined);
+
+      const issueHints = [];
+      if (/a\/c| ac |ac compressor|air conditioning/i.test(' ' + lower + ' ') && /noise|click/i.test(lower)) issueHints.push('ac noise / price concern');
+      if (/steering column|column doesn'?t want to turn|doesn'?t want to turn very well|hard to turn|won't turn very well|steering issue/i.test(lower)) issueHints.push('steering column / steering concern');
+      if (/windows? won'?t work|windows? won'?t work normally|power windows?|window issue/i.test(lower)) issueHints.push('window operation concern');
+      if (/shift(?:s|ing)? hard|hard shift|bangs? into gear|slams? into gear|delayed shift|transmission shifts?/i.test(lower)) issueHints.push('hard shift / transmission behavior concern');
+      if (/runs badly|running badly|runs rough|running rough/i.test(lower)) issueHints.push('runs badly / rough at times');
+      if (/sometimes has low power|low power|falls on its face|no power|lack of power|power loss|hesitat|stumble|bog/i.test(lower)) issueHints.push('power loss / hesitation');
+      if (/when i start(?:ed)? (?:it|up)|on startup|first start|cold start/i.test(lower)) issueHints.push('startup issue');
+      if (lightMentioned) issueHints.push('check engine light concern');
+      if (/misfire|cylinder miss|missing on one cylinder|p030\d|p0300/i.test(lower)) issueHints.push('misfire concern');
+      if (/rough idle|rough at idle/i.test(lower) && !issueHints.includes('runs badly / rough at times')) issueHints.push('rough running');
+      if (/smoke/i.test(lower)) issueHints.push('smoke concern');
+      if (/noise|knock|tap|rattle|grind/i.test(lower) && !issueHints.includes('ac noise / price concern')) issueHints.push('noise concern');
+      if (/overheat|overheating|hot/i.test(lower)) issueHints.push('overheating concern');
+      if (codeMatch?.length) issueHints.push('codes: ' + [...new Set(codeMatch.map(v => v.toUpperCase()))].join(', '));
+
+      const doneHints = [];
+      if (/spark plugs replaced|plug(?:s)? (?:were )?replaced|had .*spark plugs .*replaced|plugs were done/i.test(lower)) doneHints.push('spark plugs replaced');
+      if (/new water pump|replaced (?:the )?water pump|water pump (?:was )?replaced|water pump replaced recently/i.test(lower)) doneHints.push('water pump replaced');
+      if (/new fuel pump|has (?:a )?new fuel pump|fuel pump (?:was )?replaced|replaced (?:the )?fuel pump|fuel pump replaced recently/i.test(lower)) doneHints.push('fuel pump replaced');
+      if (/timing chain|chain done|timing set/i.test(lower)) doneHints.push('timing chain done');
+      if (/serpentine belt (?:was )?replaced|belt (?:was )?replaced already/i.test(lower)) doneHints.push('serpentine belt replaced');
+      if (/new transmission|got a new transmission|transmission replaced|transmission was replaced|transmission recently replaced/i.test(lower)) doneHints.push('transmission replaced');
+      if (/transmission filter and fluid were replaced|transmission fluid and filter were replaced|filter and fluid were replaced|transmission filter replaced|transmission fluid replaced/i.test(lower)) doneHints.push('transmission filter and fluid replaced');
+      if (/exhaust manifold replaced|manifold replaced/i.test(lower)) doneHints.push('exhaust manifold replaced');
+      if (/engine was pulled out|pulled the engine|engine pulled|aftermarket engine swap|engine swap/i.test(lower)) doneHints.push('engine pulled for swap project');
+      if (/i thought i could do it myself|started looking into wiring|bunch of it done|some of the wiring is done/i.test(lower)) doneHints.push('started wiring / partial wiring work done');
+      if (/powers?, grounds?|key to work properly|turn it on/i.test(lower)) doneHints.push('looking for powers / grounds / key-on issues');
+      if (/someone suggested|was told|they told me|shop says|mechanic says|mechanic tells me/i.test(lower)) doneHints.push('outside opinion mentioned');
+      if (/looked at|looked over|shop looked at it|mechanic looked at it|code check|scanned it|scan(?:ned)?/i.test(lower)) doneHints.push('looked at / code check mentioned');
+      if (/done some checks|did some checks|checked a few things|have checked/i.test(lower)) doneHints.push('basic checks already started');
+      if (/nothing else was done|that was the only thing done|nothing else done|nothing'?s been done yet|nothing has been done yet/i.test(lower)) doneHints.push('nothing else was done');
+
+      const uniqueDone = [...new Set(doneHints)];
+      const issue = issueHints.join(' · ') || 'Issue path still needs review';
+      let done = uniqueDone.length ? uniqueDone.join(' · ') : 'Nothing specific listed yet';
+      if (done === 'Nothing specific listed yet' && /engine swap|wiring|powers?|grounds?|key to work/i.test(lower)) {
+        done = 'project wiring / swap work already started';
+      }
+      if (done === 'Nothing specific listed yet' && /replaced|new transmission|new water pump|new fuel pump|new radiator|new engine|serpentine belt/i.test(lower)) {
+        done = 'replacement work mentioned';
+      }
+
+      const concernMentioned = /concern|concerned|worried|not sure|not really clear|decision|spend more money|before i go any farther|estimate|quote|reasonable|looking for advice|advice|insight|way to test|test it|diagnosis|direction/i.test(lower);
+      const projectMode = /engine swap|wiring|powers?|grounds?|key to work/i.test(lower);
+      const hasTimingDetail = /when|only|idle|freeway|cold|hot|hill|throttle|after|during|while|start|started|week ago|weeks ago|recently|most of the time|comes and goes|sometimes/i.test(lower);
+      const concernClearlyPresent = /need help|help testing|looking for advice|advice|insight|way to test|test (?:the|it)|concern|concerned|worried|not sure|not really clear/i.test(lower);
+      const symptomClearlyPresent = issueHints.length > 0;
+
+      const suggestionBits = [];
+      if (!symptomClearlyPresent && !projectMode) suggestionBits.push("what's going on?");
+      else if (projectMode && !/what'?s not working|not working|won't work|doesn't work|key to work|powers?|grounds?/i.test(lower)) suggestionBits.push("what's not working?");
+      else if (!hasTimingDetail && !/overheat|overheating/i.test(lower) && !/looking for advice|advice|insight|way to test|test it/i.test(lower)) suggestionBits.push('when is it doing it?');
+      else if (lightMentioned && !codeMatch.length && !noLightsMentioned && !unknownCodeMentioned) suggestionBits.push('what code is it?');
+
+      const explicitMileageMentioned = /\b\d{2,3}\s*k\b|\b\d{4,6}\s*miles?\b|\b\d{2,3}k\b/i.test(lower);
+      if (!mileage && !explicitMileageMentioned) suggestionBits.push('mileage');
+      if (done == 'Nothing specific listed yet') suggestionBits.push("what's been done?");
+      if (state.ability === 'I just need advice') suggestionBits.unshift('I just need advice');
+      else if (!concernMentioned && !concernClearlyPresent && /advice|help|second opinion|estimate|shop|diagnosis|insight|test/i.test(lower)) suggestionBits.push('what are you concerned with?');
+
+      const perspectiveLabel = 'DIY angle';
+      const perspectiveValue = state.who === "I'm working on it"
+        ? (state.ability ? `Yes — ${state.ability}` : 'Yes')
+        : 'No';
+
+      return {
+        name: nameOnly,
+        phone,
+        vehicle,
+        issue,
+        done,
+        perspectiveLabel,
+        perspectiveValue,
+        suggestions: suggestionBits.length ? [...new Set(suggestionBits)].join(', ') : 'ready'
+      };
+    }
+
+    function renderAbilityOptions() {
+      els.abilityGrid.innerHTML = '';
+      abilityOptions.forEach(option => {
+        const btn = document.createElement('button');
+        btn.className = 'opt' + (state.ability === option ? ' active' : '');
+        btn.textContent = option;
+        btn.onclick = () => {
+          state.ability = option;
+          render();
+          smoothScrollTo(els.followupSection, 'start');
+        };
+        els.abilityGrid.appendChild(btn);
+      });
+    }
+
+    function render() {
+      const summary = buildSummary();
+      if (els.sumNameEdit && document.activeElement !== els.sumNameEdit) els.sumNameEdit.value = summary.name || els.customerName.value || '';
+      els.sumMeta.textContent = `${state.caseId} · ${state.who ? (state.who === "I'm working on it" ? 'DIY' : 'Someone Else') : 'Choose path'} · ${state.followupSaved ? 'updated' : state.summaryConfirmed ? 'confirmed' : 'preview shell'}`;
+      els.sumSingleLine.textContent = [summary.vehicle, summary.issue].filter(Boolean).join(' · ');
+      els.summaryHeading.textContent = state.followupSaved ? 'UPDATED SUMMARY:' : 'SUMMARY:';
+      els.summaryHeading.classList.toggle('update-attention', !!state.followupSaved);
+      els.sumRestatement.innerHTML = `
+        <div><strong>Issue:</strong> ${summary.issue}</div>
+        <br>
+        <div><strong>${state.who === "I'm working on it" ? "What I've already done" : 'What they have done'}:</strong> ${summary.done}</div>
+        <br>
+        <div><strong>${summary.perspectiveLabel}:</strong> ${summary.perspectiveValue}</div>
+        <br>
+        <div><strong>Likely need:</strong> ${summary.suggestions}</div>
+      `;
+
+      const showAbility = state.summaryConfirmed && !state.ability;
+      const showFollowup = state.summaryConfirmed && !!state.ability;
+      const hasFollowupText = normalizeText(els.followupText.value).length > 0;
+
+      if (state.followupSaved) {
+        els.summaryBubble.innerHTML = '<span class="update-attention">Review the Updated Summary Above</span>';
+      } else {
+        els.summaryBubble.textContent = state.summaryConfirmed ? 'Add more details below' : 'Close enough to submit?';
+      }
+      els.summaryBubble.classList.toggle('attn', !!state.followupSaved);
+      els.summaryBubble.classList.toggle('update-attention', false);
+      els.summaryConfirmBtn.textContent = state.followupSaved ? 'Confirm Update' : (state.summaryConfirmed ? 'Confirmed ✓' : 'Close Enough');
+      els.summaryConfirmBtn.classList.toggle('dark', !state.followupSaved);
+      els.summaryConfirmBtn.classList.toggle('update-attention', !!state.followupSaved);
+      const saveBtn = document.getElementById('saveFollowupBtn');
+      if (saveBtn) {
+        saveBtn.textContent = state.followupSaved ? 'Details Saved ✓' : 'Save details';
+        saveBtn.classList.toggle('save-details-attention', hasFollowupText && !state.followupSaved);
+      }
+
+      els.abilityWrap.classList.toggle('hidden', !showAbility);
+      els.followupSection.classList.toggle('hidden', !showFollowup);
+      if (state.followupSaved) els.followupSection.classList.remove('hidden');
+
+      els.queueBtn.classList.toggle('hidden', hasFollowupText || !showFollowup || state.followupSaved);
+      els.followupSavedNote.classList.toggle('saved', state.followupSaved);
+      if (state.followupSaved) {
+        els.followupSavedNote.innerHTML = '<span class="update-attention">Saved ✓ Review the Updated Summary Above</span>';
+      } else {
+        els.followupSavedNote.textContent = 'Nothing saved yet.';
+      }
+      if (els.followupPromptText) els.followupPromptText.textContent = summary.suggestions;
+      document.getElementById('saveFollowupBtn').classList.toggle('dark', !!state.followupSaved);
+      if (els.phoneConsultOk && els.phoneConsultNumber) els.phoneConsultNumber.classList.toggle('hidden', !els.phoneConsultOk.checked);
+
+      renderAbilityOptions();
+    }
+
+    function playUiTone(freq, durationMs) {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = new Ctx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.value = 0.03;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        setTimeout(() => { osc.stop(); ctx.close(); }, durationMs);
+      } catch (e) {}
+    }
+
+    function goBackOneScreen() {
+      if (state.screen <= 0) return;
+      if (state.screen === 4) {
+        showScreen(3, 'auto');
+        render();
+        const target = state.followupSaved ? els.summaryBubble : (state.ability ? els.followupSection : els.abilityWrap);
+        smoothScrollTo(target || els.summaryBubble, 'start');
+        return;
+      } else if (state.screen === 3) {
+        state.summaryConfirmed = false;
+        showScreen(2, 'auto');
+        const hasInput = normalizeText(els.inputText.value).length > 0 || normalizeText(els.customerName.value).length > 0;
+        setTimeout(() => {
+          if (hasInput && els.ymmPrompt) smoothScrollTo(els.ymmPrompt, 'start');
+          else window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 80);
+      } else if (state.screen === 2) {
+        showScreen(1);
+      } else if (state.screen === 1) {
+        showScreen(0);
+      }
+      syncWhoButtons();
+      render();
+    }
+
+    document.getElementById('continueBtn').onclick = () => showScreen(1);
+
+    document.querySelectorAll('.who-btn').forEach(btn => {
+      btn.onclick = () => {
+        state.who = btn.dataset.who;
+        state.ability = '';
+        state.summaryConfirmed = false;
+        state.followupSaved = false;
+        syncWhoButtons();
+        showScreen(2);
+        render();
+      };
+    });
+
+    document.getElementById('mainClearBtn').onclick = () => {
+      els.inputText.value = '';
+      render();
+    };
+
+
+
+    if (els.phoneConsultOk) els.phoneConsultOk.onchange = () => render();
+    if (els.phoneConsultNumber) {
+      els.phoneConsultNumber.addEventListener('input', () => {
+        els.phoneConsultNumber.value = formatPhoneDisplay(els.phoneConsultNumber.value);
+        render();
+      });
+    }
+    if (els.sumNameEdit) els.sumNameEdit.oninput = () => render();
+    if (els.followupText) els.followupText.oninput = () => {
+      if (state.followupSaved) state.followupSaved = false;
+      render();
+    };
+
+    document.getElementById('toSummaryBtn').onclick = () => {
+      if (!normalizeText(els.customerName.value)) {
+        alert('Please add your name first.');
+        els.customerName.focus();
+        return;
+      }
+      showScreen(3, 'auto');
+      render();
+      smoothScrollTo(els.sumMeta, 'start');
+    };
+
+    document.getElementById('summaryBackBtn').onclick = () => {
+      if (state.followupSaved) {
+        state.followupSaved = false;
+        render();
+        smoothScrollTo(els.followupSection, 'end');
+        return;
+      }
+      state.summaryConfirmed = false;
+      showScreen(2, 'auto');
+      render();
+      const hasInput = normalizeText(els.inputText.value).length > 0 || normalizeText(els.customerName.value).length > 0;
+      if (hasInput && els.ymmPrompt) smoothScrollTo(els.ymmPrompt, 'start');
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    document.getElementById('summaryConfirmBtn').onclick = () => {
+      if (state.followupSaved) {
+        els.summaryConfirmBtn.classList.remove('update-attention');
+        els.summaryConfirmBtn.classList.add('dark');
+        els.summaryConfirmBtn.textContent = 'Confirmed ✓';
+        setTimeout(() => showScreen(4), 180);
+        return;
+      }
+      state.summaryConfirmed = true;
+      render();
+      const target = !state.ability ? els.abilityWrap : els.followupSection;
+      smoothScrollTo(target, 'start');
+    };
+
+    document.getElementById('followupClearBtn').onclick = () => {
+      els.followupText.value = '';
+      state.followupSaved = false;
+      render();
+    };
+
+    document.getElementById('saveFollowupBtn').onclick = () => {
+      state.followupSaved = true;
+      render();
+      smoothScrollTo(els.sumNameEdit || els.summaryHeading || els.sumMeta, 'start');
+    };
+
+    document.getElementById('detailsBackBtn').onclick = () => {
+      state.followupSaved = false;
+      state.ability = '';
+      render();
+      smoothScrollTo(els.abilityWrap, 'start');
+    };
+
+    document.getElementById('queueBtn').onclick = () => showScreen(4);
+
+    async function submitConsultToSupabase() {
+      if (!els.paySubmitBtn) return;
+      const originalText = els.paySubmitBtn.textContent;
+      els.paySubmitBtn.disabled = true;
+      els.paySubmitBtn.textContent = 'Submitting...';
+
+      try {
+        const summary = buildSummary();
+        const payload = {
+          customer_name: summary.name || '',
+          phone_ok: !!(els.phoneConsultOk && els.phoneConsultOk.checked),
+          customer_phone: summary.phone || '',
+          vehicle_summary: summary.vehicle || '',
+          issue_summary: summary.issue || '',
+          work_done_summary: summary.done || '',
+          diy_status: state.who === "I'm working on it" ? 'yes' : (state.who === 'Someone else is working on it' ? 'no' : ''),
+          ability_level: state.ability || '',
+          intake_text: normalizeText(els.inputText.value),
+          followup_text: normalizeText(els.followupText.value),
+          queue_type: state.queue || 'guided',
+          payment_status: 'unpaid',
+          status: 'unpaid'
+        };
+
+        const response = await fetch('/.netlify/functions/create-consult', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) {
+          throw new Error(result.error || 'Submit failed');
+        }
+
+        state.caseId = result.consult?.id || state.caseId;
+        els.paySubmitBtn.textContent = 'Submitted ✓';
+        alert('Test consult saved to Supabase. Check the consults table.');
+      } catch (err) {
+        console.error(err);
+        alert('Could not save consult yet: ' + (err.message || err));
+        els.paySubmitBtn.textContent = originalText;
+        els.paySubmitBtn.disabled = false;
+      }
+    }
+
+    if (els.paySubmitBtn) els.paySubmitBtn.onclick = submitConsultToSupabase;
+
+    document.querySelectorAll('[data-back]').forEach(btn => {
+      btn.onclick = () => {
+        const target = Number(btn.dataset.back);
+        if (target === 3) {
+          showScreen(3, 'auto');
+          render();
+          const dest = state.followupSaved ? els.summaryBubble : (state.ability ? els.followupSection : els.abilityWrap);
+          smoothScrollTo(dest || els.summaryBubble, 'start');
+          return;
+        }
+        showScreen(target, 'auto');
+        if (target === 1) syncWhoButtons();
+        render();
+        if (target === 2) {
+          const hasInput = normalizeText(els.inputText.value).length > 0 || normalizeText(els.customerName.value).length > 0;
+          setTimeout(() => {
+            if (hasInput && els.ymmPrompt) smoothScrollTo(els.ymmPrompt, 'start');
+            else window.scrollTo({ top: 0, behavior: 'smooth' });
+          }, 80);
+        }
+      };
+    });
+
+    document.querySelectorAll('.queue-btn').forEach(btn => {
+      btn.onclick = () => {
+        state.queue = btn.dataset.queue;
+        document.querySelectorAll('.queue-btn').forEach(other => other.classList.toggle('active', other === btn));
+      };
+    });
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    document.addEventListener('touchstart', (e) => {
+      if (!e.touches || !e.touches.length) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+      if (!e.changedTouches || !e.changedTouches.length) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      const mostlyHorizontal = Math.abs(dx) > Math.abs(dy) * 1.5;
+      if (!mostlyHorizontal) return;
+      if (dx > 70) goBackOneScreen();
+      else if (dx < -70) {
+        if (state.screen === 0) showScreen(1);
+        else if (state.screen === 1 && state.who) showScreen(2);
+        else if (state.screen === 2 && normalizeText(els.customerName.value)) {
+          showScreen(3, 'auto');
+          render();
+          smoothScrollTo(els.sumMeta, 'start');
+        } else if (state.screen === 3) {
+          // Do not allow swipe-forward from page 3.
+        }
+      }
+    }, { passive: true });
+
+    if (els.uploadBtn && els.uploadInput) {
+      els.uploadBtn.onclick = () => els.uploadInput.click();
+      els.uploadInput.onchange = () => {
+        const files = els.uploadInput.files;
+        if (!files || !files.length) return;
+        els.uploadBtn.textContent = files.length === 1 ? files[0].name : `${files.length} files selected`;
+        els.uploadBtn.classList.add('upload-selected');
+      };
+    }
+
+
+    if (els.recordAudioBtn && els.stopAudioBtn && els.audioStatus) {
+      els.recordAudioBtn.onclick = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '';
+          const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+          state.audioChunks = [];
+          state.mediaRecorder = recorder;
+
+          recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) state.audioChunks.push(e.data);
+          };
+
+          recorder.onstop = () => {
+            const blob = new Blob(state.audioChunks, { type: recorder.mimeType || 'audio/webm' });
+            if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
+            state.audioUrl = URL.createObjectURL(blob);
+            els.audioPlayback.src = state.audioUrl;
+            els.audioPlayback.classList.remove('hidden');
+            els.audioStatus.textContent = 'Voice note saved in this session. You can play it back below.';
+            els.recordAudioBtn.disabled = false;
+            els.stopAudioBtn.disabled = false;
+            els.recordAudioBtn.classList.add('dark');
+            els.stopAudioBtn.classList.remove('dark');
+            els.recordAudioBtn.textContent = 'Record voice note';
+            els.stopAudioBtn.textContent = 'Clear saved recording';
+            stream.getTracks().forEach(track => track.stop());
+          };
+
+          recorder.start();
+          els.audioStatus.textContent = 'Recording voice note...';
+          els.recordAudioBtn.disabled = true;
+          els.stopAudioBtn.disabled = false;
+          els.recordAudioBtn.classList.remove('dark');
+          els.stopAudioBtn.classList.add('dark');
+          els.stopAudioBtn.textContent = 'Stop recording';
+          els.recordAudioBtn.textContent = 'Recording...';
+        } catch (err) {
+          els.audioStatus.textContent = 'Microphone unavailable for voice note recording.';
+          els.recordAudioBtn.disabled = false;
+          els.stopAudioBtn.disabled = true;
+          els.recordAudioBtn.classList.add('dark');
+          els.stopAudioBtn.classList.remove('dark');
+          els.stopAudioBtn.textContent = 'Stop recording';
+          els.recordAudioBtn.textContent = 'Record voice note';
+        }
+      };
+
+      els.stopAudioBtn.onclick = () => {
+        if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
+          state.mediaRecorder.stop();
+          return;
+        }
+        if (state.audioUrl) {
+          URL.revokeObjectURL(state.audioUrl);
+          state.audioUrl = '';
+          state.audioChunks = [];
+          els.audioPlayback.removeAttribute('src');
+          els.audioPlayback.classList.add('hidden');
+          els.audioStatus.textContent = 'Voice note cleared.';
+          els.recordAudioBtn.disabled = false;
+          els.stopAudioBtn.disabled = true;
+          els.recordAudioBtn.classList.add('dark');
+          els.stopAudioBtn.classList.remove('dark');
+          els.recordAudioBtn.textContent = 'Record voice note';
+          els.stopAudioBtn.textContent = 'Stop recording';
+        }
+      };
+    }
+
+
+
+    function hidePrototypeChromeImmediately() {
+      document.querySelectorAll('.sticky, .header, .chips, .screen-tab, .dev-nav, .prototype-nav, [data-dev-nav="true"]').forEach(el => {
+        el.classList.add('hidden');
+        el.style.display = 'none';
+        el.style.visibility = 'hidden';
+        el.style.height = '0';
+        el.style.overflow = 'hidden';
+        el.style.pointerEvents = 'none';
+      });
+    }
+
+    function nudgeSafariChrome() {
+      // Normal Safari will still show the address bar until the user scrolls/interacts.
+      // This tiny nudge helps collapse it when the browser allows it, without changing app state.
+      setTimeout(() => {
+        try {
+          if (!window.navigator.standalone && window.scrollY === 0) window.scrollTo(0, 1);
+        } catch (e) {}
+      }, 350);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      hidePrototypeChromeImmediately();
+      nudgeSafariChrome();
+    });
+    window.addEventListener('load', () => {
+      hidePrototypeChromeImmediately();
+      nudgeSafariChrome();
+    });
+
+    syncWhoButtons();
+    render();
+  </script>
+</body>
+</html>
