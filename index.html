@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1104,7 +1105,7 @@
 
         const result = await response.json().catch(() => ({}));
         if (!response.ok || !result.ok) {
-          throw new Error(result.error || 'Submit failed');
+          throw new Error((result.error || 'Submit failed') + (result.details ? ' — ' + JSON.stringify(result.details) : ''));
         }
 
         state.caseId = result.consult?.id || state.caseId;
