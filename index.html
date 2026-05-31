@@ -1148,7 +1148,7 @@
       });
     }
 
-    function resizeImageFile(file, maxSide = 1600, quality = 0.82) {
+    function resizeImageFile(file, maxSide = 1200, quality = 0.72) {
       return new Promise((resolve) => {
         if (!file || !file.type || !file.type.startsWith('image/')) return resolve(file);
         const img = new Image();
@@ -1207,6 +1207,23 @@
       };
     }
 
+    async function postConsultPayload(payload) {
+      const response = await fetch('/.netlify/functions/create-consult', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const rawText = await response.text();
+      let result = {};
+      try { result = rawText ? JSON.parse(rawText) : {}; } catch (e) { result = { raw: rawText }; }
+      if (!response.ok || !result.ok) {
+        const detailText = result.details ? ' — ' + JSON.stringify(result.details) : (result.raw ? ' — ' + String(result.raw).slice(0, 500) : '');
+        throw new Error((result.error || ('Submit failed with HTTP ' + response.status)) + detailText);
+      }
+      return result;
+    }
+
     async function submitConsultToSupabase() {
       if (!els.paySubmitBtn) return;
       const originalText = els.paySubmitBtn.textContent;
@@ -1215,12 +1232,7 @@
 
       try {
         const summary = buildSummary();
-        els.paySubmitBtn.textContent = 'Preparing files...';
-        const voice_note = await voiceNoteForSubmit();
-        const uploads = await selectedUploadsForSubmit();
-        els.paySubmitBtn.textContent = 'Submitting...';
-
-        const payload = {
+        const basePayload = {
           customer_name: summary.name || '',
           phone_ok: !!(els.phoneConsultOk && els.phoneConsultOk.checked),
           customer_phone: summary.phone || '',
@@ -1233,25 +1245,33 @@
           followup_text: normalizeText(els.followupText.value),
           queue_type: state.queue || 'guided',
           payment_status: 'unpaid',
-          status: 'unpaid',
-          voice_note,
-          uploads
+          status: 'unpaid'
         };
 
-        const response = await fetch('/.netlify/functions/create-consult', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        els.paySubmitBtn.textContent = 'Preparing files...';
+        const voice_note = await voiceNoteForSubmit();
+        const uploads = await selectedUploadsForSubmit();
+        const payloadWithFiles = { ...basePayload, voice_note, uploads };
 
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || !result.ok) {
-          throw new Error((result.error || 'Submit failed') + (result.details ? ' — ' + JSON.stringify(result.details) : ''));
+        let result;
+        let fileWarning = '';
+        try {
+          els.paySubmitBtn.textContent = (voice_note || uploads.length) ? 'Submitting files...' : 'Submitting...';
+          result = await postConsultPayload(payloadWithFiles);
+        } catch (fileErr) {
+          console.warn('Submit with files failed; retrying text-only consult save.', fileErr);
+          if (voice_note || uploads.length) {
+            fileWarning = ' Text saved, but the file upload failed. We will wire larger/safer uploads next.';
+            els.paySubmitBtn.textContent = 'Saving text only...';
+            result = await postConsultPayload({ ...basePayload, file_upload_error: String(fileErr.message || fileErr).slice(0, 1000) });
+          } else {
+            throw fileErr;
+          }
         }
 
         state.caseId = result.consult?.id || state.caseId;
         els.paySubmitBtn.textContent = 'Submitted ✓';
-        alert('Test consult saved to Supabase. Check the consults table and consult-files bucket.');
+        alert('Test consult saved to Supabase.' + fileWarning + ' Check the consults table and consult-files bucket.');
       } catch (err) {
         console.error(err);
         alert('Could not save consult yet: ' + (err.message || err));
