@@ -835,7 +835,7 @@
       if (/misfire|cylinder miss|missing on one cylinder|p030\d|p0300/i.test(lower)) issueHints.push('misfire concern');
       if (/rough idle|rough at idle/i.test(lower) && !issueHints.includes('runs badly / rough at times')) issueHints.push('rough running');
       if (/smoke/i.test(lower)) issueHints.push('smoke concern');
-      if (/noise|knock|tap|rattle|grind/i.test(lower) && !issueHints.includes('ac noise / price concern')) issueHints.push('noise concern');
+      if (/noise|knock|tap|rattle|grind/i.test(lower) && !issueHints.includes('ac noise / price concern')) issueHints.push(/bump|bumps|over bumps|rough road|pothole/i.test(lower) ? 'noise over bumps / road-input concern' : 'noise concern');
       if (/overheat|overheating|hot/i.test(lower)) issueHints.push('overheating concern');
       if (codeMatch?.length) issueHints.push('codes: ' + [...new Set(codeMatch.map(v => v.toUpperCase()))].join(', '));
 
@@ -868,7 +868,7 @@
 
       const concernMentioned = /concern|concerned|worried|not sure|not really clear|decision|spend more money|before i go any farther|estimate|quote|reasonable|looking for advice|advice|insight|way to test|test it|diagnosis|direction/i.test(lower);
       const projectMode = /engine swap|wiring|powers?|grounds?|key to work/i.test(lower);
-      const hasTimingDetail = /when|only|idle|freeway|cold|hot|hill|throttle|after|during|while|start|started|week ago|weeks ago|recently|most of the time|comes and goes|sometimes/i.test(lower);
+      const hasTimingDetail = /when|only|idle|freeway|cold|hot|hill|throttle|after|during|while|start|started|week ago|weeks ago|recently|most of the time|comes and goes|sometimes|all the time|always|constant|constantly|over bumps?|bumps?|rough road|pothole|at \d+\s?mph|\d+\s?mph|highway|city|braking|turning|accelerating|decelerating|coasting|park|reverse|drive|gear/i.test(lower);
       const concernClearlyPresent = /need help|help testing|looking for advice|advice|insight|way to test|test (?:the|it)|concern|concerned|worried|not sure|not really clear/i.test(lower);
       const symptomClearlyPresent = issueHints.length > 0;
 
