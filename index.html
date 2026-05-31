@@ -356,14 +356,14 @@
     .update-attention {
       color: var(--accent-dark) !important;
       -webkit-text-fill-color: var(--accent-dark);
-      font-weight: 400 !important;
+      font-weight: 700 !important;
       font-style: normal;
     }
 
     .btn.update-attention:not(.dark) {
       color: var(--accent-dark) !important;
       -webkit-text-fill-color: var(--accent-dark);
-      font-weight: 400 !important;
+      font-weight: 700 !important;
       font-style: normal;
     }
 
@@ -372,7 +372,7 @@
       -webkit-text-fill-color: var(--accent-dark);
       text-decoration: underline;
       text-underline-offset: 3px;
-      font-weight: 400 !important;
+      font-weight: 700 !important;
       font-style: normal;
     }
 
@@ -390,7 +390,7 @@
     .updated-vehicle-inline {
       color: var(--accent-dark) !important;
       -webkit-text-fill-color: var(--accent-dark);
-      font-weight: 400 !important;
+      font-weight: 700 !important;
       font-style: normal;
       margin-left: 4px;
     }
@@ -398,7 +398,7 @@
     .save-details-attention {
       color: var(--accent-dark) !important;
       -webkit-text-fill-color: var(--accent-dark);
-      font-weight: 400;
+      font-weight: 700;
       text-decoration: underline;
       text-underline-offset: 3px;
     }
@@ -904,6 +904,16 @@
       return vehicle;
     }
 
+
+    function compactCaseId(value) {
+      const raw = String(value || '').trim();
+      if (!raw) return 'WID-0001';
+      if (/^WID-\d{4,7}$/i.test(raw)) return raw.toUpperCase();
+      const cleaned = raw.replace(/[^a-z0-9]/gi, '').toUpperCase();
+      if (!cleaned) return raw.slice(0, 7).toUpperCase();
+      return cleaned.slice(0, 7);
+    }
+
     function renderAbilityOptions() {
       els.abilityGrid.innerHTML = '';
       abilityOptions.forEach(option => {
@@ -922,7 +932,7 @@
     function render() {
       const summary = buildSummary();
       if (els.sumNameEdit && document.activeElement !== els.sumNameEdit) els.sumNameEdit.value = summary.name || els.customerName.value || '';
-      els.sumMeta.textContent = `${state.caseId} · ${state.who ? (state.who === "I'm working on it" ? 'DIY' : 'Someone Else') : 'Choose path'} · ${state.followupSaved ? 'updated' : state.summaryConfirmed ? 'confirmed' : 'preview shell'}`;
+      els.sumMeta.textContent = `${compactCaseId(state.caseId)} · ${state.who ? (state.who === "I'm working on it" ? 'DIY' : 'Someone Else') : 'Choose path'} · ${state.followupSaved ? 'updated' : state.summaryConfirmed ? 'confirmed' : 'preview shell'}`;
       const anchorSummaryLine = [summary.vehicle, summary.issue].filter(Boolean).join(' · ');
       els.sumSingleLine.textContent = anchorSummaryLine;
       if (els.updatedSummaryAnchor) {
