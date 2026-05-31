@@ -330,8 +330,10 @@
     }
 
     .saved-note.saved {
-      color: var(--ok);
-      font-weight: 600;
+      color: var(--text);
+      -webkit-text-fill-color: var(--text);
+      font-weight: 400;
+      font-style: normal;
     }
 
     .queue-price {
@@ -352,27 +354,53 @@
     }
 
     .update-attention {
-      color: var(--ok) !important;
-      -webkit-text-fill-color: var(--ok);
-      font-weight: 700;
+      color: var(--accent-dark) !important;
+      -webkit-text-fill-color: var(--accent-dark);
+      font-weight: 400 !important;
+      font-style: normal;
     }
 
     .btn.update-attention:not(.dark) {
-      color: var(--ok) !important;
-      -webkit-text-fill-color: var(--ok);
-      font-weight: 700;
+      color: var(--accent-dark) !important;
+      -webkit-text-fill-color: var(--accent-dark);
+      font-weight: 400 !important;
+      font-style: normal;
+    }
+
+    .btn.confirm-update-attention:not(.dark) {
+      color: var(--accent-dark) !important;
+      -webkit-text-fill-color: var(--accent-dark);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-weight: 400 !important;
+      font-style: normal;
     }
 
     .review-attention {
-      color: var(--ok) !important;
-      -webkit-text-fill-color: var(--ok);
-      font-weight: 700;
+      color: var(--text) !important;
+      -webkit-text-fill-color: var(--text);
+      font-weight: 400 !important;
+      font-style: normal;
+    }
+
+    .updated-summary-anchor {
+      display: none !important;
+    }
+
+    .updated-vehicle-inline {
+      color: var(--accent-dark) !important;
+      -webkit-text-fill-color: var(--accent-dark);
+      font-weight: 400 !important;
+      font-style: normal;
+      margin-left: 4px;
     }
 
     .save-details-attention {
       color: var(--accent-dark) !important;
       -webkit-text-fill-color: var(--accent-dark);
-      font-weight: 700;
+      font-weight: 400;
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
 
     .tap-note {
@@ -497,6 +525,8 @@
           <div class="soft" id="sumRestatement" style="min-height:260px;"></div>
         </div>
 
+        <div id="updatedSummaryAnchor" class="updated-summary-anchor hidden"></div>
+
         <div id="summaryConfirmWrap" style="margin-top:16px;">
           <div class="summary-bubble" id="summaryBubble">Close enough to submit?</div>
           <div class="btn-row" style="margin-top:10px;">
@@ -592,6 +622,7 @@
       sumSingleLine: document.getElementById('sumSingleLine'),
       sumRestatement: document.getElementById('sumRestatement'),
       summaryHeading: document.getElementById('summaryHeading'),
+      updatedSummaryAnchor: document.getElementById('updatedSummaryAnchor'),
       summaryBubble: document.getElementById('summaryBubble'),
       summaryConfirmBtn: document.getElementById('summaryConfirmBtn'),
       abilityWrap: document.getElementById('abilityWrap'),
@@ -866,6 +897,13 @@
       };
     }
 
+    function updatedVehicleShorthand(summary) {
+      const vehicle = String(summary.vehicle || '').trim();
+      if (!vehicle || vehicle === 'Vehicle not clear yet') return '';
+      // This intentionally uses only the year/model/mileage shorthand, not the issue path.
+      return vehicle;
+    }
+
     function renderAbilityOptions() {
       els.abilityGrid.innerHTML = '';
       abilityOptions.forEach(option => {
@@ -885,8 +923,18 @@
       const summary = buildSummary();
       if (els.sumNameEdit && document.activeElement !== els.sumNameEdit) els.sumNameEdit.value = summary.name || els.customerName.value || '';
       els.sumMeta.textContent = `${state.caseId} · ${state.who ? (state.who === "I'm working on it" ? 'DIY' : 'Someone Else') : 'Choose path'} · ${state.followupSaved ? 'updated' : state.summaryConfirmed ? 'confirmed' : 'preview shell'}`;
-      els.sumSingleLine.textContent = [summary.vehicle, summary.issue].filter(Boolean).join(' · ');
-      els.summaryHeading.textContent = state.followupSaved ? 'UPDATED SUMMARY:' : 'SUMMARY:';
+      const anchorSummaryLine = [summary.vehicle, summary.issue].filter(Boolean).join(' · ');
+      els.sumSingleLine.textContent = anchorSummaryLine;
+      if (els.updatedSummaryAnchor) {
+        els.updatedSummaryAnchor.textContent = '';
+        els.updatedSummaryAnchor.classList.add('hidden');
+      }
+      if (state.followupSaved) {
+        const vehicleOnly = updatedVehicleShorthand(summary);
+        els.summaryHeading.innerHTML = '<span class="update-attention">UPDATED SUMMARY:</span>' + (vehicleOnly ? ' <span class="updated-vehicle-inline">' + vehicleOnly + '</span>' : '');
+      } else {
+        els.summaryHeading.textContent = 'SUMMARY:';
+      }
       els.summaryHeading.classList.toggle('update-attention', !!state.followupSaved);
       els.sumRestatement.innerHTML = `
         <div><strong>Issue:</strong> ${summary.issue}</div>
@@ -903,7 +951,7 @@
       const hasFollowupText = normalizeText(els.followupText.value).length > 0;
 
       if (state.followupSaved) {
-        els.summaryBubble.innerHTML = '<span class="update-attention">Review the Updated Summary Above</span>';
+        els.summaryBubble.innerHTML = '<span class="review-attention">Review the Updated Summary Above</span>';
       } else {
         els.summaryBubble.textContent = state.summaryConfirmed ? 'Add more details below' : 'Close enough to submit?';
       }
@@ -911,7 +959,8 @@
       els.summaryBubble.classList.toggle('update-attention', false);
       els.summaryConfirmBtn.textContent = state.followupSaved ? 'Confirm Update' : (state.summaryConfirmed ? 'Confirmed ✓' : 'Close Enough');
       els.summaryConfirmBtn.classList.toggle('dark', !state.followupSaved);
-      els.summaryConfirmBtn.classList.toggle('update-attention', !!state.followupSaved);
+      els.summaryConfirmBtn.classList.toggle('update-attention', false);
+      els.summaryConfirmBtn.classList.toggle('confirm-update-attention', !!state.followupSaved);
       const saveBtn = document.getElementById('saveFollowupBtn');
       if (saveBtn) {
         saveBtn.textContent = state.followupSaved ? 'Details Saved ✓' : 'Save details';
@@ -925,7 +974,7 @@
       els.queueBtn.classList.toggle('hidden', hasFollowupText || !showFollowup || state.followupSaved);
       els.followupSavedNote.classList.toggle('saved', state.followupSaved);
       if (state.followupSaved) {
-        els.followupSavedNote.innerHTML = '<span class="update-attention">Saved ✓ Review the Updated Summary Above</span>';
+        els.followupSavedNote.innerHTML = '<span class="review-attention">Saved ✓ Review the Updated Summary Above</span>';
       } else {
         els.followupSavedNote.textContent = 'Nothing saved yet.';
       }
@@ -1041,6 +1090,7 @@
     document.getElementById('summaryConfirmBtn').onclick = () => {
       if (state.followupSaved) {
         els.summaryConfirmBtn.classList.remove('update-attention');
+        els.summaryConfirmBtn.classList.remove('confirm-update-attention');
         els.summaryConfirmBtn.classList.add('dark');
         els.summaryConfirmBtn.textContent = 'Confirmed ✓';
         setTimeout(() => showScreen(4), 180);
