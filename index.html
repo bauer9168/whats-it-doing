@@ -857,7 +857,7 @@
       if (/shift(?:s|ing)? hard|hard shift|bangs? into gear|slams? into gear|delayed shift|transmission shifts?/i.test(lower)) issueHints.push('hard shift / transmission behavior concern');
       if (/runs badly|running badly|runs rough|running rough/i.test(lower)) issueHints.push('runs badly / rough at times');
       if (/sometimes has low power|low power|falls on its face|no power|lack of power|power loss|hesitat|stumble|bog/i.test(lower)) issueHints.push('power loss / hesitation');
-      if (/when i start(?:ed)? (?:it|up)|on startup|first start|cold start/i.test(lower)) issueHints.push('startup issue');
+      if (/hard to start|starts? hard|difficult to start|long crank|cranks? (?:a lot|long)|when i start(?:ed)? (?:it|up)|on startup|first start|cold start|start(?:s|ing)? when cold|cold start/i.test(lower)) issueHints.push('startup issue');
       if (lightMentioned) issueHints.push('check engine light concern');
       if (/misfire|cylinder miss|missing on one cylinder|p030\d|p0300/i.test(lower)) issueHints.push('misfire concern');
       if (/rough idle|rough at idle/i.test(lower) && !issueHints.includes('runs badly / rough at times')) issueHints.push('rough running');
@@ -886,7 +886,8 @@
       const uniqueDone = [...new Set(doneHints)];
       const issue = issueHints.join(' · ') || 'Issue path still needs review';
       let done = uniqueDone.length ? uniqueDone.join(' · ') : 'Nothing specific listed yet';
-      if (done === 'Nothing specific listed yet' && /engine swap|wiring|powers?|grounds?|key to work/i.test(lower)) {
+      const projectWorkMentioned = /engine swap|aftermarket engine|swap project|wiring harness|wire harness|started wiring|partial wiring|wiring work|powers?\s*(?:and|&)\s*grounds?|power\s*\/\s*ground|key[- ]?on power|key to work/i.test(lower);
+      if (done === 'Nothing specific listed yet' && projectWorkMentioned) {
         done = 'project wiring / swap work already started';
       }
       if (done === 'Nothing specific listed yet' && /replaced|new transmission|new water pump|new fuel pump|new radiator|new engine|serpentine belt/i.test(lower)) {
@@ -894,7 +895,7 @@
       }
 
       const concernMentioned = /concern|concerned|worried|not sure|not really clear|decision|spend more money|before i go any farther|estimate|quote|reasonable|looking for advice|advice|insight|way to test|test it|diagnosis|direction/i.test(lower);
-      const projectMode = /engine swap|wiring|powers?|grounds?|key to work/i.test(lower);
+      const projectMode = projectWorkMentioned;
       const hasTimingDetail = /when|only|idle|freeway|cold|hot|hill|throttle|after|during|while|start|started|week ago|weeks ago|recently|most of the time|comes and goes|sometimes|all the time|always|constant|constantly|over bumps?|bumps?|rough road|pothole|at \d+\s?mph|\d+\s?mph|highway|city|braking|turning|accelerating|decelerating|coasting|park|reverse|drive|gear/i.test(lower);
       const concernClearlyPresent = /need help|help testing|looking for advice|advice|insight|way to test|test (?:the|it)|concern|concerned|worried|not sure|not really clear/i.test(lower);
       const symptomClearlyPresent = issueHints.length > 0;
