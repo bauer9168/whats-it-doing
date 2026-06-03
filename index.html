@@ -924,6 +924,7 @@
       if (/serpentine belt (?:was )?replaced|belt (?:was )?replaced already/i.test(lower)) doneHints.push('serpentine belt replaced');
       if (/new transmission|got a new transmission|transmission replaced|transmission was replaced|transmission recently replaced/i.test(lower)) doneHints.push('transmission replaced');
       if (/new gear\s*box|new gearbox|gear\s*box replaced|gearbox replaced|replaced (?:the )?gear\s*box|replaced (?:the )?gearbox/i.test(lower)) doneHints.push('gearbox replaced');
+      if (/new steering rack|steering rack (?:was )?(?:replaced|installed)|replaced (?:the )?steering rack|rack and pinion (?:was )?(?:replaced|installed)|new rack and pinion/i.test(lower)) doneHints.push('steering rack replaced');
       if (/transmission filter and fluid were replaced|transmission fluid and filter were replaced|filter and fluid were replaced|transmission filter replaced|transmission fluid replaced|filter (?:has been|was|got) changed|filter (?:has been|was|got) replaced|changed (?:the )?filter|replaced (?:the )?filter/i.test(lower)) doneHints.push('filter changed / replaced');
       if (/exhaust manifold replaced|manifold replaced/i.test(lower)) doneHints.push('exhaust manifold replaced');
       if (/engine was pulled out|pulled the engine|engine pulled|aftermarket engine swap|engine swap/i.test(lower)) doneHints.push('engine pulled for swap project');
@@ -941,7 +942,7 @@
       if (done === 'Nothing specific listed yet' && projectWorkMentioned) {
         done = 'project wiring / swap work already started';
       }
-      if (done === 'Nothing specific listed yet' && /replaced|new transmission|new gearbox|new gear\s*box|new water pump|new fuel pump|new radiator|new engine|serpentine belt/i.test(lower)) {
+      if (done === 'Nothing specific listed yet' && /replaced|new transmission|new gearbox|new gear\s*box|new steering rack|new rack and pinion|new water pump|new fuel pump|new radiator|new engine|serpentine belt/i.test(lower)) {
         done = 'replacement work mentioned';
       }
 
