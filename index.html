@@ -648,7 +648,7 @@
     };
 
     const MAKES = ['acura','alfa romeo','audi','bmw','buick','cadillac','chevrolet','chevy','chrysler','dodge','ford','gmc','honda','hyundai','infiniti','isuzu','jeep','kia','lexus','lincoln','mazda','mercedes','mercedes-benz','mercury','mini','mitsubishi','nissan','oldsmobile','pontiac','porsche','ram','saturn','scion','subaru','suzuki','toyota','volkswagen','vw','volvo'];
-    const COMMON_MODELS = ['tahoe','suburban','yukon','s10','s-10','blazer','trailblazer','civic','accord','camry','corolla','cruze','malibu','impala','explorer','escape','focus','fusion','pilot','odyssey','rav4','highlander','forester','outback','wrangler','cherokee','grand cherokee','silverado','sierra','expedition','durango','charger','challenger','altima','sentra','maxima','frontier','tacoma','tundra','4runner'];
+    const COMMON_MODELS = ['tahoe','suburban','yukon','crv','cr-v','s10','s-10','blazer','trailblazer','civic','accord','camry','corolla','cruze','malibu','impala','explorer','escape','focus','fusion','pilot','odyssey','rav4','highlander','forester','outback','wrangler','cherokee','grand cherokee','silverado','sierra','expedition','durango','charger','challenger','altima','sentra','maxima','frontier','tacoma','tundra','4runner'];
     const STOPWORDS = new Set(['with','w','has','have','had','runs','run','running','started','start','sometimes','most','time','light','lights','code','codes','after','before','because','but','and','it','is','was','were','needs','need','when','where','that','this','on','off','at','for','my','me','a','an','the']);
 
     function showScreen(index, behavior = 'smooth') {
@@ -739,22 +739,40 @@
       let model = '';
       if (/\bdodge\s+1\s*ton\b|\bdodge\s+one\s*ton\b|\bdodge\s+3500\b/i.test(lower)) {
         make = 'dodge';
-        model = '1 Ton';
-      } else if (/\bdodge\s+3\/4\b|\bdodge\s+2500\b/i.test(lower)) {
+        model = '3500';
+      } else if (/\bdodge\s+3\/4\b|\bdodge\s+three\s*quarter\b|\bdodge\s+2500\b/i.test(lower)) {
         make = 'dodge';
-        model = '3/4';
-      } else if (/\bdodge\s+1\/2\b|\bdodge\s+1500\b/i.test(lower)) {
+        model = '2500';
+      } else if (/\bdodge\s+1\/2\b|\bdodge\s+half\s*ton\b|\bdodge\s+1500\b/i.test(lower)) {
         make = 'dodge';
-        model = '1/2';
+        model = '1500';
       } else if (/\bram\s+1\s*ton\b|\bram\s+one\s*ton\b|\bram\s+3500\b/i.test(lower)) {
         make = 'ram';
-        model = '1 Ton';
-      } else if (/\bram\s+3\/4\b|\bram\s+2500\b/i.test(lower)) {
+        model = '3500';
+      } else if (/\bram\s+3\/4\b|\bram\s+three\s*quarter\b|\bram\s+2500\b/i.test(lower)) {
         make = 'ram';
-        model = '3/4';
-      } else if (/\bram\s+1\/2\b|\bram\s+1500\b/i.test(lower)) {
+        model = '2500';
+      } else if (/\bram\s+1\/2\b|\bram\s+half\s*ton\b|\bram\s+1500\b/i.test(lower)) {
         make = 'ram';
-        model = '1/2';
+        model = '1500';
+      } else if (/\bsilverado\b/i.test(lower) && /\b(3\/4|three\s*quarter|2500|2500hd)\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = 'Silverado 2500HD';
+      } else if (/\bsilverado\b/i.test(lower) && /\b(1\s*ton|one\s*ton|3500)\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = 'Silverado 3500';
+      } else if (/\bsilverado\b/i.test(lower) && /\b(1\/2|half\s*ton|1500)\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = 'Silverado 1500';
+      } else if (/\bsierra\b/i.test(lower) && /\b(3\/4|three\s*quarter|2500|2500hd)\b/i.test(lower)) {
+        make = make || 'gmc';
+        model = 'Sierra 2500HD';
+      } else if (/\bsierra\b/i.test(lower) && /\b(1\s*ton|one\s*ton|3500)\b/i.test(lower)) {
+        make = make || 'gmc';
+        model = 'Sierra 3500';
+      } else if (/\bsierra\b/i.test(lower) && /\b(1\/2|half\s*ton|1500)\b/i.test(lower)) {
+        make = make || 'gmc';
+        model = 'Sierra 1500';
       } else if (/\b([ck])\s?2500\b/i.test(lower)) {
         make = make || 'chevy';
         model = `${lower.match(/\b([ck])\s?2500\b/i)[1].toUpperCase()}2500`;
@@ -783,8 +801,9 @@
         for (const cm of COMMON_MODELS.sort((a,b)=>b.length-a.length)) {
           if (new RegExp(`\\b${cm.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i').test(lower)) {
             model = titleWords(cm);
-            if (!make && /\\b(tahoe|suburban)\\b/i.test(cm)) make = 'chevy';
-            if (!make && /\\byukon\\b/i.test(cm)) make = 'gmc';
+            if (!make && /\b(tahoe|suburban|s10|s-10|silverado)\b/i.test(cm)) make = 'chevy';
+            if (!make && /\b(yukon|sierra)\b/i.test(cm)) make = 'gmc';
+            if (!make && /\b(crv|cr-v)\b/i.test(cm)) make = 'honda';
             break;
           }
         }
@@ -804,9 +823,16 @@
       }
 
       const displayMake = normalizeMakeDisplay(make);
-      let vehicle = [year ? `'${String(year).slice(-2)}` : '', model || displayMake, mileage].filter(Boolean).join(' ');
+      let modelForDisplay = model === 'S10' || model === 'S-10' ? 'S10' : model;
+      if (/^(Crv|Cr-v|CRV|CR-V)$/i.test(modelForDisplay || '')) modelForDisplay = 'CRV';
+      const truckish = /^(1500|2500|2500HD|3500|Ram|Silverado|Sierra|S10|F150|F250|F350|C1500|C2500|C3500|K1500|K2500|K3500)/i.test(modelForDisplay || '');
+      const suvNeedsMake = /^(Tahoe|Suburban|Yukon|CRV|Crv|Cr-v|CR-V)$/i.test(modelForDisplay || '');
+      const displayVehicleName = displayMake && modelForDisplay && (truckish || suvNeedsMake)
+        ? `${displayMake} ${modelForDisplay}`
+        : (modelForDisplay || displayMake);
+      let vehicle = [year ? `'${String(year).slice(-2)}` : '', displayVehicleName, mileage].filter(Boolean).join(' ');
       if (!vehicle && (displayMake || mileage)) vehicle = [year ? `'${String(year).slice(-2)}` : '', displayMake, mileage].filter(Boolean).join(' ');
-      return { year, make: displayMake, model, mileage, vehicle: vehicle || 'Vehicle not clear yet' };
+      return { year, make: displayMake, model: modelForDisplay, mileage, vehicle: vehicle || 'Vehicle not clear yet' };
     }
 
     function buildSummary() {
