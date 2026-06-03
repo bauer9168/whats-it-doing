@@ -525,7 +525,7 @@
           Looking for a second opinion before I go any farther with it.
         </div>
         <p class="section-sub" id="ymmPrompt" style="margin-bottom:6px;">Year model mileage - what's going on?</p>
-        <textarea id="inputText" class="input-accent" placeholder="Pretend I'm standing in front of you, and tell me what it's doing, what's been done recently, and/or what you're concerned with."></textarea>
+        <textarea id="inputText" class="input-accent" placeholder="Pretend I'm standing in front of you and tell me what it's doing, what's been done recently, and/or what you're concerned with."></textarea>
         <div class="tap-note">Prefer talking? Use the microphone on your phone keyboard in this box, then review the text before continuing.</div>
         <div class="utility-row-main" style="grid-template-columns: 1fr;">
           <button class="btn small" id="mainClearBtn" type="button">Clear / start over</button>
@@ -604,29 +604,29 @@
 
       <div class="card screen" data-screen="4">
         <h2>Advanced Driveability Technician</h2>
-        <p class="section-sub">Written diagnostic review with back-and-forth text follow-up when needed. If text is not enough, I may move it to a phone consult.</p>
+        <p class="section-sub">Written Diagnostic Review with enough back-and-forth text to clarify the issue. Phone consultation is included if needed.</p>
         <div class="grid">
           <button class="opt active queue-btn" data-queue="guided">
             <div style="font-weight:600; text-align:left;">Guided consult</div>
-            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Written review with text follow-up as needed</div>
+            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Written Diagnostic Review with back-and-forth text as needed</div>
             <div class="queue-price" style="text-align:left;">$39 · avg. reply 1–2 business days</div>
           </button>
           <button class="opt queue-btn" data-queue="priority">
             <div style="font-weight:600; text-align:left;">Priority</div>
-            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Same consult path, moved ahead in line</div>
+            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Same written review and text follow-up, moved ahead in line</div>
             <div class="queue-price" style="text-align:left;">$79 · avg. reply same day / next business day</div>
           </button>
           <button class="opt queue-btn" data-queue="extended">
             <div style="font-weight:600; text-align:left;">Extended vehicle thread · 3 days</div>
-            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Back-and-forth text thread for the same vehicle/symptom path; phone consult if needed</div>
+            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">3-day text thread for the same vehicle/symptom path; phone consult if needed</div>
             <div class="queue-price" style="text-align:left;">$249 · avg. first reply same day / next business day</div>
           </button>
         </div>
         <div class="soft queue-meta">
           <div><strong>Current queue:</strong> 3 ahead of you</div>
           <div style="margin-top:6px;"><strong>Replies during business hours:</strong> Mon–Fri 9am–5pm</div>
-          <div style="margin-top:6px;"><strong>Reply window:</strong> After I ask a clarifying question, a 48-hour response window starts. A 24-hour reminder is automatic; no response by 48 hours may auto-close the case.</div>
-          <div style="margin-top:6px;"><strong>Status:</strong> Available now</div>
+          <div style="margin-top:6px;"><strong>Reply window:</strong> After a clarifying question, please reply within 48 hours. I send one 24-hour reminder; no response may auto-close the case.</div>
+          <div style="margin-top:6px;"><strong>Status:</strong> <strong id="availabilityStatus">Available Now</strong></div>
           <div class="bottom-callout">Not live chat or emergency service. After-hours requests roll to the next available window unless priority.</div>
         </div>
         <div class="btn-row" style="margin-top:18px;">
@@ -692,7 +692,7 @@
     };
 
     const MAKES = ['acura','alfa romeo','audi','bmw','buick','cadillac','chevrolet','chevy','chrysler','dodge','ford','gmc','honda','hyundai','infiniti','isuzu','jeep','kia','lexus','lincoln','mazda','mercedes','mercedes-benz','mercury','mini','mitsubishi','nissan','oldsmobile','pontiac','porsche','ram','saturn','scion','subaru','suzuki','toyota','volkswagen','vw','volvo'];
-    const COMMON_MODELS = ['tahoe','suburban','yukon','crv','cr-v','s10','s-10','blazer','trailblazer','civic','accord','camry','corolla','cruze','malibu','impala','explorer','escape','focus','fusion','pilot','odyssey','rav4','highlander','forester','outback','wrangler','cherokee','grand cherokee','silverado','sierra','expedition','durango','charger','challenger','altima','sentra','maxima','frontier','tacoma','tundra','4runner'];
+    const COMMON_MODELS = ['tahoe','suburban','yukon','crv','cr-v','s10','s-10','mr2','mighty max','blazer','trailblazer','civic','accord','camry','corolla','cruze','malibu','impala','explorer','escape','focus','fusion','pilot','odyssey','rav4','highlander','forester','outback','wrangler','cherokee','grand cherokee','silverado','sierra','expedition','durango','charger','challenger','altima','sentra','maxima','frontier','tacoma','tundra','4runner'];
     const STOPWORDS = new Set(['with','w','has','have','had','runs','run','running','started','start','sometimes','most','time','light','lights','code','codes','after','before','because','but','and','it','is','was','were','needs','need','when','where','that','this','on','off','at','for','my','me','a','an','the']);
 
     function showScreen(index, behavior = 'smooth') {
@@ -763,7 +763,7 @@
 
     function titleWords(s) {
       return s.split(' ').filter(Boolean).map(w => {
-        if (/^[f]\d{3}$/i.test(w)) return w.toUpperCase();
+        if (/^(mr2|[f]\d{3})$/i.test(w)) return w.toUpperCase();
         if (/^\d\/\d$/.test(w)) return w;
         if (w === '1ton') return '1ton';
         return w.charAt(0).toUpperCase() + w.slice(1);
@@ -781,7 +781,13 @@
       }
 
       let model = '';
-      if (/\bdodge\s+1\s*ton\b|\bdodge\s+one\s*ton\b|\bdodge\s+3500\b/i.test(lower)) {
+      if (/\bmighty\s+max\b/i.test(lower)) {
+        make = 'mitsubishi';
+        model = 'Mighty Max';
+      } else if (/\bmr2\b/i.test(lower)) {
+        make = make || 'toyota';
+        model = 'MR2';
+      } else if (/\bdodge\s+1\s*ton\b|\bdodge\s+one\s*ton\b|\bdodge\s+3500\b/i.test(lower)) {
         make = 'dodge';
         model = '3500';
       } else if (/\bdodge\s+3\/4\b|\bdodge\s+three\s*quarter\b|\bdodge\s+2500\b/i.test(lower)) {
@@ -917,6 +923,7 @@
       if (/timing chain|chain done|timing set/i.test(lower)) doneHints.push('timing chain done');
       if (/serpentine belt (?:was )?replaced|belt (?:was )?replaced already/i.test(lower)) doneHints.push('serpentine belt replaced');
       if (/new transmission|got a new transmission|transmission replaced|transmission was replaced|transmission recently replaced/i.test(lower)) doneHints.push('transmission replaced');
+      if (/new gear\s*box|new gearbox|gear\s*box replaced|gearbox replaced|replaced (?:the )?gear\s*box|replaced (?:the )?gearbox/i.test(lower)) doneHints.push('gearbox replaced');
       if (/transmission filter and fluid were replaced|transmission fluid and filter were replaced|filter and fluid were replaced|transmission filter replaced|transmission fluid replaced|filter (?:has been|was|got) changed|filter (?:has been|was|got) replaced|changed (?:the )?filter|replaced (?:the )?filter/i.test(lower)) doneHints.push('filter changed / replaced');
       if (/exhaust manifold replaced|manifold replaced/i.test(lower)) doneHints.push('exhaust manifold replaced');
       if (/engine was pulled out|pulled the engine|engine pulled|aftermarket engine swap|engine swap/i.test(lower)) doneHints.push('engine pulled for swap project');
@@ -934,13 +941,13 @@
       if (done === 'Nothing specific listed yet' && projectWorkMentioned) {
         done = 'project wiring / swap work already started';
       }
-      if (done === 'Nothing specific listed yet' && /replaced|new transmission|new water pump|new fuel pump|new radiator|new engine|serpentine belt/i.test(lower)) {
+      if (done === 'Nothing specific listed yet' && /replaced|new transmission|new gearbox|new gear\s*box|new water pump|new fuel pump|new radiator|new engine|serpentine belt/i.test(lower)) {
         done = 'replacement work mentioned';
       }
 
       const concernMentioned = /concern|concerned|worried|not sure|not really clear|decision|spend more money|before i go any farther|estimate|quote|reasonable|looking for advice|advice|insight|way to test|test it|diagnosis|direction/i.test(lower);
       const projectMode = projectWorkMentioned;
-      const hasTimingDetail = /when|only|idle|freeway|cold|hot|hill|throttle|after|during|while|start|started|week ago|weeks ago|recently|most of the time|comes and goes|sometimes|all the time|always|constant|constantly|over bumps?|bumps?|rough road|pothole|at \d+\s?mph|\d+\s?mph|highway|city|braking|turning|accelerating|decelerating|coasting|park|reverse|drive|gear/i.test(lower);
+      const hasTimingDetail = /when|only|idle|freeway|cold|hot|hill|throttle|after|during|while|start|started|week ago|weeks ago|recently|most of the time|comes and goes|sometimes|all the time|always|constant|constantly|over bumps?|bumps?|rough road|pothole|at \d+\s?mph|\d+\s?mph|highway|city|braking|turning|accelerating|decelerating|coasting|park|reverse|drive|gear/i.test(lower) || /does (?:it|this|that) (?:mostly |usually |only )?(?:do it |happen |act up |occur )?(?:when |while |if )?(?:it(?:'s| is)? )?(?:cold|hot)/i.test(lower);
       const concernClearlyPresent = /need help|help testing|looking for advice|advice|insight|way to test|test (?:the|it)|concern|concerned|worried|not sure|not really clear/i.test(lower);
       const symptomClearlyPresent = issueHints.length > 0;
 
