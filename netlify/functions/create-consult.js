@@ -57,7 +57,8 @@ exports.handler = async function(event) {
     const file_errors = [];
 
     if (voiceNote && voiceNote.dataUrl) {
-      const uploaded = await uploadDataUrl(BUCKET, `${consultId}/voice-note-${Date.now()}.webm`, voiceNote);
+      const voiceExt = extensionFromMime(voiceNote.type || '') || 'webm';
+      const uploaded = await uploadDataUrl(BUCKET, `${consultId}/voice-note-${Date.now()}.${voiceExt}`, voiceNote);
       if (uploaded.ok) voice_note_path = uploaded.path;
       else file_errors.push({ kind: 'voice_note', status: uploaded.status, details: uploaded.data });
     }
@@ -101,7 +102,7 @@ exports.handler = async function(event) {
       headers: {
         apikey: SUPABASE_SERVICE_ROLE_KEY,
         Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        'Content-Type': fileObj.type || parsed.mime || 'application/octet-stream',
+        'Content-Type': cleanContentType(fileObj.type || parsed.mime || 'application/octet-stream'),
         'x-upsert': 'true'
       },
       body: parsed.buffer
@@ -127,10 +128,27 @@ exports.handler = async function(event) {
 };
 
 function parseDataUrl(dataUrl) {
-  const match = String(dataUrl || '').match(/^data:([^;,]+)?(;base64)?,(.*)$/s);
-  if (!match || !match[2]) return null;
-  const mime = match[1] || 'application/octet-stream';
-  return { mime, buffer: Buffer.from(match[3] || '', 'base64') };
+  const match = String(dataUrl || '').match(/^data:([^,]*),(.*)$/s);
+  if (!match) return null;
+  const meta = match[1] || '';
+  if (!/;base64(?:;|$)/i.test(meta)) return null;
+  const mime = (meta.split(';')[0] || 'application/octet-stream').trim();
+  return { mime, buffer: Buffer.from(match[2] || '', 'base64') };
+}
+
+function cleanContentType(type) {
+  const base = String(type || '').split(';')[0].trim();
+  return base || 'application/octet-stream';
+}
+
+function extensionFromMime(type) {
+  const base = cleanContentType(type);
+  if (base === 'audio/webm') return 'webm';
+  if (base === 'audio/mp4' || base === 'audio/x-m4a') return 'm4a';
+  if (base === 'audio/mpeg') return 'mp3';
+  if (base === 'audio/wav') return 'wav';
+  if (base === 'audio/ogg') return 'ogg';
+  return '';
 }
 
 function safeFileName(name) {
