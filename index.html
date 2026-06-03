@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#2d5bff" />
-  <title>What's it Doing? — Customer Shell V3 Stabilized 09</title>
+  <title>What's it Doing? — Customer Shell V3 Stabilized 10</title>
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -241,6 +241,44 @@
       border-color: rgba(31,41,55,.28) !important;
       color: var(--accent-dark) !important;
       font-weight: 700;
+    }
+
+    .upload-preview {
+      margin-top: 8px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .upload-preview-row {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 8px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: left;
+      overflow: hidden;
+    }
+
+    .upload-preview-row img {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--soft);
+    }
+
+    .upload-preview-name {
+      font-weight: 700;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .warning-box {
@@ -505,7 +543,8 @@
           <audio id="audioPlayback" class="hidden" controls style="width:100%; margin-top:10px;"></audio>
         </div>
                 <button class="btn" type="button" id="uploadBtn" style="margin-top:10px; text-align:left;">Optional upload (code scan / photo / video / estimate)</button>
-        <input type="file" id="uploadInput" class="hidden" accept="image/*,video/*,.pdf,.txt,.csv,.jpg,.jpeg,.png,.webp" />
+        <input type="file" id="uploadInput" class="hidden" accept="image/*,video/*,.pdf,.txt,.csv,.jpg,.jpeg,.png,.webp" multiple />
+        <div id="uploadPreview" class="upload-preview hidden"></div>
         <input class="input input-accent" id="customerName" placeholder="Your name" style="margin-top:10px;" />
         <div class="soft" style="margin-top:10px;">
           <label style="display:flex; align-items:center; gap:10px; font-size:14px; line-height:1.35;"><input type="checkbox" id="phoneConsultOk" style="width:18px; height:18px;" /> Willing to accept phone consult if necessary</label>
@@ -639,6 +678,7 @@
       queueBtn: document.getElementById('queueBtn'),
       uploadBtn: document.getElementById('uploadBtn'),
       uploadInput: document.getElementById('uploadInput'),
+      uploadPreview: document.getElementById('uploadPreview'),
       recordAudioBtn: document.getElementById('recordAudioBtn'),
       stopAudioBtn: document.getElementById('stopAudioBtn'),
       audioStatus: document.getElementById('audioStatus'),
@@ -1210,14 +1250,63 @@
       });
     }
 
+    function safeUploadName(name, fallback = 'upload') {
+      const base = String(name || fallback).split(/[\\/]/).pop() || fallback;
+      return base.replace(/[^a-zA-Z0-9._ -]/g, '_').slice(0, 96) || fallback;
+    }
+
+    function readableFileSize(size) {
+      const n = Number(size || 0);
+      if (!n) return '0 KB';
+      if (n < 1024 * 1024) return Math.max(1, Math.round(n / 1024)) + ' KB';
+      return (n / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function renderUploadPreview() {
+      if (!els.uploadInput || !els.uploadPreview) return;
+      const files = Array.from(els.uploadInput.files || []);
+      if (!files.length) {
+        els.uploadPreview.innerHTML = '';
+        els.uploadPreview.classList.add('hidden');
+        if (els.uploadBtn) {
+          els.uploadBtn.textContent = 'Optional upload (code scan / photo / video / estimate)';
+          els.uploadBtn.classList.remove('upload-selected');
+        }
+        return;
+      }
+      els.uploadPreview.classList.remove('hidden');
+      els.uploadPreview.innerHTML = files.map((file, index) => {
+        const isImage = /^image\//.test(file.type || '');
+        const thumb = isImage ? `<img alt="selected upload ${index + 1}" data-upload-preview-img="${index}" />` : `<div style="width:44px;height:44px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;background:var(--soft);font-weight:700;color:var(--accent-dark);">FILE</div>`;
+        return `<div class="upload-preview-row">${thumb}<div><div class="upload-preview-name">${escapeHtml(safeUploadName(file.name, 'upload'))}</div><div>${escapeHtml(file.type || 'file')} · ${escapeHtml(readableFileSize(file.size))}</div></div></div>`;
+      }).join('');
+      files.forEach((file, index) => {
+        if (!/^image\//.test(file.type || '')) return;
+        const img = els.uploadPreview.querySelector(`[data-upload-preview-img="${index}"]`);
+        if (!img) return;
+        const url = URL.createObjectURL(file);
+        img.onload = () => URL.revokeObjectURL(url);
+        img.src = url;
+      });
+      if (els.uploadBtn) {
+        els.uploadBtn.textContent = files.length === 1 ? safeUploadName(files[0].name, 'upload') : `${files.length} files selected`;
+        els.uploadBtn.classList.add('upload-selected');
+      }
+    }
+
     async function selectedUploadsForSubmit() {
       const uploads = [];
       if (els.uploadInput && els.uploadInput.files && els.uploadInput.files.length) {
+        let index = 0;
         for (const file of Array.from(els.uploadInput.files)) {
           const prepared = await resizeImageFile(file);
+          index += 1;
           uploads.push({
-            name: prepared.name || 'upload',
-            type: prepared.type || 'application/octet-stream',
+            name: safeUploadName(prepared.name || file.name || `upload-${index}`),
+            original_name: safeUploadName(file.name || `upload-${index}`),
+            type: prepared.type || file.type || 'application/octet-stream',
+            size: prepared.size || file.size || 0,
+            client_index: index,
             dataUrl: await blobToDataUrl(prepared)
           });
         }
@@ -1229,7 +1318,9 @@
       if (!state.audioBlob) return null;
       return {
         name: 'voice-note.webm',
+        original_name: 'voice-note.webm',
         type: state.audioBlob.type || 'audio/webm',
+        size: state.audioBlob.size || 0,
         dataUrl: await blobToDataUrl(state.audioBlob)
       };
     }
@@ -1272,13 +1363,14 @@
           followup_text: normalizeText(els.followupText.value),
           queue_type: state.queue || 'guided',
           payment_status: 'unpaid',
-          status: 'unpaid'
+          status: 'unpaid',
+          client_upload_payload_version: 'customer-v10'
         };
 
         els.paySubmitBtn.textContent = 'Preparing files...';
         const voice_note = await voiceNoteForSubmit();
         const uploads = await selectedUploadsForSubmit();
-        const payloadWithFiles = { ...basePayload, voice_note, uploads };
+        const payloadWithFiles = { ...basePayload, voice_note, uploads, upload_count: uploads.length, has_voice_note: !!voice_note };
 
         let result;
         let fileWarning = '';
@@ -1298,7 +1390,10 @@
 
         state.caseId = result.consult?.id || state.caseId;
         els.paySubmitBtn.textContent = 'Submitted ✓';
-        alert('Test consult saved to Supabase.' + fileWarning + ' Check the consults table and consult-files bucket.');
+        const returnedFiles = result.consult?.file_links || result.consult?.upload_paths || result.file_links || result.upload_paths || [];
+        const returnedVoice = result.consult?.voice_note_url || result.consult?.voice_note_path || result.voice_note_url || result.voice_note_path || '';
+        const returnNote = (voice_note || uploads.length) ? ` Returned files: ${Array.isArray(returnedFiles) ? returnedFiles.length : 'unknown'} · voice: ${returnedVoice ? 'yes' : 'no'}.` : '';
+        alert('Test consult saved to Supabase.' + fileWarning + returnNote + ' Check the consults table and consult-files bucket.');
       } catch (err) {
         console.error(err);
         alert('Could not save consult yet: ' + (err.message || err));
@@ -1368,13 +1463,12 @@
     }, { passive: true });
 
     if (els.uploadBtn && els.uploadInput) {
-      els.uploadBtn.onclick = () => els.uploadInput.click();
-      els.uploadInput.onchange = () => {
-        const files = els.uploadInput.files;
-        if (!files || !files.length) return;
-        els.uploadBtn.textContent = files.length === 1 ? files[0].name : `${files.length} files selected`;
-        els.uploadBtn.classList.add('upload-selected');
+      els.uploadBtn.onclick = () => {
+        // Resetting the value lets iOS/Safari fire onchange even when the same photo is picked again.
+        els.uploadInput.value = '';
+        els.uploadInput.click();
       };
+      els.uploadInput.onchange = () => renderUploadPreview();
     }
 
 
