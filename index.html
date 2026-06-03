@@ -543,8 +543,9 @@
           <audio id="audioPlayback" class="hidden" controls style="width:100%; margin-top:10px;"></audio>
         </div>
                 <button class="btn" type="button" id="uploadBtn" style="margin-top:10px; text-align:left;">Optional upload (code scan / photo / video / estimate)</button>
-        <input type="file" id="uploadInput" class="hidden" accept="image/*,video/*,.pdf,.txt,.csv,.jpg,.jpeg,.png,.webp" multiple />
+        <input type="file" id="uploadInput" class="hidden" accept="image/*,.heic,.heif,video/*,.pdf,.txt,.csv,.jpg,.jpeg,.png,.webp,.heic,.heif" multiple="multiple" />
         <div id="uploadPreview" class="upload-preview hidden"></div>
+        <div id="uploadHint" class="saved-note" style="margin-top:6px;">Photos can be added more than once; each selection is kept for submit. On iPhone, tap Select in the photo picker to choose more than one.</div>
         <input class="input input-accent" id="customerName" placeholder="Your name" style="margin-top:10px;" />
         <div class="soft" style="margin-top:10px;">
           <label style="display:flex; align-items:center; gap:10px; font-size:14px; line-height:1.35;"><input type="checkbox" id="phoneConsultOk" style="width:18px; height:18px;" /> Willing to accept phone consult if necessary</label>
@@ -650,7 +651,8 @@
       mediaRecorder: null,
       audioChunks: [],
       audioBlob: null,
-      audioUrl: ''
+      audioUrl: '',
+      uploadFiles: []
     };
 
     const abilityOptions = ['I just need advice', 'Can do basic checks', "I'm IN IT", 'Advanced Troubleshooting'];
@@ -679,6 +681,7 @@
       uploadBtn: document.getElementById('uploadBtn'),
       uploadInput: document.getElementById('uploadInput'),
       uploadPreview: document.getElementById('uploadPreview'),
+      uploadHint: document.getElementById('uploadHint'),
       recordAudioBtn: document.getElementById('recordAudioBtn'),
       stopAudioBtn: document.getElementById('stopAudioBtn'),
       audioStatus: document.getElementById('audioStatus'),
@@ -1125,6 +1128,9 @@
 
     document.getElementById('mainClearBtn').onclick = () => {
       els.inputText.value = '';
+      state.uploadFiles = [];
+      if (els.uploadInput) els.uploadInput.value = '';
+      renderUploadPreview();
       render();
     };
 
@@ -1262,9 +1268,31 @@
       return (n / (1024 * 1024)).toFixed(1) + ' MB';
     }
 
+    function uploadSignature(file) {
+      return [file.name || 'upload', file.size || 0, file.lastModified || 0, file.type || ''].join('|');
+    }
+
+    function addSelectedUploadFiles(fileList) {
+      const incoming = Array.from(fileList || []);
+      if (!incoming.length) return;
+      const existing = new Set((state.uploadFiles || []).map(uploadSignature));
+      incoming.forEach(file => {
+        const sig = uploadSignature(file);
+        if (!existing.has(sig)) {
+          state.uploadFiles.push(file);
+          existing.add(sig);
+        }
+      });
+    }
+
+    function removeSelectedUpload(index) {
+      state.uploadFiles.splice(index, 1);
+      renderUploadPreview();
+    }
+
     function renderUploadPreview() {
-      if (!els.uploadInput || !els.uploadPreview) return;
-      const files = Array.from(els.uploadInput.files || []);
+      if (!els.uploadPreview) return;
+      const files = Array.from(state.uploadFiles || []);
       if (!files.length) {
         els.uploadPreview.innerHTML = '';
         els.uploadPreview.classList.add('hidden');
@@ -1278,7 +1306,7 @@
       els.uploadPreview.innerHTML = files.map((file, index) => {
         const isImage = /^image\//.test(file.type || '');
         const thumb = isImage ? `<img alt="selected upload ${index + 1}" data-upload-preview-img="${index}" />` : `<div style="width:44px;height:44px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;background:var(--soft);font-weight:700;color:var(--accent-dark);">FILE</div>`;
-        return `<div class="upload-preview-row">${thumb}<div><div class="upload-preview-name">${escapeHtml(safeUploadName(file.name, 'upload'))}</div><div>${escapeHtml(file.type || 'file')} · ${escapeHtml(readableFileSize(file.size))}</div></div></div>`;
+        return `<div class="upload-preview-row">${thumb}<div style="min-width:0;flex:1;"><div class="upload-preview-name">${escapeHtml(safeUploadName(file.name, 'upload'))}</div><div>${escapeHtml(file.type || 'file')} · ${escapeHtml(readableFileSize(file.size))}</div></div><button class="btn small" type="button" data-remove-upload="${index}" style="width:auto;padding:6px 8px;">Remove</button></div>`;
       }).join('');
       files.forEach((file, index) => {
         if (!/^image\//.test(file.type || '')) return;
@@ -1288,6 +1316,13 @@
         img.onload = () => URL.revokeObjectURL(url);
         img.src = url;
       });
+      els.uploadPreview.querySelectorAll('[data-remove-upload]').forEach(btn => {
+        btn.onclick = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          removeSelectedUpload(Number(btn.dataset.removeUpload));
+        };
+      });
       if (els.uploadBtn) {
         els.uploadBtn.textContent = files.length === 1 ? safeUploadName(files[0].name, 'upload') : `${files.length} files selected`;
         els.uploadBtn.classList.add('upload-selected');
@@ -1296,9 +1331,10 @@
 
     async function selectedUploadsForSubmit() {
       const uploads = [];
-      if (els.uploadInput && els.uploadInput.files && els.uploadInput.files.length) {
+      const filesToSubmit = Array.from(state.uploadFiles || []);
+      if (filesToSubmit.length) {
         let index = 0;
-        for (const file of Array.from(els.uploadInput.files)) {
+        for (const file of filesToSubmit) {
           const prepared = await resizeImageFile(file);
           index += 1;
           uploads.push({
@@ -1468,7 +1504,11 @@
         els.uploadInput.value = '';
         els.uploadInput.click();
       };
-      els.uploadInput.onchange = () => renderUploadPreview();
+      els.uploadInput.onchange = () => {
+        addSelectedUploadFiles(els.uploadInput.files);
+        els.uploadInput.value = '';
+        renderUploadPreview();
+      };
     }
 
 
