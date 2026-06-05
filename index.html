@@ -1551,13 +1551,18 @@
           client_upload_payload_version: 'customer-v20-paid'
         };
 
-        els.paySubmitBtn.textContent = 'Preparing files...';
-        const voice_note = await voiceNoteForSubmit();
-        const uploads = await selectedUploadsForSubmit();
-        const payloadWithFiles = { ...basePayload, voice_note, uploads, upload_count: uploads.length, has_voice_note: !!voice_note };
+        // v81: keep the paid checkout request light and reliable.
+        // Full upload/voice storage should be wired separately after the paid case is created.
+        const uploads = Array.from(state.uploadFiles || []);
+        const payloadForCheckout = {
+          ...basePayload,
+          upload_count: uploads.length,
+          has_voice_note: !!state.audioBlob,
+          upload_note: uploads.length || state.audioBlob ? 'Customer selected upload/voice attachments before checkout; upload storage still needs final wiring.' : ''
+        };
 
         els.paySubmitBtn.textContent = 'Opening payment...';
-        const result = await postPaidConsultPayload(payloadWithFiles);
+        const result = await postPaidConsultPayload(payloadForCheckout);
         state.caseId = result.consult_id || result.consult?.id || state.caseId;
 
         if (result.checkout_url) {
