@@ -905,22 +905,22 @@
       } else if (/\bmr2\b/i.test(lower)) {
         make = make || 'toyota';
         model = 'MR2';
-      } else if (/\bdodge\s+1\s*ton\b|\bdodge\s+one\s*ton\b|\bdodge\s+3500\b/i.test(lower)) {
+      } else if (/\b(?:dodge\s+(?:1\s*ton|one\s*ton|3500)|(?:1\s*ton|one\s*ton|3500)\s+dodge|(?:one\s*ton)\s+dodge)\b/i.test(lower)) {
         make = 'dodge';
         model = '3500';
-      } else if (/\bdodge\s+3\/4\b|\bdodge\s+three\s*quarter\b|\bdodge\s+2500\b/i.test(lower)) {
+      } else if (/\b(?:dodge\s+(?:3\/4(?:\s*ton)?|three\s*quarter(?:\s*ton)?|2500)|(?:3\/4(?:\s*ton)?|three\s*quarter(?:\s*ton)?|2500)\s+dodge)\b/i.test(lower)) {
         make = 'dodge';
         model = '2500';
-      } else if (/\bdodge\s+1\/2\b|\bdodge\s+half\s*ton\b|\bdodge\s+1500\b/i.test(lower)) {
+      } else if (/\b(?:dodge\s+(?:1\/2(?:\s*ton)?|half\s*ton|1500)|(?:1\/2(?:\s*ton)?|half\s*ton|1500)\s+dodge)\b/i.test(lower)) {
         make = 'dodge';
         model = '1500';
-      } else if (/\bram\s+1\s*ton\b|\bram\s+one\s*ton\b|\bram\s+3500\b/i.test(lower)) {
+      } else if (/\b(?:ram\s+(?:1\s*ton|one\s*ton|3500)|(?:1\s*ton|one\s*ton|3500)\s+ram|(?:one\s*ton)\s+ram)\b/i.test(lower)) {
         make = 'ram';
         model = '3500';
-      } else if (/\bram\s+3\/4\b|\bram\s+three\s*quarter\b|\bram\s+2500\b/i.test(lower)) {
+      } else if (/\b(?:ram\s+(?:3\/4(?:\s*ton)?|three\s*quarter(?:\s*ton)?|2500)|(?:3\/4(?:\s*ton)?|three\s*quarter(?:\s*ton)?|2500)\s+ram)\b/i.test(lower)) {
         make = 'ram';
         model = '2500';
-      } else if (/\bram\s+1\/2\b|\bram\s+half\s*ton\b|\bram\s+1500\b/i.test(lower)) {
+      } else if (/\b(?:ram\s+(?:1\/2(?:\s*ton)?|half\s*ton|1500)|(?:1\/2(?:\s*ton)?|half\s*ton|1500)\s+ram)\b/i.test(lower)) {
         make = 'ram';
         model = '1500';
       } else if (/\bsilverado\b/i.test(lower) && /\b(3\/4|three\s*quarter|2500|2500hd)\b/i.test(lower)) {
@@ -1012,10 +1012,11 @@
       const nameOnly = normalizeText((document.activeElement === els.sumNameEdit ? els.sumNameEdit.value : els.customerName.value)) || 'Name needed';
       const rawCodeMatches = combined.match(/\b[A-Za-z]\d{4,5}\b/g) || [];
       const codeMatch = rawCodeMatches.filter(v => !/^[CK]\d{4}$/i.test(v));
-      const lightMentioned = /check engine|engine light|cel|warning light|light came on|light is on|light on/i.test(lower);
-      const noLightsMentioned = /no lights on|no light on|no warning lights?|no check engine light/i.test(lower);
+      const noLightsMentioned = /no lights? on|no warning lights?|no check engine light|check engine light (?:is )?not on|cel (?:is )?(?:not on|off)/i.test(lower);
+      const rawLightMentioned = /check engine|engine light|cel|warning light|light came on|light is on|light on/i.test(lower);
+      const lightMentioned = rawLightMentioned && !noLightsMentioned;
       const unknownCodeMentioned = /don\'t know what code|do not know what code|not sure what code|can\'t scan|cannot scan|no scanner|don\'t have a scanner/i.test(lower);
-      const hasCodeInfo = /code|codes/i.test(lower) || lightMentioned || noLightsMentioned || (codeMatch && codeMatch.length);
+      const hasCodeInfo = /code|codes/i.test(lower) || rawLightMentioned || noLightsMentioned || (codeMatch && codeMatch.length);
       const { vehicle, mileage } = detectVehicle(combined);
 
       const issueHints = [];
@@ -1038,6 +1039,8 @@
       if (/spark plugs replaced|plug(?:s)? (?:were )?replaced|had .*spark plugs .*replaced|plugs were done/i.test(lower)) doneHints.push('spark plugs replaced');
       if (/new water pump|replaced (?:the )?water pump|water pump (?:was )?replaced|water pump replaced recently/i.test(lower)) doneHints.push('water pump replaced');
       if (/new fuel pump|has (?:a )?new fuel pump|fuel pump (?:was )?replaced|replaced (?:the )?fuel pump|fuel pump replaced recently/i.test(lower)) doneHints.push('fuel pump replaced');
+      if (/new fuel filter|has (?:a )?new fuel filter|fuel filter (?:was )?(?:replaced|changed|done)|replaced (?:the )?fuel filter|changed (?:the )?fuel filter|fuel filter replaced recently/i.test(lower)) doneHints.push('fuel filter replaced');
+      if (/new tires?|has (?:a )?new tires?|tires? (?:were |was )?(?:replaced|changed|done)|replaced (?:the )?tires?|put (?:on )?new tires?/i.test(lower)) doneHints.push('tires replaced');
       if (/timing chain|chain done|timing set/i.test(lower)) doneHints.push('timing chain done');
       if (/serpentine belt (?:was )?replaced|belt (?:was )?replaced already/i.test(lower)) doneHints.push('serpentine belt replaced');
       if (/new transmission|got a new transmission|transmission replaced|transmission was replaced|transmission recently replaced/i.test(lower)) doneHints.push('transmission replaced');
@@ -1060,7 +1063,7 @@
       if (done === 'Nothing specific listed yet' && projectWorkMentioned) {
         done = 'project wiring / swap work already started';
       }
-      if (done === 'Nothing specific listed yet' && /replaced|new transmission|new gearbox|new gear\s*box|new steering rack|new rack and pinion|new water pump|new fuel pump|new radiator|new engine|serpentine belt/i.test(lower)) {
+      if (done === 'Nothing specific listed yet' && /replaced|new transmission|new gearbox|new gear\s*box|new steering rack|new rack and pinion|new water pump|new fuel pump|new radiator|new engine|new fuel filter|fuel filter|new tires?|tires? (?:were |was )?(?:replaced|changed|done)|serpentine belt/i.test(lower)) {
         done = 'replacement work mentioned';
       }
 
