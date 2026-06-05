@@ -9,8 +9,8 @@
   <meta name="apple-mobile-web-app-title" content="What's it Doing?" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#2d5bff" />
-  <title>What's it Doing? — Customer Shell V3 Stabilized 10</title>
+  <meta name="theme-color" content="#244fbe" />
+  <title>What's it Doing? — Customer Shell V17 Blue Border Safe</title>
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -482,7 +482,97 @@
     html, body { min-height: calc(100dvh + 2px); }
     body { overscroll-behavior-y: contain; }
 
-  </style>
+  
+
+    /* v17 blue border / browser banner retention
+       Keep the customer side visually matched to the operator side. */
+    :root {
+      --accent:#244fbe !important;
+      --accent-dark:#173a93 !important;
+      --wid-blue:#244fbe;
+      --border:rgba(36,79,190,.42) !important;
+    }
+    html,
+    body {
+      width:100% !important;
+      max-width:100% !important;
+      margin:0 !important;
+      overflow-x:hidden !important;
+      overscroll-behavior-x:none !important;
+      background:#244fbe !important;
+    }
+    body {
+      justify-content:center !important;
+    }
+    .app {
+      width:100% !important;
+      max-width:900px !important;
+      margin-inline:auto !important;
+      border-inline:3px solid #244fbe !important;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(45,91,255,.08), transparent 26%),
+        radial-gradient(circle at 100% 18%, rgba(45,91,255,.06), transparent 24%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom)) !important;
+      overflow-x:hidden !important;
+      contain:layout paint;
+    }
+    .page-wrap,
+    .card,
+    .screen,
+    .bottom-choice,
+    .big-center,
+    .grid,
+    .btn-row,
+    .utility-row-main,
+    .utility-row-followup {
+      min-width:0 !important;
+      max-width:100% !important;
+    }
+    .card.screen.active,
+    .card,
+    .btn,
+    .opt,
+    .input,
+    textarea,
+    .soft,
+    .summary-bubble,
+    .example-box,
+    .limit-box,
+    .upload-preview-row,
+    .queue-meta {
+      border-color:rgba(36,79,190,.52) !important;
+    }
+    .card {
+      border-left:0 !important;
+      border-right:0 !important;
+    }
+    .input-accent,
+    textarea.input-accent,
+    input.input-accent {
+      border-color:rgba(36,79,190,.68) !important;
+      box-shadow:0 0 0 3px rgba(36,79,190,.10) !important;
+    }
+    .btn.dark,
+    .opt.active,
+    .btn.listening {
+      background:linear-gradient(180deg,#244fbe,#173a93 58%,#122f77) !important;
+      border-color:#173a93 !important;
+    }
+    .upload-selected,
+    .update-attention,
+    .btn.update-attention:not(.dark),
+    .btn.confirm-update-attention:not(.dark),
+    .updated-vehicle-inline,
+    .save-details-attention {
+      color:#173a93 !important;
+      -webkit-text-fill-color:#173a93 !important;
+    }
+    @media (max-width:560px) {
+      .app {
+        border-inline-width:2px !important;
+      }
+    }
+</style>
 </head>
 <body>
   <div class="app">
@@ -638,6 +728,34 @@
   </div>
 
     <script>
+
+    const WID_BLUE_BAR = '#244fbe';
+    function widLockBlueBrowserBars() {
+      document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
+      document.documentElement.style.backgroundColor = WID_BLUE_BAR;
+      document.body.style.backgroundColor = WID_BLUE_BAR;
+      document.documentElement.style.overflowX = 'hidden';
+      document.body.style.overflowX = 'hidden';
+      const app = document.querySelector('.app');
+      if (app) {
+        app.scrollLeft = 0;
+        app.style.marginLeft = 'auto';
+        app.style.marginRight = 'auto';
+      }
+    }
+    function widLockBlueBrowserBarsSoon() {
+      widLockBlueBrowserBars();
+      requestAnimationFrame(widLockBlueBrowserBars);
+      setTimeout(widLockBlueBrowserBars, 60);
+      setTimeout(widLockBlueBrowserBars, 220);
+      setTimeout(widLockBlueBrowserBars, 600);
+    }
+
+    widLockBlueBrowserBarsSoon();
+    window.addEventListener('pageshow', widLockBlueBrowserBarsSoon, { passive:true });
+    window.addEventListener('resize', widLockBlueBrowserBarsSoon, { passive:true });
+    window.addEventListener('orientationchange', () => setTimeout(widLockBlueBrowserBars, 120), { passive:true });
+
     const state = {
       screen: 0,
       who: "",
