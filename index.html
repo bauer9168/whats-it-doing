@@ -812,7 +812,7 @@
     };
 
     const MAKES = ['acura','alfa romeo','audi','bmw','buick','cadillac','chevrolet','chevy','chrysler','dodge','ford','gmc','honda','hyundai','infiniti','isuzu','jeep','kia','lexus','lincoln','mazda','mercedes','mercedes-benz','mercury','mini','mitsubishi','nissan','oldsmobile','pontiac','porsche','ram','saturn','scion','subaru','suzuki','toyota','volkswagen','vw','volvo'];
-    const COMMON_MODELS = ['tahoe','suburban','yukon','crv','cr-v','s10','s-10','mr2','mighty max','blazer','trailblazer','civic','accord','camry','corolla','cruze','malibu','impala','explorer','escape','focus','fusion','pilot','odyssey','rav4','highlander','forester','outback','wrangler','cherokee','grand cherokee','silverado','sierra','expedition','durango','charger','challenger','altima','sentra','maxima','frontier','tacoma','tundra','4runner'];
+    const COMMON_MODELS = ['lancer evolution','lancer evo','evolution','evo','lancer','tahoe','suburban','yukon','crv','cr-v','s10','s-10','mr2','mighty max','blazer','trailblazer','civic','accord','camry','corolla','cruze','malibu','impala','explorer','escape','focus','fusion','pilot','odyssey','rav4','highlander','forester','outback','wrangler','cherokee','grand cherokee','silverado','sierra','expedition','durango','charger','challenger','altima','sentra','maxima','frontier','tacoma','tundra','4runner'];
     const STOPWORDS = new Set(['with','w','has','have','had','runs','run','running','started','start','sometimes','most','time','light','lights','code','codes','after','before','because','but','and','it','is','was','were','needs','need','when','where','that','this','on','off','at','for','my','me','a','an','the']);
 
     function showScreen(index, behavior = 'smooth') {
@@ -901,7 +901,10 @@
       }
 
       let model = '';
-      if (/\bmighty\s+max\b/i.test(lower)) {
+      if (/\b(?:lancer\s+evo(?:lution)?|evo(?:lution)?|lancer)\b/i.test(lower)) {
+        make = 'mitsubishi';
+        model = /\blancer\b/i.test(lower) ? (/\bevo(?:lution)?\b/i.test(lower) ? 'Lancer Evolution' : 'Lancer') : 'Lancer Evolution';
+      } else if (/\bmighty\s+max\b/i.test(lower)) {
         make = 'mitsubishi';
         model = 'Mighty Max';
       } else if (/\bmr2\b/i.test(lower)) {
@@ -974,6 +977,9 @@
             if (!make && /\b(tahoe|suburban|s10|s-10|silverado)\b/i.test(cm)) make = 'chevy';
             if (!make && /\b(yukon|sierra)\b/i.test(cm)) make = 'gmc';
             if (!make && /\b(crv|cr-v)\b/i.test(cm)) make = 'honda';
+            if (!make && /\b(lancer|evo|evolution)\b/i.test(cm)) make = 'mitsubishi';
+            if (/^(Evo|Evolution)$/i.test(model)) model = 'Lancer Evolution';
+            if (/^Lancer Evo$/i.test(model)) model = 'Lancer Evolution';
             break;
           }
         }
@@ -995,8 +1001,9 @@
       const displayMake = normalizeMakeDisplay(make);
       let modelForDisplay = model === 'S10' || model === 'S-10' ? 'S10' : model;
       if (/^(Crv|Cr-v|CRV|CR-V)$/i.test(modelForDisplay || '')) modelForDisplay = 'CRV';
+      if (/^(Evo|Evolution|Lancer Evo)$/i.test(modelForDisplay || '')) modelForDisplay = 'Lancer Evolution';
       const truckish = /^(1500|2500|2500HD|3500|Ram|Silverado|Sierra|S10|F150|F250|F350|C1500|C2500|C3500|K1500|K2500|K3500)/i.test(modelForDisplay || '');
-      const suvNeedsMake = /^(Tahoe|Suburban|Yukon|CRV|Crv|Cr-v|CR-V)$/i.test(modelForDisplay || '');
+      const suvNeedsMake = /^(Tahoe|Suburban|Yukon|CRV|Crv|Cr-v|CR-V|Lancer|Lancer Evolution)$/i.test(modelForDisplay || '');
       const displayVehicleName = displayMake && modelForDisplay && (truckish || suvNeedsMake)
         ? `${displayMake} ${modelForDisplay}`
         : (modelForDisplay || displayMake);
@@ -1039,7 +1046,9 @@
       if (codeMatch?.length) issueHints.push('codes: ' + [...new Set(codeMatch.map(v => v.toUpperCase()))].join(', '));
 
       const doneHints = [];
-      if (/spark plugs replaced|plug(?:s)? (?:were )?replaced|had .*spark plugs .*replaced|plugs were done/i.test(lower)) doneHints.push('spark plugs replaced');
+      if (/(?:new|replaced|changed|did|done|installed|has|have|had)\s+(?:the\s+)?(?:spark\s+)?plugs?\b|spark plugs? (?:were )?(?:replaced|changed|done|installed)|plugs were done/i.test(lower)) doneHints.push('spark plugs replaced');
+      if (/(?:new|replaced|changed|installed|has|have|had)\s+(?:the\s+)?(?:ignition\s+)?coils?\b|coils? (?:were )?(?:replaced|changed|done|installed)/i.test(lower)) doneHints.push('ignition coils replaced');
+      if (/(?:new|replaced|changed|installed|has|have|had)\s+(?:a\s+|the\s+)?turbo(?:charger)?\b|turbo(?:charger)? (?:was )?(?:replaced|changed|done|installed)/i.test(lower)) doneHints.push('turbo replaced');
       if (/new water pump|replaced (?:the )?water pump|water pump (?:was )?replaced|water pump replaced recently/i.test(lower)) doneHints.push('water pump replaced');
       if (/new fuel pump|has (?:a )?new fuel pump|fuel pump (?:was )?replaced|replaced (?:the )?fuel pump|fuel pump replaced recently/i.test(lower)) doneHints.push('fuel pump replaced');
       if (/new fuel filter|has (?:a )?new fuel filter|fuel filter (?:was )?(?:replaced|changed|done)|replaced (?:the )?fuel filter|changed (?:the )?fuel filter|fuel filter replaced recently/i.test(lower)) doneHints.push('fuel filter replaced');
@@ -1551,14 +1560,16 @@
           client_upload_payload_version: 'customer-v20-paid'
         };
 
-        // v81: keep the paid checkout request light and reliable.
-        // Full upload/voice storage should be wired separately after the paid case is created.
-        const uploads = Array.from(state.uploadFiles || []);
+        // v82: upload/voice selections are now included in the checkout request.
+        // Images are resized first to keep the request smaller and more reliable on mobile.
+        const uploads = await selectedUploadsForSubmit();
+        const voice_note = await voiceNoteForSubmit();
         const payloadForCheckout = {
           ...basePayload,
           upload_count: uploads.length,
-          has_voice_note: !!state.audioBlob,
-          upload_note: uploads.length || state.audioBlob ? 'Customer selected upload/voice attachments before checkout; upload storage still needs final wiring.' : ''
+          has_voice_note: !!voice_note,
+          uploads,
+          voice_note
         };
 
         els.paySubmitBtn.textContent = 'Opening payment...';
@@ -1607,10 +1618,20 @@
       };
     });
 
+    function scrollToPaySubmit() {
+      const target = els.paySubmitBtn || document.getElementById('paySubmitBtn');
+      if (!target) return;
+      setTimeout(() => {
+        try { target.scrollIntoView({ behavior:'smooth', block:'end' }); }
+        catch (_) { window.scrollTo({ top:document.body.scrollHeight, behavior:'smooth' }); }
+      }, 80);
+    }
+
     document.querySelectorAll('.queue-btn').forEach(btn => {
       btn.onclick = () => {
         state.queue = btn.dataset.queue;
         document.querySelectorAll('.queue-btn').forEach(other => other.classList.toggle('active', other === btn));
+        scrollToPaySubmit();
       };
     });
 
