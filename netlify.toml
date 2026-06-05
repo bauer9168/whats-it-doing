@@ -1,0 +1,12 @@
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/thread"
+  to = "/customer-thread.html"
+  status = 200
+
+[[redirects]]
+  from = "/operator"
+  to = "/operator.html"
+  status = 200

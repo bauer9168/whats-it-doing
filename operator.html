@@ -1,0 +1,2440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="WID Operator" />
+  <meta name="theme-color" content="#244fbe" />
+  <meta name="msapplication-navbutton-color" content="#244fbe" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>What's it Doing? — Operator v77-safe</title>
+  <style>
+    :root {
+      --bg:#f7faff;
+      --bg2:#e8eef8;
+      --text:#0e0f12;
+      --muted:#5f6470;
+      --border:#d4dce8;
+      --dash:#a9b5c8;
+      --blue:#244fbe;
+      --ok:#166534;
+      --warn:#9a5b00;
+      --danger:#9f1239;
+      --priority:#b91c1c;
+      --priority-bg:#fff1f2;
+      --extended:#15803d;
+      --extended-bg:#f0fdf4;
+      --line:#244fbe;
+    }
+    * { box-sizing:border-box; }
+    html { margin:0; min-height:100%; background:var(--blue); overflow-x:hidden; }
+    body { margin:0; min-height:100%; width:100%; max-width:100vw; overflow-x:hidden; }
+    body {
+      background:linear-gradient(180deg,var(--bg),var(--bg2));
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      -webkit-text-size-adjust:120%;
+    }
+    .app {
+      width:100%;
+      max-width:900px;
+      min-width:0;
+      margin:0 auto;
+      min-height:100dvh;
+      padding:12px 8px calc(72px + env(safe-area-inset-bottom, 0px));
+    }
+    .top {
+      margin:0 0 10px;
+      padding:2px 2px 10px;
+      background:transparent;
+      border-bottom:2px dotted var(--dash);
+    }
+    h1 { margin:0; font-size:25px; letter-spacing:-.04em; line-height:1.05; }
+    .top-title-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px; }
+    .top-title-row h1 { min-width:0; }
+    .sub { color:var(--muted); font-size:13px; margin-top:2px; line-height:1.25; }
+    .controls { display:block; margin-top:6px; }
+    .filter-refresh-row { display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:6px; align-items:center; width:100%; max-width:100%; overflow:hidden; }
+    .filter-refresh-row select,
+    .filter-refresh-row button { min-height:36px; height:36px; padding-top:6px; padding-bottom:6px; line-height:1.1; }
+    .filter-refresh-row select { appearance:auto; -webkit-appearance:menulist; min-width:0; width:100%; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+    .pin-row { display:block; margin-top:6px; }
+    .pin-row input { width:100%; }
+    .auto-archive-toggle { font-size:11px !important; padding:5px 7px !important; border-radius:999px !important; min-height:0 !important; white-space:nowrap; flex:0 0 auto; }
+    .queue-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:9px; }
+    .queue-tile { border:1px solid var(--border); border-radius:14px; background:rgba(255,255,255,.64); padding:7px 8px; min-height:46px; }
+    .queue-tile .k { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:900; }
+    .queue-tile .v { margin-top:2px; font-size:17px; line-height:1; color:var(--blue); font-weight:1000; }
+    .queue-tile.priority .v { color:var(--priority); }
+    .queue-tile.extended .v { color:var(--extended); }
+    .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    input, select, button, textarea {
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:16px;
+      font-family:inherit;
+      max-width:100%;
+    }
+    select { min-width:0; }
+    input { min-width:150px; flex:1; }
+    button { background:#fff; cursor:pointer; font-weight:700; }
+    button.dark { background:linear-gradient(180deg,#244fbe,#173a93); color:#fff; border-color:#173a93; }
+    button.small { font-size:14px; padding:8px 10px; border-radius:12px; }
+    button.close-case { border-color:#fecdd3; color:var(--danger); background:#fff7f8; }
+    button.reopen-case { border-color:#bbf7d0; color:var(--ok); background:#f0fdf4; }
+    .queue { display:block; }
+    .case {
+      position:relative;
+      background:transparent;
+      border:0;
+      border-radius:0;
+      padding:13px 2px 15px;
+      box-shadow:none;
+      border-bottom:2px dotted var(--dash);
+      cursor:default;
+      touch-action:manipulation;
+    }
+    .case:first-child { border-top:2px dotted var(--dash); }
+    .case.extended {
+      background:linear-gradient(90deg, rgba(240,253,244,.92), transparent 74%);
+      margin-left:-8px;
+      margin-right:-8px;
+      padding-left:8px;
+      padding-right:8px;
+    }
+    .case.waiting-me {
+      background:linear-gradient(90deg, rgba(255,241,242,.88), transparent 74%);
+      margin-left:-8px;
+      margin-right:-8px;
+      padding-left:8px;
+      padding-right:8px;
+    }
+    .case-head { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:flex-start; }
+    .left-lines { min-width:0; padding-right:4px; }
+    .customer-name,
+    .vehicle-line {
+      font-size:21px;
+      font-weight:900;
+      line-height:1.08;
+      letter-spacing:-.025em;
+      overflow-wrap:anywhere;
+    }
+    .vehicle-line { margin-top:3px; }
+    .symptom-line {
+      color:#171a20;
+      font-size:20px;
+      font-weight:900;
+      line-height:1.12;
+      margin-top:8px;
+      letter-spacing:-.025em;
+      overflow-wrap:anywhere;
+    }
+    .meta { color:var(--muted); font-size:12px; line-height:1.35; margin-top:6px; }
+    .right-stack {
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:7px;
+      min-width:78px;
+    }
+    .case-number {
+      align-self:flex-end;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:76px;
+      padding:7px 8px 6px;
+      border:3px solid var(--blue);
+      border-radius:16px 16px 16px 4px;
+      background:#fff;
+      box-shadow:3px 3px 0 var(--blue);
+      color:var(--blue);
+      font-size:23px;
+      font-weight:1000;
+      letter-spacing:.02em;
+      line-height:1;
+      transform:rotate(1deg);
+    }
+    .case.waiting-me .case-number { border-color:var(--blue); color:var(--blue); box-shadow:3px 3px 0 var(--blue); }
+    body:not(.focus-mode) .case.waiting-me .status-label { color:var(--priority); font-weight:1000; }
+    .queue-badge {
+      display:inline-flex;
+      align-items:center;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.72);
+      border-radius:999px;
+      padding:5px 8px;
+      font-size:12px;
+      color:var(--blue);
+      white-space:nowrap;
+      line-height:1.1;
+      font-weight:850;
+    }
+    .queue-badge.priority { color:var(--priority); border-color:#fecdd3; background:var(--priority-bg); }
+    .queue-badge.extended { color:var(--extended); border-color:#bbf7d0; background:var(--extended-bg); }
+    .case.extended .case-number { border-color:var(--extended); color:var(--extended); box-shadow:3px 3px 0 var(--extended); }
+    .case.extended.waiting-me .status-label,
+    .case.extended.waiting-me .meta,
+    body.focus-mode .case.extended.waiting-me .status-label { color:var(--priority) !important; font-weight:1000 !important; }
+    .case.waiting-me .status-label,
+    .case.waiting-me .meta,
+    body.focus-mode .case.waiting-me .status-label,
+    body.focus-mode .case.waiting-me .meta { color:var(--priority) !important; font-weight:1000 !important; }
+    body.focus-mode .case.focused .symptom-line { font-size:16px !important; line-height:1.18 !important; }
+    body.focus-mode .case.focused .meta { font-size:11px !important; line-height:1.25 !important; }
+    .timer-summary {
+      margin-top:8px;
+      border:1px solid #fed7aa;
+      background:#fff7ed;
+      color:#7c4a03;
+      border-radius:13px;
+      padding:8px 10px;
+      font-size:12px;
+      line-height:1.32;
+      font-weight:800;
+      white-space:normal;
+    }
+    .autoclose-thread-note {
+      display:none;
+      border-top:1px solid rgba(148,163,184,.20);
+      background:#fff;
+      color:#9aa3af;
+      font-size:9.5px;
+      line-height:1.15;
+      padding:3px 9px 2px;
+      font-weight:700;
+      text-align:right;
+      letter-spacing:.01em;
+    }
+    .autoclose-thread-note.active { display:block; }
+    .autoclose-countdown { font-weight:1000; color:#7c4a03; }
+    .icons { display:flex; gap:7px; justify-content:flex-end; flex-wrap:wrap; margin-top:2px; }
+    .icon {
+      min-width:34px;
+      height:34px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border:2px dashed var(--dash);
+      border-radius:999px;
+      background:rgba(255,255,255,.54);
+      color:#293241;
+      font-size:16px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+    }
+    .icon.on { border-style:solid; background:#fff; }
+    .case { cursor:pointer; }
+    .case:active { transform:translateY(1px); }
+    .message-panel { margin-top:10px; display:grid; gap:8px; }
+    textarea.replybox { width:100%; min-height:86px; resize:vertical; border:1px solid var(--border); border-radius:14px; padding:10px 12px; font:inherit; font-size:16px; background:#fff; color:var(--text); }
+    .message-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .message-actions button { font-size:13px; padding:7px 10px; border-radius:11px; }
+    .copy-btn { border-color:#bcd0ff; color:#fff; background:linear-gradient(180deg,#244fbe,#173a93); }
+    .workflow-actions { margin:12px 0 10px; padding:10px 0 0; border-top:1px dotted var(--dash); display:grid; grid-template-columns:1fr 1fr; gap:7px; align-items:stretch; }
+    .workflow-actions button { font-size:13px; padding:8px 9px; border-radius:11px; opacity:.96; min-height:38px; }
+    .workflow-actions .waiting-btn { color:#7c4a03; border-color:#fed7aa; background:#fff7ed; grid-column:2; grid-row:1; }
+    .workflow-actions .reset-btn { color:#334155; border-color:#cbd5e1; background:#f8fafc; grid-column:1; grid-row:2; }
+    .workflow-actions .undo-btn { color:#334155; border-color:#cbd5e1; background:#f8fafc; grid-column:2; grid-row:2; }
+    .workflow-actions .close-case, .workflow-actions .reopen-case { grid-column:1; grid-row:1; }
+    .workflow-actions .archive-btn { grid-column:1 / -1; grid-row:3; }
+    .operator-action-buttons { justify-content:flex-end; gap:6px; }
+    .operator-action-buttons button { white-space:nowrap; }
+    .archive-btn { color:#475569; border-color:#cbd5e1; background:#f8fafc; }
+
+    .timer-note { margin-top:6px; color:var(--muted); font-size:11px; text-align:right; width:100%; }
+    .details { display:none; margin-top:12px; }
+    .details.open { display:block; }
+    .box {
+      background:rgba(255,255,255,.7);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:15px;
+      line-height:1.42;
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+    }
+    .label {
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-weight:900;
+      margin:10px 0 5px;
+    }
+    .pathline { display:block; margin-top:3px; color:var(--muted); font-size:12px; font-weight:600; word-break:break-all; }
+    audio { width:100%; margin-top:6px; }
+    img.thumb { width:100%; max-height:380px; object-fit:contain; background:#fff; border:1px solid var(--border); border-radius:14px; margin-top:8px; cursor:zoom-in; }
+    a.filelink { display:block; margin-top:8px; color:var(--blue); font-weight:750; text-decoration:none; word-break:break-word; }
+    .muted { color:var(--muted); }
+    .error { color:#9f1239; background:#fff1f2; border:1px solid #fecdd3; border-radius:14px; padding:10px 12px; margin-top:10px; font-size:14px; }
+    .empty { text-align:center; color:var(--muted); padding:36px 10px; }
+
+    .message-tabs { display:flex; gap:7px; margin:2px 0 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .message-tab { flex:0 0 auto; border:1px solid var(--border); background:#fff; color:var(--muted); border-radius:999px; padding:7px 10px; font-size:13px; font-weight:900; }
+    .message-tab.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+    .texting-shell { margin-top:10px; border:1px solid var(--border); border-radius:18px; background:rgba(255,255,255,.76); overflow:hidden; }
+    .texting-head { padding:9px 11px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; gap:8px; align-items:center; }
+    .texting-title { font-size:14px; font-weight:1000; color:var(--blue); }
+    .texting-sub { font-size:11px; color:var(--muted); font-weight:750; text-align:right; }
+    .thread { padding:12px 10px 10px; max-height:52dvh; overflow:auto; scroll-padding-bottom:110px; background:linear-gradient(180deg,#fff,rgba(248,251,255,.94)); }
+    .bubble { max-width:88%; padding:10px 12px; border-radius:18px; margin:0 0 8px; font-size:15px; line-height:1.35; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .bubble.customer { background:#f1f5f9; border:1px solid #dbe3ef; border-bottom-left-radius:6px; color:#111827; }
+    .bubble.operator { background:linear-gradient(180deg,#244fbe,#173a93); color:#fff; margin-left:auto; border-bottom-right-radius:6px; }
+    .bubble.system { margin-left:auto; margin-right:auto; max-width:96%; background:#fff; border:1px dashed var(--dash); color:var(--muted); font-size:12px; text-align:center; }
+    .bubble.info { margin-left:auto; margin-right:auto; max-width:92%; background:#f8fafc; border:1px solid #e5e7eb; color:#7a8493; font-size:11px; line-height:1.22; text-align:center; padding:7px 9px; }
+    .bubble-meta { display:block; margin-top:4px; font-size:10px; opacity:.72; font-weight:750; }
+    .bubble-image-thumb { display:block; width:100%; max-width:240px; max-height:180px; object-fit:cover; border-radius:13px; margin-top:7px; border:1px solid rgba(255,255,255,.55); background:#fff; cursor:zoom-in; }
+    .bubble.customer .bubble-image-thumb, .bubble.system .bubble-image-thumb { border-color:var(--border); }
+    .message-image-modal { position:fixed; inset:0; z-index:90; background:rgba(15,23,42,.92); display:flex; align-items:center; justify-content:center; padding:14px; }
+    .message-image-modal img { max-width:100%; max-height:100%; object-fit:contain; border-radius:12px; background:#fff; }
+    .message-image-modal .close-image { position:fixed; top:10px; right:10px; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12); color:#fff; border-radius:999px; padding:9px 12px; font-size:13px; font-weight:900; }
+    .quick-replies {
+      display:grid !important;
+      grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+      grid-template-rows:repeat(2, 18px) !important;
+      grid-auto-rows:18px !important;
+      gap:2px !important;
+      padding:3px 7px 2px !important;
+      background:#fff;
+      border-top:1px solid var(--border);
+      touch-action:pan-y;
+      max-height:41px !important;
+      min-height:0 !important;
+      overflow:hidden;
+    }
+    .quick-replies button {
+      width:100%;
+      min-width:0;
+      font-size:8.5px !important;
+      padding:1px 3px !important;
+      border-radius:999px;
+      line-height:1 !important;
+      min-height:0 !important;
+      height:18px !important;
+      max-height:18px !important;
+      white-space:nowrap !important;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      touch-action:pan-y;
+    }
+    .last-message-preview { margin-top:5px; color:var(--muted); font-size:12px; line-height:1.22; font-weight:800; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+    body.focus-mode .case.focused .last-message-preview { display:none !important; }
+    .phone-compose { display:grid; grid-template-columns:minmax(0,1fr) 72px; gap:7px; padding:8px 9px 9px; background:#fff; align-items:stretch; }
+    .phone-compose textarea { min-height:54px; max-height:132px; width:100%; min-width:0; resize:none; border-radius:16px; font-size:16px; line-height:1.28; padding:10px 11px; overflow:auto; }
+    .phone-compose textarea:focus { min-height:82px; }
+    .phone-compose textarea.is-growing { transition:height .08s ease; }
+    .phone-buttons { display:flex; flex-direction:column; gap:5px; min-width:0; }
+    .phone-buttons button { padding:7px 6px; font-size:12px; border-radius:11px; width:100%; touch-action:manipulation; }
+    .phone-buttons .photo-btn { padding:4px 5px; min-height:24px; font-size:11px; line-height:1; border-radius:999px; color:var(--blue); border-color:#bcd0ff; background:#f8fbff; }
+    .phone-buttons .send { background:linear-gradient(180deg,#244fbe,#173a93); color:#fff; border-color:#173a93; }
+    .case-detail-grid { margin-top:12px; }
+
+    body.focus-mode { overflow:hidden; overscroll-behavior:none; position:fixed; left:0; right:0; width:100%; max-width:100vw; background:var(--blue); }
+    body.focus-mode .top { display:none; }
+    body.focus-mode .app { max-width:900px; height:100dvh; overflow:hidden; overscroll-behavior:none; padding:0 8px env(safe-area-inset-bottom, 0px); }
+    body.focus-mode .case:not(.focused) { display:none; }
+    body.focus-mode .case.focused {
+      position:fixed;
+      left:0;
+      right:0;
+      top:0;
+      width:100vw;
+      max-width:100vw;
+      bottom:0;
+      height:auto;
+      z-index:40;
+      overflow:auto;
+      overscroll-behavior:none;
+      touch-action:pan-y;
+      -webkit-overflow-scrolling:auto;
+      border-top:0;
+      border-bottom:0;
+      padding:10px 8px 0;
+      background:linear-gradient(180deg,#f7faff,#eef4ff);
+    }
+    body.focus-mode.keyboard-active .case.focused.keyboard-space {
+      padding-bottom:calc(46dvh + env(safe-area-inset-bottom, 0px));
+    }
+    body.focus-mode .case.focused .details { display:block; }
+    body.focus-mode .case.focused .details::after { content:''; display:block; height:0; }
+    body.focus-mode .case.focused .texting-shell { margin-bottom:0; border-bottom-left-radius:0; border-bottom-right-radius:0; }
+    body.focus-mode .case.focused .phone-compose { padding-bottom:0 !important; }
+    body.focus-mode .case.focused .phone-buttons { padding-bottom:0 !important; }
+    body.focus-mode .case.focused .workflow-actions { margin-bottom:6px; }
+    .workflow-actions .undo-btn { display:block !important; visibility:visible !important; opacity:1 !important; }
+
+    .call-btn { display:inline-flex; align-items:center; justify-content:center; margin-top:8px; width:100%; text-decoration:none; border:1px solid #bcd0ff; color:#fff; background:linear-gradient(180deg,#244fbe,#173a93); border-radius:13px; padding:10px 12px; font-size:15px; font-weight:900; }
+    .uploads-list { display:grid; gap:6px; margin-top:6px; }
+    .upload-row { display:flex; gap:8px; align-items:center; justify-content:flex-start; padding:0; background:transparent; border:0; }
+    .upload-row a { color:var(--blue); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:900; text-decoration:none; }
+    .bubble { cursor:pointer; }
+    .texting-shell { overscroll-behavior:contain; }
+    .texting-shell.collapsed .thread,
+    .texting-shell.collapsed .quick-replies,
+    .texting-shell.collapsed .autoclose-thread-note,
+    .texting-shell.collapsed .phone-compose { display:none; }
+    .texting-shell.collapsed .texting-head { border-bottom:0; }
+    body.focus-mode .texting-shell .thread { max-height:62dvh; }
+    body.focus-mode .texting-shell .bubble { max-width:96%; font-size:17px; line-height:1.38; }
+    .texting-shell.message-zoom {
+      position:fixed;
+      left:0;
+      right:0;
+      top:0;
+      width:100vw;
+      max-width:100vw;
+      bottom:0;
+      height:calc(var(--vvh, 100dvh) - env(safe-area-inset-bottom, 0px));
+      z-index:60;
+      background:#fff;
+      box-shadow:0 18px 60px rgba(15,23,42,.25);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      overscroll-behavior:none;
+      touch-action:pan-y;
+    }
+    .texting-shell.message-zoom .texting-head { flex:0 0 auto; }
+    .texting-shell.message-zoom .thread { flex:1 1 auto; max-height:none; min-height:0; scroll-padding-bottom:18px; overscroll-behavior:none; }
+    .texting-shell.message-zoom .quick-replies,
+    .texting-shell.message-zoom .phone-compose { flex:0 0 auto; }
+
+
+
+    /* v58 hard overrides: keep these late so older mobile rules cannot win. */
+    .quick-replies.wid-v58-quick {
+      display:grid !important;
+      grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+      grid-template-rows:repeat(2, 20px) !important;
+      grid-auto-rows:0 !important;
+      gap:3px !important;
+      padding:4px 6px !important;
+      max-height:49px !important;
+      min-height:49px !important;
+      height:49px !important;
+      overflow:hidden !important;
+      align-content:start !important;
+    }
+    .quick-replies.wid-v58-quick button {
+      display:block !important;
+      height:20px !important;
+      min-height:20px !important;
+      max-height:20px !important;
+      padding:2px 4px !important;
+      font-size:9px !important;
+      line-height:1 !important;
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:clip !important;
+    }
+    .workflow-actions.wid-v58-workflow {
+      display:grid !important;
+      grid-template-columns:1fr 1fr !important;
+      grid-template-areas:
+        "close waiting"
+        "reset undo"
+        "archive archive" !important;
+      gap:7px !important;
+    }
+    .workflow-actions.wid-v58-workflow .close-case,
+    .workflow-actions.wid-v58-workflow .reopen-case { grid-area:close !important; }
+    .workflow-actions.wid-v58-workflow .waiting-btn { grid-area:waiting !important; }
+    .workflow-actions.wid-v58-workflow .archive-btn { grid-area:archive !important; }
+    .workflow-actions.wid-v58-workflow .reset-btn { grid-area:reset !important; }
+    .workflow-actions.wid-v58-workflow .undo-btn {
+      grid-area:undo !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      visibility:visible !important;
+      opacity:1 !important;
+      min-height:40px !important;
+      background:#f8fafc !important;
+      border:2px solid #cbd5e1 !important;
+      color:#111827 !important;
+      font-weight:1000 !important;
+      z-index:2 !important;
+      position:relative !important;
+    }
+    .phone-buttons .photo-btn.wid-v58-photo {
+      display:block !important;
+      visibility:visible !important;
+      opacity:1 !important;
+      min-height:28px !important;
+      padding:5px 5px !important;
+      font-size:12px !important;
+      font-weight:1000 !important;
+      border:2px solid #bcd0ff !important;
+      background:#eef4ff !important;
+      color:var(--blue) !important;
+    }
+    .texting-shell.message-zoom {
+      inset:0 !important;
+      width:100vw !important;
+      height:100dvh !important;
+      margin:0 !important;
+      border:0 !important;
+      border-radius:0 !important;
+      box-shadow:none !important;
+    }
+    .texting-shell.message-zoom .phone-compose {
+      padding-bottom:calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+      border-top:1px solid var(--border) !important;
+    }
+    body.focus-mode .case.focused {
+      padding-bottom:0 !important;
+      margin-bottom:0 !important;
+      border-radius:0 !important;
+    }
+    body.focus-mode .case.focused .details,
+    body.focus-mode .case.focused .texting-shell { padding-bottom:0 !important; margin-bottom:0 !important; }
+
+    /* v76 blue border persistence / centering guard
+       Keeps the blue shell visible in normal list, focused case view, and after exiting focus mode. */
+    html, body {
+      background-color: var(--blue) !important;
+      overscroll-behavior-x: none;
+    }
+    .app {
+      width:min(100%, 900px) !important;
+      max-width:900px !important;
+      margin-left:auto !important;
+      margin-right:auto !important;
+      border-left:3px solid var(--blue) !important;
+      border-right:3px solid var(--blue) !important;
+      background:linear-gradient(180deg,var(--bg),var(--bg2)) !important;
+      overflow-x:hidden !important;
+    }
+    .top,
+    .case,
+    .case:first-child {
+      border-color:rgba(36,79,190,.62) !important;
+    }
+    .filter-refresh-row,
+    .queue-strip,
+    .case-head,
+    .details,
+    .texting-shell,
+    .phone-compose,
+    .thread,
+    .workflow-actions {
+      min-width:0 !important;
+      max-width:100% !important;
+    }
+    .queue-tile,
+    .texting-shell,
+    .texting-head,
+    .box,
+    .soft,
+    .summary-bubble,
+    input,
+    select,
+    textarea,
+    button {
+      border-color:rgba(36,79,190,.38);
+    }
+    .case-number {
+      border-color:var(--blue) !important;
+      color:var(--blue) !important;
+      box-shadow:3px 3px 0 var(--blue) !important;
+    }
+    body.focus-mode {
+      background:var(--blue) !important;
+      overflow:hidden !important;
+      width:100% !important;
+      max-width:100vw !important;
+    }
+    body.focus-mode .app {
+      width:min(100vw, 900px) !important;
+      max-width:900px !important;
+      margin-left:auto !important;
+      margin-right:auto !important;
+      border-left:3px solid var(--blue) !important;
+      border-right:3px solid var(--blue) !important;
+      background:linear-gradient(180deg,var(--bg),var(--bg2)) !important;
+      overflow:hidden !important;
+    }
+    body.focus-mode .case.focused {
+      left:50% !important;
+      right:auto !important;
+      transform:translateX(-50%) !important;
+      width:min(100vw, 900px) !important;
+      max-width:900px !important;
+      margin:0 !important;
+      border-left:3px solid var(--blue) !important;
+      border-right:3px solid var(--blue) !important;
+      border-top:3px solid var(--blue) !important;
+      border-bottom:3px solid var(--blue) !important;
+      background:linear-gradient(180deg,#f7faff,#eef4ff) !important;
+      overflow-x:hidden !important;
+    }
+    body.focus-mode .case.focused .details,
+    body.focus-mode .case.focused .texting-shell,
+    body.focus-mode .case.focused .texting-head,
+    body.focus-mode .case.focused .phone-compose,
+    body.focus-mode .case.focused .thread,
+    body.focus-mode .case.focused .box,
+    body.focus-mode .case.focused input,
+    body.focus-mode .case.focused select,
+    body.focus-mode .case.focused textarea,
+    body.focus-mode .case.focused button {
+      border-color:rgba(36,79,190,.42) !important;
+    }
+    body.focus-mode .case.focused .case-number {
+      border-color:var(--blue) !important;
+      color:var(--blue) !important;
+      box-shadow:3px 3px 0 var(--blue) !important;
+    }
+    .texting-shell.message-zoom {
+      border-left:3px solid var(--blue) !important;
+      border-right:3px solid var(--blue) !important;
+      border-top:3px solid var(--blue) !important;
+      border-bottom:3px solid var(--blue) !important;
+      background:#fff !important;
+    }
+    @media (max-width:560px) {
+      .app { border-left:2px solid var(--blue) !important; border-right:2px solid var(--blue) !important; }
+      body.focus-mode .case.focused,
+      .texting-shell.message-zoom { border-left-width:2px !important; border-right-width:2px !important; }
+    }
+
+
+
+    /* v77 hard border/viewport guard
+       Re-applies the blue shell from CSS alone so Safari/focus-mode state changes cannot drop it. */
+    html,
+    body {
+      width:100% !important;
+      max-width:100% !important;
+      margin:0 !important;
+      overflow-x:hidden !important;
+      background:#244fbe !important;
+    }
+    .app {
+      width:100% !important;
+      max-width:900px !important;
+      margin-inline:auto !important;
+      border-inline:3px solid #244fbe !important;
+      background:linear-gradient(180deg,var(--bg),var(--bg2)) !important;
+      transform:none !important;
+      contain:layout paint;
+    }
+    .top,
+    .queue-tile,
+    .case,
+    .case:first-child,
+    .texting-shell,
+    .texting-head,
+    .box,
+    input,
+    select,
+    textarea,
+    button {
+      border-color:rgba(36,79,190,.52) !important;
+    }
+    .filter-refresh-row select,
+    #statusFilter {
+      width:100% !important;
+      min-width:0 !important;
+      max-width:100% !important;
+    }
+    body.focus-mode {
+      left:0 !important;
+      right:0 !important;
+      width:100% !important;
+      max-width:100% !important;
+      overflow-x:hidden !important;
+      background:#244fbe !important;
+    }
+    body.focus-mode .app {
+      width:100% !important;
+      max-width:900px !important;
+      margin-inline:auto !important;
+      border-inline:3px solid #244fbe !important;
+      background:linear-gradient(180deg,var(--bg),var(--bg2)) !important;
+    }
+    body.focus-mode .case.focused {
+      left:50% !important;
+      right:auto !important;
+      width:min(100%, 900px) !important;
+      max-width:900px !important;
+      transform:translateX(-50%) !important;
+      border:3px solid #244fbe !important;
+      border-radius:0 !important;
+      background:linear-gradient(180deg,#f7faff,#eef4ff) !important;
+      overflow-x:hidden !important;
+    }
+    .texting-shell.message-zoom {
+      border:3px solid #244fbe !important;
+      border-radius:0 !important;
+    }
+    @media (max-width:560px) {
+      .app,
+      body.focus-mode .app {
+        border-inline-width:2px !important;
+      }
+      body.focus-mode .case.focused,
+      .texting-shell.message-zoom {
+        border-width:2px !important;
+      }
+    }
+
+
+    /* v60 hard fixes */
+    .texting-shell.collapsed > .thread,
+    .texting-shell.collapsed > .quick-replies,
+    .texting-shell.collapsed > .autoclose-thread-note,
+    .texting-shell.collapsed > .phone-compose {
+      display:none !important;
+      height:0 !important;
+      max-height:0 !important;
+      min-height:0 !important;
+      padding:0 !important;
+      margin:0 !important;
+      border:0 !important;
+      overflow:hidden !important;
+      visibility:hidden !important;
+      pointer-events:none !important;
+    }
+    .texting-shell.collapsed .texting-sub::before { content:'tap to expand'; }
+    .texting-shell:not(.collapsed) .texting-sub::before { content:'tap to collapse'; }
+    .texting-shell .texting-sub { font-size:0 !important; }
+    .texting-shell .texting-sub::before { font-size:11px; }
+    .phone-compose textarea,
+    .phone-compose textarea:focus {
+      min-height:72px !important;
+      height:auto;
+    }
+    @media (max-width:390px) {
+      .quick-replies { grid-template-rows:repeat(2, 18px) !important; grid-auto-rows:18px !important; gap:2px !important; padding-top:3px !important; max-height:41px !important; }
+      .quick-replies button { height:18px !important; max-height:18px !important; font-size:8px !important; padding-left:2px !important; padding-right:2px !important; }
+    }
+    @media (max-width:560px) {
+      .app { padding-left:8px; padding-right:8px; }
+      .controls { display:block; }
+      .filter-refresh-row { grid-template-columns:minmax(0, 1fr) auto; gap:6px; }
+      .filter-refresh-row select { min-width:0; width:100%; }
+      .filter-refresh-row #refreshBtn { padding-left:9px; padding-right:9px; }
+      .top-title-row { align-items:flex-start; }
+      .auto-archive-toggle { max-width:118px; overflow:hidden; text-overflow:ellipsis; }
+      .case-head { grid-template-columns:1fr auto; gap:8px; }
+      .customer-name,.vehicle-line { font-size:20px; }
+      .symptom-line { font-size:19px; }
+      .case-number { font-size:22px; min-width:72px; }
+      .message-actions button { flex:1; }
+    }
+    @media (max-width:390px) {
+      .customer-name,.vehicle-line { font-size:19px; }
+      .symptom-line { font-size:18px; }
+      .case-number { min-width:68px; font-size:20px; padding:7px 7px 6px; }
+    }
+
+
+    /* v78 iPhone native banner / safe-area blue lock
+       Keep Safari/PWA top and bottom chrome sampling blue even when a light case is expanded. */
+    :root { --wid-native-blue:#244fbe; }
+    html,
+    body {
+      background-color:var(--wid-native-blue) !important;
+      overscroll-behavior-x:none !important;
+    }
+    body::before,
+    body::after {
+      content:"";
+      position:fixed;
+      left:0;
+      right:0;
+      z-index:2147483000;
+      pointer-events:none;
+      background:var(--wid-native-blue) !important;
+      transform:translateZ(0);
+    }
+    body::before {
+      top:0;
+      height:max(10px, env(safe-area-inset-top, 0px));
+    }
+    body::after {
+      bottom:0;
+      height:max(10px, env(safe-area-inset-bottom, 0px));
+    }
+    .app {
+      background-clip:padding-box !important;
+    }
+    body.focus-mode .app,
+    body.focus-mode .case.focused,
+    .texting-shell.message-zoom {
+      background-clip:padding-box !important;
+    }
+    body.focus-mode .case.focused {
+      top:max(10px, env(safe-area-inset-top, 0px)) !important;
+      bottom:max(10px, env(safe-area-inset-bottom, 0px)) !important;
+      height:auto !important;
+    }
+    .texting-shell.message-zoom {
+      top:max(10px, env(safe-area-inset-top, 0px)) !important;
+      bottom:max(10px, env(safe-area-inset-bottom, 0px)) !important;
+      height:auto !important;
+    }
+    @supports (height: 100svh) {
+      body.focus-mode .case.focused,
+      .texting-shell.message-zoom { max-height:calc(100svh - max(10px, env(safe-area-inset-top, 0px)) - max(10px, env(safe-area-inset-bottom, 0px))) !important; }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="top">
+      <div class="top-title-row">
+        <h1>What's it Doing?</h1>
+        <button id="autoArchiveToggleBtn" class="small auto-archive-toggle" type="button">Auto archive: off</button>
+      </div>
+      <div class="sub">Operator queue</div>
+      <div class="controls">
+        <div class="filter-refresh-row">
+          <select id="statusFilter">
+            <option value="open">Open queue</option>
+            <option value="waiting_on_customer">Waiting cust.</option>
+            <option value="closed">Closed</option>
+            <option value="archived">Archived</option>
+          </select>
+          <button id="refreshBtn" class="dark small">Refresh</button>
+        </div>
+        <div class="pin-row">
+          <input id="operatorPin" type="password" placeholder="Operator PIN" />
+        </div>
+      </div>
+      <div class="queue-strip" aria-label="queue summary">
+        <div class="queue-tile priority"><div class="k">Priority</div><div class="v" id="priorityCount">0</div></div>
+        <div class="queue-tile extended"><div class="k">Extended</div><div class="v" id="extendedCount">0</div></div>
+        <div class="queue-tile"><div class="k">Normal</div><div class="v" id="normalCount">0</div></div>
+        <div class="queue-tile"><div class="k">Open queue</div><div class="v" id="totalCount">0</div></div>
+      </div>
+      <div id="statusLine" class="sub"></div>
+    </div>
+    <div id="list" class="queue"></div>
+  </div>
+
+  <script>
+    const list = document.getElementById('list');
+    const statusLine = document.getElementById('statusLine');
+    const pinInput = document.getElementById('operatorPin');
+    const savedPin = localStorage.getItem('wid_operator_pin') || '';
+    pinInput.value = savedPin;
+    window.__widWaitingTimers = window.__widWaitingTimers || {};
+
+    const BLUE_BAR = '#244fbe';
+
+    function lockBlueBrowserBars() {
+      document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => {
+        meta.setAttribute('content', BLUE_BAR);
+      });
+      document.documentElement.style.backgroundColor = BLUE_BAR;
+      document.body.style.backgroundColor = BLUE_BAR;
+      document.documentElement.style.overflowX = 'hidden';
+      document.body.style.overflowX = 'hidden';
+    }
+
+    function lockBlueBrowserBarsSoon() {
+      lockBlueBrowserBars();
+      requestAnimationFrame(lockBlueBrowserBars);
+      setTimeout(lockBlueBrowserBars, 60);
+      setTimeout(lockBlueBrowserBars, 220);
+      setTimeout(lockBlueBrowserBars, 600);
+    }
+
+    lockBlueBrowserBarsSoon();
+    window.addEventListener('pageshow', lockBlueBrowserBarsSoon, { passive:true });
+    window.addEventListener('resize', lockBlueBrowserBarsSoon, { passive:true });
+    window.addEventListener('orientationchange', lockBlueBrowserBarsSoon, { passive:true });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', lockBlueBrowserBarsSoon, { passive:true });
+      window.visualViewport.addEventListener('scroll', lockBlueBrowserBarsSoon, { passive:true });
+    }
+
+    function recenterShell() {
+      lockBlueBrowserBars();
+      try { window.scrollTo(Math.max(0, window.scrollX || window.pageXOffset || 0) ? 0 : 0, window.scrollY || window.pageYOffset || 0); } catch (_) {}
+      document.documentElement.scrollLeft = 0;
+      document.body.scrollLeft = 0;
+      const app = document.querySelector('.app');
+      if (app) {
+        app.scrollLeft = 0;
+        app.style.marginLeft = 'auto';
+        app.style.marginRight = 'auto';
+      }
+    }
+
+    window.addEventListener('orientationchange', () => setTimeout(recenterShell, 120), { passive:true });
+
+
+    function installViewportSizing() {
+      const set = () => {
+        const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        document.documentElement.style.setProperty('--vvh', Math.round(h) + 'px');
+      };
+      set();
+      window.addEventListener('resize', set, { passive:true });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', set, { passive:true });
+        window.visualViewport.addEventListener('scroll', set, { passive:true });
+      }
+    }
+
+    function autosizeReplyBox(box) {
+      if (!box) return;
+      box.classList.add('is-growing');
+      box.style.height = 'auto';
+      const max = 132;
+      // v60: never collapse to a one-line box. The button stack already uses
+      // roughly two lines of vertical room, so the textarea should match it.
+      const min = 72;
+      const next = Math.max(min, Math.min(max, box.scrollHeight));
+      box.style.height = next + 'px';
+    }
+
+    function setKeyboardSpace(box, on = true) {
+      const card = box && box.closest('.case.focused');
+      if (!card) return;
+      card.classList.toggle('keyboard-space', !!on);
+      document.body.classList.toggle('keyboard-active', !!on);
+    }
+
+    function closeComposeSpace(box) {
+      if (!box) return;
+      clearComposeScrollTimers(box);
+      try { box.blur(); } catch (_) {}
+      setKeyboardSpace(box, false);
+      const card = box.closest('.case.focused');
+      if (card) card.classList.remove('keyboard-space');
+      document.body.classList.remove('keyboard-active');
+    }
+
+    function alignComposeBottom(box, instant = true) {
+      if (!box) return;
+      const card = box.closest('.case.focused');
+      const compose = box.closest('.phone-compose');
+      if (!card || !compose || !document.body.classList.contains('focus-mode')) return;
+      const vvHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      const targetBottom = Math.max(140, vvHeight - 2);
+      const rect = compose.getBoundingClientRect();
+      const delta = rect.bottom - targetBottom;
+      if (Math.abs(delta) > 3) {
+        card.scrollTo({ top:Math.max(0, card.scrollTop + delta), behavior: instant ? 'auto' : 'smooth' });
+      }
+    }
+
+    function settleComposeBottomAfterKeyboard(box) {
+      if (!box) return;
+      [80, 180, 320].forEach(delay => setTimeout(() => alignComposeBottom(box, true), delay));
+    }
+
+    function activeComposeBox() {
+      const el = document.activeElement;
+      return el && el.matches && el.matches('textarea[data-reply-draft]') ? el : null;
+    }
+
+    function dismissKeyboardFromOuterScroll(target) {
+      const box = activeComposeBox();
+      if (!box) return;
+      const node = target && target.nodeType === 1 ? target : (target && target.parentElement);
+      clearComposeScrollTimers(box);
+      if (node && node.closest && node.closest('.phone-compose,.quick-replies')) return;
+      try { box.blur(); } catch (_) {}
+      setKeyboardSpace(box, false);
+    }
+
+    const composeScrollTimers = new WeakMap();
+
+    function clearComposeScrollTimers(box) {
+      if (!box) return;
+      const timers = composeScrollTimers.get(box) || [];
+      timers.forEach(id => clearTimeout(id));
+      composeScrollTimers.set(box, []);
+    }
+
+    function scheduleComposeScroll(box, delay, options = {}) {
+      if (!box) return;
+      const timers = composeScrollTimers.get(box) || [];
+      const id = setTimeout(() => {
+        const current = composeScrollTimers.get(box) || [];
+        composeScrollTimers.set(box, current.filter(item => item !== id));
+        if (document.activeElement === box) keepComposeVisible(box, options);
+      }, delay);
+      timers.push(id);
+      composeScrollTimers.set(box, timers);
+    }
+
+    function composeLooksVisible(compose) {
+      if (!compose) return false;
+      const rect = compose.getBoundingClientRect();
+      const vvHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      return rect.top >= 10 && rect.bottom <= (vvHeight - 8);
+    }
+
+    function keepComposeVisible(box, options = {}) {
+      if (!box) return;
+      setKeyboardSpace(box, true);
+      const shell = box.closest('.texting-shell');
+      const thread = shell && shell.querySelector('.thread');
+      const compose = box.closest('.phone-compose') || box;
+      if (thread && options.threadBottom !== false) thread.scrollTop = thread.scrollHeight;
+      if (options.skipIfVisible !== false && composeLooksVisible(compose)) return;
+
+      const doScroll = () => {
+        const card = box.closest('.case.focused');
+        if (card && document.body.classList.contains('focus-mode')) {
+          const vvHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+          const keyboardReserve = Math.round(vvHeight * 0.45);
+          const visibleArea = Math.max(190, vvHeight - keyboardReserve);
+          const bottomGap = options.tight ? -3 : 0;
+          const target = Math.max(0, compose.offsetTop + compose.offsetHeight - visibleArea + bottomGap);
+          card.scrollTo({ top:target, behavior: options.instant ? 'auto' : 'smooth' });
+        } else {
+          compose.scrollIntoView({ block:'end', behavior: options.instant ? 'auto' : 'smooth' });
+        }
+      };
+      doScroll();
+    }
+
+    function focusComposeCursor(box, forceKeyboard = false) {
+      if (!box) return;
+      try {
+        // v60: prescribed buttons must actually bring up the keyboard on iOS.
+        // A normal focus from the tap handler is more reliable than preventScroll.
+        if (forceKeyboard) box.focus();
+        else box.focus({ preventScroll:true });
+        const len = box.value.length;
+        if (box.setSelectionRange) box.setSelectionRange(len, len);
+      } catch (_) {
+        try { box.focus(); } catch (__) {}
+      }
+    }
+
+    function activateComposeBox(box) {
+      if (!box) return;
+      clearComposeScrollTimers(box);
+      const shell = box.closest('.texting-shell');
+      if (shell) {
+        shell.classList.remove('collapsed');
+        updateMessageShellSubtext(shell);
+        const thread = shell.querySelector('.thread');
+        if (thread) thread.scrollTop = thread.scrollHeight;
+      }
+      autosizeReplyBox(box);
+      focusComposeCursor(box, true);
+      forceQuickReplyComposeVisible(box);
+    }
+
+    function forceQuickReplyComposeVisible(box) {
+      if (!box) return;
+      setKeyboardSpace(box, true);
+      const compose = box.closest('.phone-compose') || box;
+      const card = box.closest('.case.focused');
+      const shell = box.closest('.texting-shell');
+      const thread = shell && shell.querySelector('.thread');
+      if (shell) shell.classList.remove('collapsed');
+      const jump = (instant = true) => {
+        autosizeReplyBox(box);
+        if (thread) thread.scrollTop = thread.scrollHeight;
+        if (card && document.body.classList.contains('focus-mode')) {
+          const vvHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+          const rect = compose.getBoundingClientRect();
+          const targetBottom = Math.max(170, vvHeight - 8);
+          let nextTop = card.scrollTop + (rect.bottom - targetBottom);
+          if (!Number.isFinite(nextTop) || nextTop < 0) nextTop = 0;
+          // fallback based on actual offset inside the focused case
+          const fallbackTop = Math.max(0, compose.offsetTop + compose.offsetHeight - Math.max(200, vvHeight * 0.60));
+          nextTop = Math.max(nextTop, fallbackTop);
+          card.scrollTo({ top:nextTop, behavior:instant ? 'auto' : 'smooth' });
+        } else {
+          try { compose.scrollIntoView({ block:'end', behavior:instant ? 'auto' : 'smooth' }); } catch (_) {}
+        }
+      };
+      jump(true);
+      requestAnimationFrame(() => jump(true));
+      [60, 140, 260, 420, 700, 1000].forEach((delay, i) => setTimeout(() => {
+        if (document.activeElement !== box) focusComposeCursor(box, true);
+        jump(i < 3);
+      }, delay));
+    }
+
+    function setupQuickReplyButton(btn) {
+      if (!btn || btn.dataset.quickReady === '1') return;
+      btn.dataset.quickReady = '1';
+      let sx = 0, sy = 0, moved = false, touchHandledUntil = 0;
+      btn.addEventListener('touchstart', event => {
+        const t = event.changedTouches && event.changedTouches[0];
+        if (!t) return;
+        sx = t.clientX; sy = t.clientY; moved = false;
+      }, { passive:true });
+      btn.addEventListener('touchmove', event => {
+        const t = event.changedTouches && event.changedTouches[0];
+        if (!t) return;
+        if (Math.abs(t.clientX - sx) > 8 || Math.abs(t.clientY - sy) > 8) moved = true;
+      }, { passive:true });
+      btn.addEventListener('touchend', event => {
+        if (moved) return;
+        touchHandledUntil = Date.now() + 450;
+        insertQuickReply(btn, event);
+      }, { passive:false });
+      btn.addEventListener('click', event => {
+        if (Date.now() < touchHandledUntil) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+        insertQuickReply(btn, event);
+      });
+    }
+
+    function insertQuickReply(btn, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      if (!btn || btn.dataset.inserting === '1') return;
+      btn.dataset.inserting = '1';
+      setTimeout(() => { if (btn) btn.dataset.inserting = '0'; }, 320);
+
+      const box = document.getElementById(btn.dataset.insertReply);
+      if (!box) return;
+      const text = btn.dataset.replyText || '';
+      const before = box.value || '';
+      box.value = before ? (before.replace(/\s*$/, ' ') + text) : text;
+      box.dispatchEvent(new Event('input', { bubbles:true }));
+      activateComposeBox(box);
+    }
+
+    function directComposeFocus(box) {
+      if (!box) return;
+      const shell = box.closest('.texting-shell');
+      if (shell) {
+        shell.classList.remove('collapsed');
+        updateMessageShellSubtext(shell);
+      }
+      autosizeReplyBox(box);
+      clearComposeScrollTimers(box);
+      setKeyboardSpace(box, true);
+      keepComposeVisible(box, { tight:true, single:true, skipIfVisible:false, threadBottom:true, instant:true });
+      forceQuickReplyComposeVisible(box);
+    }
+
+
+    function setupLocalSendButton(btn) {
+      if (!btn || btn.dataset.sendReady === '1') return;
+      btn.dataset.sendReady = '1';
+      let touchHandledUntil = 0;
+      const run = event => {
+        touchHandledUntil = Date.now() + 700;
+        sendLocalReply(btn, event);
+      };
+      btn.addEventListener('touchend', run, { passive:false });
+      btn.addEventListener('pointerup', event => {
+        if (event.pointerType === 'touch') return;
+        run(event);
+      });
+      btn.addEventListener('click', event => {
+        if (Date.now() < touchHandledUntil) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+        sendLocalReply(btn, event);
+      });
+    }
+
+    async function sendLocalReply(btn, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      if (!btn || btn.dataset.sending === '1') return;
+      btn.dataset.sending = '1';
+      const originalLabel = btn.textContent;
+      btn.textContent = 'Sending...';
+
+      const box = document.getElementById(btn.dataset.localSend);
+      const thread = document.getElementById(btn.dataset.threadTarget);
+      const caseKey = btn.dataset.caseKey;
+      const text = (box && box.value || '').trim();
+      if (!text) {
+        if (box) closeComposeSpace(box);
+        btn.dataset.sending = '0';
+        btn.textContent = originalLabel;
+        return;
+      }
+      if (box) closeComposeSpace(box);
+
+      const now = new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
+      let savedServerSide = false;
+      try {
+        const res = await fetch('/.netlify/functions/post-operator-message', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', ...pinHeader() },
+          body:JSON.stringify({ id:caseKey, text })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Could not save operator message');
+        savedServerSide = true;
+      } catch (err) {
+        statusLine.textContent = 'Message kept locally; server save failed: ' + (err.message || err);
+      }
+
+      const local = getLocalThread(caseKey);
+      local.push({ who:'operator', text, at:now, server:savedServerSide });
+      saveLocalThread(caseKey, local);
+      updateLastMessagePreview(caseKey, text);
+      if (thread) thread.insertAdjacentHTML('beforeend', renderMessageBubble({ who:'operator', text, at:now }));
+      setLastUndoAction(caseKey, { type:'message', text, at:now });
+
+      try { await navigator.clipboard.writeText(text); } catch (_) {}
+
+      if (box) {
+        box.value = '';
+        box.dispatchEvent(new Event('input', { bubbles:true }));
+        autosizeReplyBox(box);
+        settleComposeBottomAfterKeyboard(box);
+      }
+      if (thread) thread.scrollTop = thread.scrollHeight;
+      btn.dataset.sending = '0';
+      btn.textContent = originalLabel;
+    }
+
+    const AUTO_ARCHIVE_KEY = 'wid_auto_archive_closed_after_week';
+
+    document.getElementById('refreshBtn').onclick = loadConsults;
+    const autoArchiveToggleBtn = document.getElementById('autoArchiveToggleBtn');
+    if (autoArchiveToggleBtn) autoArchiveToggleBtn.onclick = toggleAutoArchiveClosed;
+    document.getElementById('statusFilter').onchange = () => { syncArchiveControlsVisibility(); loadConsults(); };
+    pinInput.oninput = () => localStorage.setItem('wid_operator_pin', pinInput.value || '');
+
+    function syncArchiveControlsVisibility() {
+      if (!autoArchiveToggleBtn) return;
+      const selected = document.getElementById('statusFilter').value || 'open';
+      autoArchiveToggleBtn.style.display = selected === 'closed' ? '' : 'none';
+    }
+
+    function syncAutoArchiveButton() {
+      if (!autoArchiveToggleBtn) return;
+      const on = localStorage.getItem(AUTO_ARCHIVE_KEY) === '1';
+      autoArchiveToggleBtn.textContent = on ? 'Auto archive: on' : 'Auto archive: off';
+      autoArchiveToggleBtn.classList.toggle('dark', on);
+      syncArchiveControlsVisibility();
+    }
+
+    function toggleAutoArchiveClosed() {
+      const next = localStorage.getItem(AUTO_ARCHIVE_KEY) === '1' ? '0' : '1';
+      localStorage.setItem(AUTO_ARCHIVE_KEY, next);
+      syncAutoArchiveButton();
+      statusLine.textContent = next === '1' ? 'Auto archive enabled for cases closed over 1 week' : 'Auto archive disabled';
+      if (next === '1') archiveOldClosedCases({ manual:false });
+    }
+
+    async function loadConsults() {
+      const selected = document.getElementById('statusFilter').value || 'open';
+      statusLine.textContent = 'Loading...';
+      list.innerHTML = '';
+      try {
+        const functionStatus = 'all';
+        const res = await fetch('/.netlify/functions/list-consults?status=' + encodeURIComponent(functionStatus) + '&limit=100', { headers: pinHeader() });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load consults');
+        window.__widAllConsults = data.consults || [];
+        syncAutoArchiveButton();
+        if (localStorage.getItem(AUTO_ARCHIVE_KEY) === '1' && !window.__widAutoArchiveRunning) {
+          const didArchive = await archiveOldClosedCases({ manual:false, skipReload:true });
+          if (didArchive) return loadConsults();
+        }
+        const shown = filterConsults(window.__widAllConsults, selected);
+        renderConsults(sortConsults(shown), selected);
+        const priorityCount = shown.filter(isPriority).length;
+        const extendedCount = shown.filter(isExtended).length;
+        const normalCount = Math.max(0, shown.length - priorityCount - extendedCount);
+        updateTopCounts(priorityCount, normalCount, shown.length, selected, extendedCount);
+        statusLine.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}`;
+      } catch (err) {
+        list.innerHTML = `<div class="error">${escapeHtml(err.message || String(err))}</div>`;
+        statusLine.textContent = 'Load failed';
+      }
+    }
+
+    function updateTopCounts(priorityCount, normalCount, totalCount, selected, extendedCount = 0) {
+      const p = document.getElementById('priorityCount');
+      const e = document.getElementById('extendedCount');
+      const n = document.getElementById('normalCount');
+      const t = document.getElementById('totalCount');
+      if (p) p.textContent = String(priorityCount || 0);
+      if (e) e.textContent = String(extendedCount || 0);
+      if (n) n.textContent = String(normalCount || 0);
+      if (t) t.textContent = String(totalCount || 0);
+      const normalLabel = document.querySelector('.queue-tile:nth-child(3) .k');
+      if (normalLabel) normalLabel.textContent = 'Normal';
+      const totalLabel = document.querySelector('.queue-tile:nth-child(4) .k');
+      if (totalLabel) totalLabel.textContent = selectedStatusLabel(selected);
+    }
+
+    function selectedStatusLabel(selected) {
+      const filter = document.getElementById('statusFilter');
+      if (filter) {
+        const option = Array.from(filter.options || []).find(opt => opt.value === selected);
+        if (option && option.textContent) return option.textContent.trim();
+      }
+      const fallback = {
+        open:'Open queue',
+        waiting_on_customer:'Waiting cust.',
+        closed:'Closed',
+        archived:'Archived',
+        all:'All'
+      };
+      return fallback[selected] || 'Shown';
+    }
+
+    function filterConsults(items, selected) {
+      if (selected === 'archived') return items.filter(isArchived);
+      if (selected === 'all') return items.filter(c => !isArchived(c));
+      if (selected === 'open') return items.filter(c => !isClosed(c) && !isArchived(c) && String(c.status || '') !== 'waiting_on_customer');
+      return items.filter(c => String(c.status || '') === selected && !isArchived(c));
+    }
+
+    function sortConsults(items) {
+      const statusRank = { waiting_on_me:0, paid_pending:0, waiting_on_customer:2, unpaid:3, draft:4, closed:9, archived:10 };
+      return [...items].sort((a,b) => {
+        const ap = isPriority(a) ? -10 : (isExtended(a) ? -6 : 0);
+        const bp = isPriority(b) ? -10 : (isExtended(b) ? -6 : 0);
+        const ar = ap + (statusRank[a.status] ?? 1);
+        const br = bp + (statusRank[b.status] ?? 1);
+        if (ar !== br) return ar - br;
+        return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
+      });
+    }
+
+
+    function updateMessageShellSubtext(shell) {
+      if (!shell) return;
+      const sub = shell.querySelector('.texting-sub');
+      if (sub) sub.textContent = shell.classList.contains('collapsed') ? 'tap to expand' : 'tap to collapse';
+    }
+
+    function scrollMessageShellIntoView(shell) {
+      if (!shell) return;
+      const card = shell.closest('.case.focused');
+      const targetTop = Math.max(0, shell.offsetTop - 8);
+      if (card && document.body.classList.contains('focus-mode')) {
+        requestAnimationFrame(() => card.scrollTo({ top:targetTop, behavior:'smooth' }));
+      } else {
+        try { shell.scrollIntoView({ block:'start', behavior:'smooth' }); } catch (_) {}
+      }
+    }
+    function renderConsults(items, selectedView = 'open') {
+      if (!items.length) { list.innerHTML = '<div class="empty">No cases in this view.</div>'; return; }
+      const queueMeta = buildQueueMeta(items);
+      list.innerHTML = items.map((item, index) => renderCase(item, index, queueMeta, selectedView)).join('');
+      document.querySelectorAll('.case').forEach(card => {
+        card.onclick = (event) => {
+          if (event.target.closest('button,a,audio,textarea,.icon,.bubble,.texting-shell')) return;
+          registerCaseTap(card, event);
+        };
+        card.ondblclick = (event) => {
+          if (event.target.closest('button,a,audio,textarea,.icon,.bubble,.texting-shell')) return;
+          event.preventDefault();
+          if (document.body.classList.contains('focus-mode') && card.classList.contains('focused')) exitFocusMode();
+          else focusCase(card);
+        };
+        setupSwipeExit(card);
+        setupKeyboardDismiss(card);
+      });
+      document.querySelectorAll('[data-action-status]').forEach(btn => btn.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        handleStatusButton(btn);
+      });
+      document.querySelectorAll('[data-open-attachment]').forEach(btn => btn.onclick = (event) => {
+        event.stopPropagation();
+        const detailId = btn.dataset.detailId;
+        const url = btn.dataset.openAttachment;
+        openDetails(detailId);
+        if (url) window.open(url, '_blank', 'noopener');
+      });
+      document.querySelectorAll('[data-copy-reply]').forEach(btn => btn.onclick = async (event) => {
+        event.stopPropagation();
+        const box = document.getElementById(btn.dataset.copyReply);
+        if (!box) return;
+        try { await navigator.clipboard.writeText(box.value || ''); btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy reply', 1200); }
+        catch (_) { box.select(); document.execCommand('copy'); btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy reply', 1200); }
+      });
+      document.querySelectorAll('[data-reply-draft]').forEach(box => {
+        const key = 'wid_reply_' + box.dataset.replyDraft;
+        box.value = localStorage.getItem(key) || '';
+        autosizeReplyBox(box);
+        box.oninput = () => {
+          localStorage.setItem(key, box.value || '');
+          autosizeReplyBox(box);
+        };
+        box.onfocus = () => { directComposeFocus(box); };
+        box.onblur = () => { autosizeReplyBox(box); setKeyboardSpace(box, false); };
+        box.onclick = (event) => event.stopPropagation();
+      });
+      document.querySelectorAll('[data-insert-reply]').forEach(btn => {
+        setupQuickReplyButton(btn);
+      });
+      document.querySelectorAll('[data-clear-reply]').forEach(btn => btn.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const box = document.getElementById(btn.dataset.clearReply);
+        if (!box) return;
+        box.value = '';
+        localStorage.setItem('wid_reply_' + box.dataset.replyDraft, '');
+        autosizeReplyBox(box);
+        closeComposeSpace(box);
+      });
+      document.querySelectorAll('[data-local-send]').forEach(btn => {
+        setupLocalSendButton(btn);
+      });
+      document.querySelectorAll('.texting-shell').forEach(shell => {
+        updateMessageShellSubtext(shell);
+        setupSwipeExit(shell, () => shell.classList.remove('message-zoom'));
+        const head = shell.querySelector('.texting-head');
+        if (head) {
+          head.onclick = (event) => {
+            if (event.target.closest('button,textarea,a,audio')) return;
+            event.stopPropagation();
+            if (shell.classList.contains('message-zoom')) return;
+            const wasCollapsed = shell.classList.contains('collapsed');
+            shell.classList.toggle('collapsed');
+            updateMessageShellSubtext(shell);
+            if (wasCollapsed) scrollMessageShellIntoView(shell);
+          };
+          head.ondblclick = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleMessageZoom(shell);
+          };
+        }
+      });
+      document.querySelectorAll('.bubble').forEach(bubble => {
+        bubble.onclick = (event) => event.stopPropagation();
+        bubble.ondblclick = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const shell = bubble.closest('.texting-shell');
+          if (shell) toggleMessageZoom(shell);
+        };
+      });
+      document.querySelectorAll('[data-clear-waiting-workflow]').forEach(btn => btn.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const card = btn.closest('.case');
+        const shell = card && card.querySelector('.texting-shell');
+        const caseKey = shell ? shell.dataset.caseKey : btn.dataset.id;
+        clearWaitingWorkflow(caseKey);
+        statusLine.textContent = 'Timer cleared';
+      });
+      document.querySelectorAll('[data-undo-action]').forEach(btn => btn.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        undoLastOperatorAction(btn);
+      });
+      document.querySelectorAll('[data-picture-pick]').forEach(btn => btn.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const input = document.getElementById(btn.dataset.picturePick);
+        if (input) {
+          input.value = '';
+          input.click();
+        }
+      });
+      document.querySelectorAll('[data-picture-input]').forEach(input => input.onchange = (event) => {
+        event.stopPropagation();
+        handlePictureInput(input);
+      });
+      document.querySelectorAll('[data-expand-image]').forEach(img => img.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openMessageImage(img.dataset.expandImage || img.src);
+      });
+      document.querySelectorAll('[data-open-thread]').forEach(btn => btn.onclick = (event) => {
+        event.stopPropagation();
+        openThread(btn.dataset.openThread);
+      });
+      refreshAllAutocloseCountdowns();
+      if (!window.__widAutocloseInterval) {
+        window.__widAutocloseInterval = setInterval(refreshAllAutocloseCountdowns, 30000);
+      }
+    }
+
+
+    let tapTimer = null;
+    let lastTappedCase = null;
+    let lockedScrollY = 0;
+
+    function registerCaseTap(card, event) {
+      const now = Date.now();
+      const isFocused = document.body.classList.contains('focus-mode') && card.classList.contains('focused');
+      if (lastTappedCase === card && tapTimer && (now - Number(card.dataset.lastTap || 0)) < 360) {
+        clearTimeout(tapTimer);
+        tapTimer = null;
+        if (isFocused) exitFocusMode();
+        else focusCase(card);
+        return;
+      }
+      card.dataset.lastTap = String(now);
+      lastTappedCase = card;
+      tapTimer = setTimeout(() => { tapTimer = null; }, 370);
+    }
+
+    function focusCase(card) {
+      if (!card) return;
+      installViewportSizing();
+      lockedScrollY = window.scrollY || window.pageYOffset || 0;
+      document.querySelectorAll('.texting-shell.message-zoom').forEach(el => el.classList.remove('message-zoom'));
+      document.querySelectorAll('.case.focused').forEach(el => el.classList.remove('focused'));
+      card.classList.add('focused');
+      document.body.classList.add('focus-mode');
+      document.body.style.top = '-' + lockedScrollY + 'px';
+      recenterShell();
+      lockBlueBrowserBarsSoon();
+      openDetails(card.dataset.detailId);
+      setTimeout(() => card.scrollTo({ top:0, behavior:'auto' }), 0);
+    }
+
+    function exitFocusMode(options = {}) {
+      const focusedCards = Array.from(document.querySelectorAll('.case.focused'));
+      document.querySelectorAll('.texting-shell.message-zoom').forEach(el => el.classList.remove('message-zoom'));
+      document.querySelectorAll('textarea').forEach(box => box.blur());
+      focusedCards.forEach(card => {
+        card.querySelectorAll('.details.open').forEach(detail => detail.classList.remove('open'));
+        card.querySelectorAll('.texting-shell').forEach(shell => shell.classList.remove('message-zoom'));
+        card.classList.remove('keyboard-space');
+        document.body.classList.remove('keyboard-active');
+        card.scrollTop = 0;
+        card.classList.remove('focused');
+      });
+      document.body.classList.remove('focus-mode');
+      document.body.style.top = '';
+      recenterShell();
+      lockBlueBrowserBarsSoon();
+      if (options.restoreScroll !== false) window.scrollTo(0, lockedScrollY || 0);
+      requestAnimationFrame(() => {
+        recenterShell();
+      });
+      lastTappedCase = null;
+      if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
+    }
+
+    function toggleMessageZoom(shell) {
+      if (!shell) return;
+      const card = shell.closest('.case');
+      if (card && !document.body.classList.contains('focus-mode')) focusCase(card);
+      installViewportSizing();
+      shell.classList.remove('collapsed');
+      const willOpen = !shell.classList.contains('message-zoom');
+      document.querySelectorAll('.texting-shell.message-zoom').forEach(el => el.classList.remove('message-zoom'));
+      if (willOpen) {
+        shell.classList.add('message-zoom');
+        lockBlueBrowserBarsSoon();
+        const thread = shell.querySelector('.thread');
+        if (thread) thread.scrollTop = thread.scrollHeight;
+      }
+    }
+
+    function setupSwipeExit(el, callback) {
+      if (!el || el.dataset.swipeReady === '1') return;
+      el.dataset.swipeReady = '1';
+      let startX = 0, startY = 0;
+      el.addEventListener('touchstart', e => {
+        const t = e.changedTouches && e.changedTouches[0];
+        if (!t) return;
+        startX = t.clientX; startY = t.clientY;
+      }, { passive:true });
+      el.addEventListener('touchend', e => {
+        const t = e.changedTouches && e.changedTouches[0];
+        if (!t) return;
+        const dx = t.clientX - startX;
+        const dy = t.clientY - startY;
+        if (dx < -70 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+          if (callback) callback();
+          else exitFocusMode();
+        }
+      }, { passive:true });
+    }
+
+    function setupKeyboardDismiss(card) {
+      if (!card || card.dataset.keyboardDismissReady === '1') return;
+      card.dataset.keyboardDismissReady = '1';
+      let startTarget = null;
+      card.addEventListener('touchstart', e => {
+        startTarget = e.target;
+      }, { passive:true });
+      card.addEventListener('touchmove', e => {
+        dismissKeyboardFromOuterScroll(startTarget || e.target);
+      }, { passive:true });
+      card.addEventListener('wheel', e => {
+        dismissKeyboardFromOuterScroll(e.target);
+      }, { passive:true });
+    }
+
+    function clampScrollEdges(el) {
+      if (!el || el.dataset.clampReady === '1') return;
+      el.dataset.clampReady = '1';
+      let lastY = 0;
+      el.addEventListener('touchstart', e => {
+        const t = e.touches && e.touches[0];
+        if (t) lastY = t.clientY;
+      }, { passive:true });
+      el.addEventListener('touchmove', e => {
+        if (!document.body.classList.contains('focus-mode')) return;
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        const dy = t.clientY - lastY;
+        lastY = t.clientY;
+        const atTop = el.scrollTop <= 0;
+        const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
+        if ((atTop && dy > 0) || (atBottom && dy < 0)) e.preventDefault();
+      }, { passive:false });
+    }
+
+    function toggleDetails(detailId) {
+      const el = document.getElementById(detailId);
+      if (!el) return;
+      el.classList.toggle('open');
+    }
+
+    function openDetails(detailId) {
+      const el = document.getElementById(detailId);
+      if (el) el.classList.add('open');
+    }
+
+    function renderCase(c, index, queueMeta, selectedView = 'open') {
+      const caseNo = formatCaseNumber(c, index, queueMeta);
+      const created = c.created_at ? new Date(c.created_at).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '';
+      const name = c.customer_name || 'Name missing';
+      const vehicle = c.vehicle_summary || compactVehicle(c) || 'Vehicle not clear';
+      const issue = c.issue_summary || 'Symptom not clear';
+      const status = c.status || 'waiting_on_me';
+      const detailId = `detail-${index}`;
+      const files = Array.isArray(c.file_links) ? c.file_links : [];
+      const imageFiles = files.filter(f => /^image\//.test(f.type || '') || looksLikeImage(f.name || f.path || ''));
+      const otherFiles = files.filter(f => !( /^image\//.test(f.type || '') || looksLikeImage(f.name || f.path || '') ));
+      const hasVoice = !!c.voice_note_url;
+      const priority = isPriority(c);
+      const extended = isExtended(c);
+      const statusKey = String(status || '').toLowerCase();
+      const waitingOnMeVisual = statusKey === 'waiting_on_me' || statusKey === 'paid_pending';
+      const queueType = priority ? 'priority' : (extended ? 'extended' : 'normal');
+      const pos = queueMeta.positions[getCaseKey(c, index)] || (index + 1);
+      const total = queueMeta.total || itemsTotalFallback(queueMeta);
+      const queueLabel = `${priority ? 'Priority' : (extended ? 'Extended' : 'Normal')} · ${pos} of ${total}`;
+      const showQueueLabel = selectedView === 'open';
+      const archived = isArchived(c);
+      const actionLabel = (isClosed(c) || archived) ? 'Reopen case' : 'Close case';
+      const actionStatus = (isClosed(c) || archived) ? 'waiting_on_me' : 'closed';
+      const actionClass = (isClosed(c) || archived) ? 'reopen-case' : 'close-case';
+      const archiveButton = isClosed(c) ? `<button class="archive-btn" data-action-status="archived" data-id="${escapeAttr(c.id)}" data-case-no="${escapeAttr(caseNo)}" type="button">Archive case</button>` : '';
+      const isWaitingOnCustomer = String(status || '').toLowerCase() === 'waiting_on_customer';
+      const waitingActionLabel = isWaitingOnCustomer ? 'Waiting on me' : 'Waiting cust.';
+      const waitingActionStatus = isWaitingOnCustomer ? 'waiting_on_me' : 'waiting_on_customer';
+      const firstVoiceUrl = c.voice_note_url || '';
+      const firstImageUrl = (imageFiles.find(f => f.url) || {}).url || '';
+      const firstFileUrl = (otherFiles.find(f => f.url) || {}).url || '';
+      const attachmentIcons = renderAttachmentIcons({ detailId, firstVoiceUrl, firstImageUrl, firstFileUrl });
+      const replyId = `reply-${escapeAttr(c.id || index)}`;
+      const preview = getLastMessagePreview(c, index);
+      const caseKey = getCaseKey(c, index);
+      return `
+        <section class="case ${priority ? 'priority' : ''} ${extended ? 'extended' : ''} ${waitingOnMeVisual ? 'waiting-me' : ''}" data-thread-id="${escapeAttr(c.id)}" data-case-key="${escapeAttr(caseKey)}" data-detail-id="${detailId}">
+          <div class="case-head">
+            <div class="left-lines">
+              <div class="customer-name">${escapeHtml(name)}</div>
+              <div class="vehicle-line">${escapeHtml(vehicle)}</div>
+              <div class="symptom-line">${escapeHtml(issue)}</div>
+              <div class="meta">${escapeHtml(created)} · <span class="status-label">${escapeHtml(effectiveStatusLabel(status))}</span></div>
+              <div class="last-message-preview" data-last-preview="${escapeAttr(caseKey)}" ${preview ? '' : 'style="display:none"'}>${preview ? escapeHtml(preview) : ''}</div>
+            </div>
+            <div class="right-stack">
+              <div class="case-number">#${escapeHtml(caseNo)}</div>
+              ${showQueueLabel ? `<span class="queue-badge ${queueType}">${escapeHtml(queueLabel)}</span>` : ''}
+              ${attachmentIcons}
+            </div>
+          </div>
+          <div class="details" id="${detailId}">
+            <div class="label">Summary</div>
+            <div class="box"><strong>Issue:</strong> ${escapeHtml(c.issue_summary || '')}\n\n<strong>What has been done:</strong> ${escapeHtml(c.work_done_summary || '')}</div>
+            <div class="label">Original intake</div>
+            <div class="box">${escapeHtml(c.intake_text || '')}</div>
+            <div class="label">Additional details</div>
+            <div class="box">${escapeHtml(c.followup_text || 'None')}</div>
+            ${renderPhone(c)}
+            ${renderFiles(c)}
+            <div class="workflow-actions wid-v58-workflow">
+              <button class="${actionClass}" data-action-status="${actionStatus}" data-id="${escapeAttr(c.id)}" data-case-no="${escapeAttr(caseNo)}">${actionLabel}</button>
+              <button class="waiting-btn" data-action-status="${escapeAttr(waitingActionStatus)}" data-id="${escapeAttr(c.id)}" data-case-no="${escapeAttr(caseNo)}">${escapeHtml(waitingActionLabel)}</button>
+              <button class="reset-btn" data-clear-waiting-workflow="1" data-id="${escapeAttr(c.id)}" data-case-no="${escapeAttr(caseNo)}" type="button" aria-label="Clear active autoclose timer">Clear timer</button>
+              <button class="undo-btn" data-undo-action="1" data-id="${escapeAttr(c.id)}" data-case-no="${escapeAttr(caseNo)}" type="button" aria-label="Undo last timer reset or local message">Undo</button>
+              ${archiveButton}
+            </div>
+            ${renderTextingPanel(c, index, replyId)}
+          </div>
+        </section>`;
+    }
+
+
+    function renderTextingPanel(c, index, replyId) {
+      const threadId = `thread-${index}`;
+      const key = escapeAttr(c.id || index);
+      return `
+        <div class="texting-shell" data-case-key="${key}">
+          <div class="texting-head">
+            <div class="texting-title">Messages</div>
+            <div class="texting-sub">tap to collapse</div>
+          </div>
+          <div class="thread" id="${threadId}">${renderThreadBubbles(c, index)}</div>
+          <div class="autoclose-thread-note ${getWaitingWorkflow(c.id || index) ? 'active' : ''}" data-autoclose-note="${key}">48hr autoclose active</div>
+          <div class="quick-replies wid-v58-quick" aria-label="reply starters">
+            <button type="button" tabindex="-1" data-insert-reply="${replyId}" data-reply-text="Hello, my name is Bryan, ">Hello..</button>
+            <button type="button" tabindex="-1" data-insert-reply="${replyId}" data-reply-text="I’d check ">I’d check</button>
+            <button type="button" tabindex="-1" data-insert-reply="${replyId}" data-reply-text="I’m not sure ">I’m not sure</button>
+            <button type="button" tabindex="-1" data-insert-reply="${replyId}" data-reply-text="Can you elaborate?">Elaborate?</button>
+            <button type="button" tabindex="-1" data-insert-reply="${replyId}" data-reply-text="What code was it?">Code?</button>
+            <button type="button" tabindex="-1" data-insert-reply="${replyId}" data-reply-text="Does that make sense?">Make sense?</button>
+          </div>
+          <div class="phone-compose">
+            <textarea id="${replyId}" data-reply-draft="${key}" data-thread-target="${threadId}" placeholder="Type message..."></textarea>
+            <div class="phone-buttons">
+              <button class="photo-btn wid-v58-photo" type="button" data-picture-pick="pic-${replyId}" aria-label="Add photo to message">Photo</button>
+              <button type="button" data-clear-reply="${replyId}">Clear</button>
+              <button type="button" class="send" data-local-send="${replyId}" data-case-key="${key}" data-thread-target="${threadId}">Send</button>
+              <input id="pic-${replyId}" data-picture-input="1" data-case-key="${key}" data-thread-target="${threadId}" type="file" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp" multiple style="display:none" />
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function renderThreadBubbles(c, index) {
+      const parts = [];
+      const serverMessages = Array.isArray(c.messages) ? c.messages : [];
+      if (serverMessages.length) {
+        serverMessages.forEach(m => parts.push(renderMessageBubble(m)));
+      } else {
+        const intro = [c.intake_text, c.followup_text].filter(Boolean).join('\n\n');
+        if (intro) parts.push(`<div class="bubble customer">${escapeHtml(intro)}<span class="bubble-meta">customer</span></div>`);
+      }
+      const local = getLocalThread(c.id || index);
+      local.forEach(m => parts.push(renderMessageBubble(m)));
+      if (!parts.length) parts.push('<div class="bubble system">No message text saved yet.</div>');
+      return parts.join('');
+    }
+
+    function renderMessageBubble(m) {
+      const rawWho = String((m && (m.who || m.sender)) || 'operator').toLowerCase();
+      const who = rawWho === 'system' ? 'system' : (rawWho === 'info' ? 'info' : (rawWho === 'customer' ? 'customer' : 'operator'));
+      const at = (m && (m.at || m.created_at)) || '';
+      const meta = who === 'system' || who === 'info' ? (at || who) : (who === 'customer' ? ('customer · ' + at) : ('you · ' + at));
+      const text = escapeHtml((m && (m.text || m.body)) || '');
+      const img = (m && m.imageData) ? `<img class="bubble-image-thumb" src="${escapeAttr(m.imageData)}" alt="${escapeAttr(m.imageName || 'message picture')}" data-expand-image="${escapeAttr(m.imageData)}" />` : '';
+      return `<div class="bubble ${who}">${text}${img}<span class="bubble-meta">${escapeHtml(meta)}</span></div>`;
+    }
+
+    function getLastMessagePreview(c, index) {
+      const caseKey = c.id || index;
+      const wf = getWaitingWorkflow(caseKey);
+      const local = getLocalThread(caseKey);
+      const operatorQuestion = lastOperatorText(caseKey);
+      if (wf && operatorQuestion) {
+        return `Last: ${firstWords(operatorQuestion, 4)} · Autoclose: ${formatAutocloseCountdown(wf.closeAt)}`;
+      }
+      const serverMessages = Array.isArray(c.messages) ? c.messages : [];
+      const last = local.length ? local[local.length - 1] : (serverMessages.length ? serverMessages[serverMessages.length - 1] : null);
+      const raw = last ? (last.text || last.body || (last.imageData ? 'Picture attached' : '')) : (c.last_message || c.last_message_body || c.latest_message || c.operator_reply || '');
+      const text = String(raw || '').replace(/\s+/g, ' ').trim();
+      if (!text) return '';
+      const words = text.split(' ').slice(0, 9).join(' ');
+      return 'Last: ' + words + (text.length > words.length ? '…' : '');
+    }
+
+    function updateLastMessagePreview(caseKey, text) {
+      const clean = String(text || '').replace(/\s+/g, ' ').trim();
+      const wf = getWaitingWorkflow(caseKey);
+      let preview = '';
+      if (wf && clean) {
+        preview = `Last: ${firstWords(clean, 4)} · Autoclose: ${formatAutocloseCountdown(wf.closeAt)}`;
+      } else if (clean) {
+        const words = clean.split(' ').slice(0, 9).join(' ');
+        preview = 'Last: ' + words + (clean.length > words.length ? '…' : '');
+      }
+      document.querySelectorAll(`[data-last-preview="${cssEscape(caseKey)}"]`).forEach(el => {
+        el.textContent = preview;
+        el.style.display = preview ? '' : 'none';
+      });
+    }
+
+    function cssEscape(v) {
+      if (window.CSS && CSS.escape) return CSS.escape(String(v));
+      return String(v).replace(/[^a-zA-Z0-9_-]/g, '\$&');
+    }
+
+    function getLocalThread(caseKey) {
+      try { return JSON.parse(localStorage.getItem('wid_thread_' + caseKey) || '[]') || []; }
+      catch (_) { return []; }
+    }
+
+    function saveLocalThread(caseKey, messages) {
+      localStorage.setItem('wid_thread_' + caseKey, JSON.stringify(messages || []));
+    }
+
+
+    function renderAttachmentIcons({ detailId, firstVoiceUrl, firstImageUrl, firstFileUrl }) {
+      const parts = [];
+      if (firstVoiceUrl) parts.push(`<span class="icon on" title="Open voice note" data-open-attachment="${escapeAttr(firstVoiceUrl)}" data-detail-id="${detailId}">🎙</span>`);
+      if (firstImageUrl) parts.push(`<span class="icon on" title="Open picture" data-open-attachment="${escapeAttr(firstImageUrl)}" data-detail-id="${detailId}">📷</span>`);
+      if (firstFileUrl) parts.push(`<span class="icon on" title="Open uploaded file" data-open-attachment="${escapeAttr(firstFileUrl)}" data-detail-id="${detailId}">📎</span>`);
+      return parts.length ? `<div class="icons" aria-label="attachments">${parts.join('')}</div>` : '';
+    }
+
+
+    function buildQueueMeta(items) {
+      const positions = {};
+      const caseNumbers = {};
+      items.forEach((c, index) => {
+        positions[getCaseKey(c, index)] = index + 1;
+      });
+      const all = Array.isArray(window.__widAllConsults) && window.__widAllConsults.length ? window.__widAllConsults : items;
+      [...all]
+        .sort((a,b) => new Date(a.created_at || a.paid_at || a.updated_at || 0) - new Date(b.created_at || b.paid_at || b.updated_at || 0))
+        .forEach((c, index) => { caseNumbers[getCaseKey(c, index)] = index + 1; });
+      return { total: items.length, positions, caseNumbers };
+    }
+
+    function itemsTotalFallback(queueMeta) {
+      if (!queueMeta || !queueMeta.positions) return 1;
+      return Object.keys(queueMeta.positions).length || 1;
+    }
+
+    function getCaseKey(c, index) {
+      return String(c.id || c.case_number || c.consult_number || c.ticket_number || index);
+    }
+
+    function openThread(id) {
+      if (!id) return;
+      window.location.href = '/thread.html?id=' + encodeURIComponent(id);
+    }
+
+    function formatCaseNumber(c, index, queueMeta) {
+      const raw = c.case_number ?? c.consult_number ?? c.ticket_number ?? c.sequence_number;
+      const n = Number(raw);
+      if (Number.isFinite(n) && n > 0) return String(n).padStart(4, '0').slice(-4);
+      const key = getCaseKey(c, index);
+      const globalN = queueMeta && queueMeta.caseNumbers ? Number(queueMeta.caseNumbers[key]) : NaN;
+      if (Number.isFinite(globalN) && globalN > 0) return String(globalN).padStart(4, '0').slice(-4);
+      return '----';
+    }
+
+    function compactVehicle(c) {
+      return [c.year, c.make, c.model].filter(Boolean).join(' ');
+    }
+
+    function isExtended(c) {
+      const raw = String(c.queue_type || c.consult_type || c.priority || c.product || c.plan || '').toLowerCase();
+      return raw.includes('extended') || raw.includes('3 day') || raw.includes('3-day') || raw.includes('three day');
+    }
+
+    function isPriority(c) {
+      const raw = String(c.queue_type || c.consult_type || c.priority || '').toLowerCase();
+      return raw.includes('priority') || raw.includes('rush') || raw.includes('urgent');
+    }
+
+    function isClosed(c) { return String(c.status || '').toLowerCase() === 'closed'; }
+    function isArchived(c) { return String(c.status || '').toLowerCase() === 'archived'; }
+
+    function effectiveStatusLabel(status) {
+      const map = {
+        unpaid:'Waiting on me',
+        paid_pending:'Waiting on me',
+        waiting_on_me:'Waiting on me',
+        waiting_on_customer:'Waiting cust.',
+        closed:'Closed',
+        archived:'Archived',
+        draft:'Draft'
+      };
+      return map[status] || status || 'Waiting on me';
+    }
+
+
+    function renderPhone(c) {
+      const raw = c.customer_phone || c.phone || c.phone_number || '';
+      const clean = String(raw || '').replace(/[^\d+]/g, '');
+      if (!raw || !clean) return '';
+      return `<div class="label">Contact</div><a class="call-btn" href="tel:${escapeAttr(clean)}">Call ${escapeHtml(raw)}</a>`;
+    }
+
+    function renderVoice(c) {
+      if (!c.voice_note_path) return '<div class="label">Voice note</div><div class="box muted">No voice note saved.</div>';
+      if (!c.voice_note_url) return `<div class="label">Voice note</div><div class="box">Path saved, but no playable URL returned.<span class="pathline">${escapeHtml(c.voice_note_path)}</span></div>`;
+      return `<div class="label">Voice note</div><audio controls src="${escapeAttr(c.voice_note_url)}"></audio><a class="filelink" target="_blank" rel="noopener" href="${escapeAttr(c.voice_note_url)}">Open voice note</a><span class="pathline">${escapeHtml(c.voice_note_path)}</span>`;
+    }
+
+    function renderFiles(c) {
+      const files = (Array.isArray(c.file_links) ? c.file_links : []).filter(f => f && f.url);
+      if (!files.length) return '';
+      return '<div class="label">Uploads</div><div class="uploads-list">' + files.map((f, i) => {
+        const fileName = f.name || f.path || 'upload';
+        const label = looksLikeImage(fileName) || /^image\//.test(f.type || '') ? `Open photo${files.length > 1 ? ' ' + (i + 1) : ''}` : `Open file${files.length > 1 ? ' ' + (i + 1) : ''}`;
+        return `<div class="upload-row"><a target="_blank" rel="noopener" href="${escapeAttr(f.url)}">${label}</a></div>`;
+      }).join('') + '</div>';
+    }
+
+    function looksLikeImage(name) { return /\.(png|jpe?g|gif|webp|heic|heif)$/i.test(String(name || '')); }
+
+    async function ensureNotificationPermission() {
+      if (!('Notification' in window)) return false;
+      if (Notification.permission === 'granted') return true;
+      if (Notification.permission === 'denied') return false;
+      try { return (await Notification.requestPermission()) === 'granted'; }
+      catch (_) { return false; }
+    }
+
+    function notifyOperator(title, body) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try { new Notification(title, { body }); return; } catch (_) {}
+      }
+      try { alert(title + '\n\n' + body); } catch (_) {}
+    }
+
+    function getWaitingWorkflow(caseKey) {
+      if (!caseKey) return null;
+      try { return JSON.parse(localStorage.getItem('wid_waiting_workflow_' + String(caseKey)) || 'null'); }
+      catch (_) { return null; }
+    }
+
+    function formatAutocloseCountdown(closeAt) {
+      const end = Number(closeAt || 0);
+      if (!end) return '';
+      const ms = Math.max(0, end - Date.now());
+      const totalMinutes = Math.ceil(ms / 60000);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      if (hours <= 0) return `${minutes}m`;
+      return `${hours}h ${String(minutes).padStart(2, '0')}m`;
+    }
+
+    function getAutocloseCountdown(caseKey) {
+      const wf = getWaitingWorkflow(caseKey);
+      if (!wf || !wf.closeAt) return '';
+      return formatAutocloseCountdown(wf.closeAt);
+    }
+
+    function firstWords(text, count = 4) {
+      return String(text || '').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean).slice(0, count).join(' ');
+    }
+
+    function lastOperatorText(caseKey) {
+      const local = getLocalThread(caseKey);
+      for (let i = local.length - 1; i >= 0; i--) {
+        if (local[i] && local[i].who === 'operator' && local[i].text) return local[i].text;
+      }
+      return '';
+    }
+
+    function updateAutocloseUi(caseKey) {
+      if (!caseKey) return;
+      const wf = getWaitingWorkflow(caseKey);
+      const countdown = wf ? formatAutocloseCountdown(wf.closeAt) : '';
+      document.querySelectorAll(`[data-autoclose-note="${cssEscape(caseKey)}"]`).forEach(el => {
+        el.textContent = '48hr autoclose active';
+        el.classList.toggle('active', !!wf);
+      });
+      document.querySelectorAll(`[data-autoclose-countdown="${cssEscape(caseKey)}"]`).forEach(el => {
+        el.textContent = countdown;
+      });
+      const text = lastOperatorText(caseKey);
+      if (wf && text) updateLastMessagePreview(caseKey, text);
+      else if (!wf) {
+        const local = getLocalThread(caseKey);
+        const last = [...local].reverse().find(m => m && (m.text || m.imageData));
+        updateLastMessagePreview(caseKey, last ? (last.text || 'Picture attached') : '');
+      }
+    }
+
+    function refreshAllAutocloseCountdowns() {
+      document.querySelectorAll('[data-case-key]').forEach(el => updateAutocloseUi(el.dataset.caseKey));
+    }
+
+    function renderWaitingTimerSummary(caseKey) {
+      const wf = getWaitingWorkflow(caseKey);
+      if (!wf || !wf.started) return '';
+      const left = formatAutocloseCountdown(wf.closeAt);
+      return `
+
+<div class="timer-summary">Autoclose: <span class="autoclose-countdown" data-autoclose-countdown="${escapeAttr(caseKey)}">${escapeHtml(left)}</span></div>`;
+    }
+
+    function appendSystemMessage(caseKey, thread, text) {
+      if (!caseKey || !text) return;
+      const now = new Date().toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+      const local = getLocalThread(caseKey);
+      local.push({ who:'system', text, at:now });
+      saveLocalThread(caseKey, local);
+      if (thread) {
+        thread.insertAdjacentHTML('beforeend', renderMessageBubble({ who:'system', text, at:now }));
+        thread.scrollTop = thread.scrollHeight;
+      }
+    }
+
+    function setLastUndoAction(caseKey, action) {
+      if (!caseKey || !action) return;
+      localStorage.setItem('wid_last_undo_' + String(caseKey), JSON.stringify({ ...action, savedAt:Date.now() }));
+    }
+
+    function getLastUndoAction(caseKey) {
+      try { return JSON.parse(localStorage.getItem('wid_last_undo_' + String(caseKey)) || 'null'); }
+      catch (_) { return null; }
+    }
+
+    function setLastTimerUndo(caseKey, action) {
+      if (!caseKey || !action) return;
+      localStorage.setItem('wid_last_timer_undo_' + String(caseKey), JSON.stringify({ ...action, savedAt:Date.now() }));
+    }
+
+    function getLastTimerUndo(caseKey) {
+      try { return JSON.parse(localStorage.getItem('wid_last_timer_undo_' + String(caseKey)) || 'null'); }
+      catch (_) { return null; }
+    }
+
+    function clearWaitingTimerHandles(caseKey) {
+      const store = window.__widWaitingTimers || {};
+      const timers = store[String(caseKey)] || [];
+      timers.forEach(id => clearTimeout(id));
+      store[String(caseKey)] = [];
+      window.__widWaitingTimers = store;
+    }
+
+    function rememberWaitingTimerHandle(caseKey, id) {
+      if (!caseKey || !id) return;
+      const store = window.__widWaitingTimers || {};
+      store[String(caseKey)] = store[String(caseKey)] || [];
+      store[String(caseKey)].push(id);
+      window.__widWaitingTimers = store;
+    }
+
+    function undoTimerReset(caseKey, thread) {
+      const action = getLastTimerUndo(caseKey) || getLastUndoAction(caseKey);
+      if (!action || action.type !== 'reset_timer') return false;
+      const key = 'wid_waiting_workflow_' + String(caseKey);
+      clearWaitingTimerHandles(caseKey);
+      if (action.prevWorkflowRaw) {
+        localStorage.setItem(key, action.prevWorkflowRaw);
+        try {
+          const old = JSON.parse(action.prevWorkflowRaw);
+          scheduleWaitingTimeouts(old.id, caseKey, old.caseNo, thread, old.started, old.halfAt, old.closeAt);
+        } catch (_) {}
+      } else {
+        localStorage.removeItem(key);
+      }
+      removeTimerSystemMessages(caseKey, thread);
+      localStorage.removeItem('wid_last_timer_undo_' + String(caseKey));
+      const last = getLastUndoAction(caseKey);
+      if (last && last.type === 'reset_timer') localStorage.removeItem('wid_last_undo_' + String(caseKey));
+      statusLine.textContent = 'Timer reset undone';
+      return true;
+    }
+
+    function isTimerSystemMessage(m) {
+      const text = String((m && m.text) || '');
+      return !!(m && m.who === 'system' && (
+        text.includes('Waiting timer reset') ||
+        text.includes('Waiting on customer started') ||
+        text.includes('Reminder at 24 hours') ||
+        text.includes('auto-close target') ||
+        text.includes('24-hour reminder') ||
+        text.includes('48-hour close point reached') ||
+        text.includes('Auto-close point reached')
+      ));
+    }
+
+    function removeTimerSystemMessages(caseKey, thread) {
+      const local = getLocalThread(caseKey);
+      let removed = false;
+      for (let i = local.length - 1; i >= 0; i--) {
+        if (isTimerSystemMessage(local[i])) {
+          local.splice(i, 1);
+          removed = true;
+          break;
+        }
+      }
+      if (removed) saveLocalThread(caseKey, local);
+      if (thread) {
+        const systemBubbles = Array.from(thread.querySelectorAll('.bubble.system'));
+        const timerBubble = systemBubbles.reverse().find(b => isTimerSystemMessage({ who:'system', text:b.textContent || '' }));
+        if (timerBubble) timerBubble.remove();
+        else removeLastSystemBubble(thread);
+      }
+    }
+
+    function undoLastOperatorAction(btn) {
+      const card = btn.closest('.case');
+      const shell = card && card.querySelector('.texting-shell');
+      const thread = card && card.querySelector('.thread');
+      const caseKey = shell ? shell.dataset.caseKey : btn.dataset.id;
+      if (!caseKey) return;
+      if (undoTimerReset(caseKey, thread)) return;
+      const local = getLocalThread(caseKey);
+      for (let i = local.length - 1; i >= 0; i--) {
+        if (local[i] && local[i].who === 'operator') {
+          local.splice(i, 1);
+          saveLocalThread(caseKey, local);
+          removeLastOperatorBubble(thread);
+          const last = [...local].reverse().find(m => m && (m.text || m.imageData));
+          updateLastMessagePreview(caseKey, last ? (last.text || 'Picture attached') : '');
+          localStorage.removeItem('wid_last_undo_' + String(caseKey));
+          statusLine.textContent = 'Last operator message undone';
+          return;
+        }
+      }
+      statusLine.textContent = 'Nothing to undo for this case';
+    }
+
+    function removeLastOperatorBubble(thread) {
+      if (!thread) return;
+      const bubbles = Array.from(thread.querySelectorAll('.bubble.operator'));
+      const last = bubbles[bubbles.length - 1];
+      if (last) last.remove();
+    }
+
+    function removeLastSystemBubble(thread) {
+      if (!thread) return;
+      const bubbles = Array.from(thread.querySelectorAll('.bubble.system'));
+      const last = bubbles[bubbles.length - 1];
+      if (last) last.remove();
+    }
+
+    function openMessageImage(src) {
+      if (!src) return;
+      const old = document.querySelector('.message-image-modal');
+      if (old) old.remove();
+      const modal = document.createElement('div');
+      modal.className = 'message-image-modal';
+      modal.innerHTML = `<button class="close-image" type="button">Close</button><img src="${escapeAttr(src)}" alt="message picture" />`;
+      modal.onclick = () => modal.remove();
+      const btn = modal.querySelector('.close-image');
+      if (btn) btn.onclick = (event) => { event.stopPropagation(); modal.remove(); };
+      document.body.appendChild(modal);
+    }
+
+    function resizeOperatorImageFile(file, maxSide = 900, quality = 0.58) {
+      return new Promise((resolve) => {
+        if (!file || !file.type || !file.type.startsWith('image/')) return resolve(file);
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.onload = () => {
+          try {
+            let width = img.naturalWidth || img.width;
+            let height = img.naturalHeight || img.height;
+            const scale = Math.min(1, maxSide / Math.max(width, height));
+            width = Math.max(1, Math.round(width * scale));
+            height = Math.max(1, Math.round(height * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+              URL.revokeObjectURL(objectUrl);
+              if (!blob) return resolve(file);
+              const safeBase = String(file.name || 'picture').replace(/\.[^.]+$/, '') || 'picture';
+              resolve(new File([blob], safeBase + '.jpg', { type:'image/jpeg' }));
+            }, 'image/jpeg', quality);
+          } catch (err) {
+            URL.revokeObjectURL(objectUrl);
+            resolve(file);
+          }
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          resolve(file);
+        };
+        img.src = objectUrl;
+      });
+    }
+
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(reader.error || new Error('Could not read picture'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handlePictureInput(input) {
+      const files = Array.from(input.files || []).filter(file => /^image\//.test(file.type || '') || /\.(heic|heif|jpe?g|png|gif|webp)$/i.test(file.name || ''));
+      input.value = '';
+      if (!files.length) {
+        statusLine.textContent = 'Only image files can be attached here';
+        return;
+      }
+      const caseKey = input.dataset.caseKey;
+      const thread = document.getElementById(input.dataset.threadTarget);
+      let added = 0;
+      for (const originalFile of files) {
+        try {
+          const file = await resizeOperatorImageFile(originalFile);
+          const dataUrl = await fileToDataUrl(file);
+          if (!dataUrl) throw new Error('Empty picture data');
+          const now = new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
+          const msg = { who:'operator', text:'', imageData:dataUrl, imageName:originalFile.name || file.name || 'picture', at:now };
+          const local = getLocalThread(caseKey);
+          local.push(msg);
+          try {
+            saveLocalThread(caseKey, local);
+          } catch (storeErr) {
+            local.pop();
+            // Full-size iPhone library photos can exceed localStorage even after compression.
+            // Keep the selected photo visible for this open page session instead of failing the whole attach.
+            const sessionUrl = URL.createObjectURL(originalFile);
+            msg.imageData = sessionUrl;
+            msg.text = 'Photo attached locally for this session';
+          }
+          updateLastMessagePreview(caseKey, files.length > 1 ? `${files.length} pictures attached` : 'Picture attached');
+          setLastUndoAction(caseKey, { type:'message', imageName:msg.imageName, at:now });
+          if (thread) {
+            thread.insertAdjacentHTML('beforeend', renderMessageBubble(msg));
+            thread.scrollTop = thread.scrollHeight;
+            const imgs = thread.querySelectorAll('[data-expand-image]');
+            const lastImg = imgs[imgs.length - 1];
+            if (lastImg) lastImg.onclick = (event) => { event.preventDefault(); event.stopPropagation(); openMessageImage(lastImg.dataset.expandImage || lastImg.src); };
+          }
+          added += 1;
+        } catch (err) {
+          console.warn('Operator picture attach failed', err);
+          statusLine.textContent = err.message || 'Could not read one or more pictures';
+        }
+      }
+      if (added) statusLine.textContent = added > 1 ? `${added} pictures added to local message thread` : 'Picture added to local message thread';
+    }
+
+
+    async function handleStatusButton(btn) {
+      if (!btn || btn.dataset.statusBusy === '1') return;
+      const id = btn.dataset.id;
+      const status = btn.dataset.actionStatus;
+      const caseNo = btn.dataset.caseNo ? ('#' + btn.dataset.caseNo) : 'this case';
+      if (!id || !status) return;
+
+      const messages = {
+        closed: `Close ${caseNo}? This will move it to the Closed list.`,
+        archived: `Archive ${caseNo}? This will remove it from Closed and move it to Archived.`,
+        waiting_on_customer: `Mark ${caseNo} as waiting on customer? This starts the 48-hour autoclose countdown.`,
+        waiting_on_me: `Switch ${caseNo} back to waiting on me? This clears any active autoclose countdown.`
+      };
+      const prompt = messages[status] || `Change ${caseNo} to ${effectiveStatusLabel(status)}?`;
+      if (!window.confirm(prompt)) return;
+
+      btn.dataset.statusBusy = '1';
+      btn.disabled = true;
+      try {
+        const card = btn.closest('.case');
+        const shell = card && card.querySelector('.texting-shell');
+        const thread = card && card.querySelector('.thread');
+        const caseKey = shell ? shell.dataset.caseKey : id;
+
+        if (status === 'waiting_on_customer') {
+          startWaitingWorkflowLocalOnly({ id, caseKey, caseNo:btn.dataset.caseNo, thread });
+        } else if (status === 'waiting_on_me') {
+          clearWaitingWorkflow(caseKey);
+        } else if (status === 'closed' || status === 'archived') {
+          clearWaitingWorkflow(caseKey);
+        }
+
+        await updateStatus(id, status);
+      } finally {
+        btn.dataset.statusBusy = '0';
+        btn.disabled = false;
+      }
+    }
+
+    function refreshTimerSummaryInCard(caseKey) {
+      const card = document.querySelector(`[data-case-key="${cssEscape(caseKey)}"]`);
+      if (!card) return;
+      const summaryBox = card.querySelector('.details .box');
+      if (!summaryBox) return;
+      const old = summaryBox.querySelector('.timer-summary');
+      if (old) old.remove();
+      const html = renderWaitingTimerSummary(caseKey);
+      if (html) summaryBox.insertAdjacentHTML('beforeend', html.replace(/^\n\n/, ''));
+    }
+
+    function clearWaitingWorkflow(caseKey) {
+      const key = 'wid_waiting_workflow_' + String(caseKey || '');
+      clearWaitingTimerHandles(caseKey);
+      localStorage.removeItem(key);
+      refreshTimerSummaryInCard(caseKey);
+      updateAutocloseUi(caseKey);
+    }
+
+
+    function startWaitingWorkflowLocalOnly({ id, caseKey, caseNo, thread, reset = false, silent = false }) {
+      if (!caseKey) return;
+      const key = 'wid_waiting_workflow_' + String(caseKey);
+      const prevWorkflowRaw = localStorage.getItem(key);
+      clearWaitingWorkflow(caseKey);
+      const started = Date.now();
+      const halfMs = 24 * 60 * 60 * 1000;
+      const closeMs = 48 * 60 * 60 * 1000;
+      const halfAt = started + halfMs;
+      const closeAt = started + closeMs;
+      const label = caseNo ? '#' + caseNo : 'this case';
+      localStorage.setItem(key, JSON.stringify({ id, caseKey, caseNo, started, halfAt, closeAt, source:'waiting_on_customer_button' }));
+      if (reset) {
+        const undo = { type:'reset_timer', prevWorkflowRaw };
+        setLastTimerUndo(caseKey, undo);
+        if (!silent) setLastUndoAction(caseKey, undo);
+      }
+      refreshTimerSummaryInCard(caseKey);
+      updateAutocloseUi(caseKey);
+      if (!silent) statusLine.textContent = `${reset ? 'Autoclose reset' : 'Autoclose started'} · ${label}`;
+      scheduleWaitingTimeouts(id, caseKey, caseNo, thread, started, halfAt, closeAt);
+    }
+
+    async function scheduleWaitingWorkflow({ id, caseKey, caseNo, thread, reset = false, silent = false }) {
+      // Kept only for older calls. The visible button now clears timers;
+      // changing status to Waiting on customer starts a fresh timer.
+      startWaitingWorkflowLocalOnly({ id, caseKey, caseNo, thread, reset, silent });
+    }
+
+    function scheduleWaitingTimeouts(id, caseKey, caseNo, thread, started, halfAt, closeAt) {
+      if (!caseKey || !started) return;
+      clearWaitingTimerHandles(caseKey);
+      const key = 'wid_waiting_workflow_' + String(caseKey);
+      const label = caseNo ? '#' + caseNo : 'this case';
+      const msUntilHalf = Math.max(0, Number(halfAt || 0) - Date.now());
+      const msUntilClose = Math.max(0, Number(closeAt || 0) - Date.now());
+      const halfTimer = window.setTimeout(() => {
+        const saved = localStorage.getItem(key);
+        if (!saved) return;
+        try { if (JSON.parse(saved).started !== started) return; } catch (_) { return; }
+        appendSystemMessage(caseKey, thread, `24-hour reminder for ${label}: no recorded customer response yet. 48-hour close point is ${new Date(Number(closeAt)).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' })}.`);
+        notifyOperator(`Follow-up reminder: ${label}`, '24 hours have passed without a recorded response.');
+      }, msUntilHalf);
+      const closeTimer = window.setTimeout(() => {
+        const saved = localStorage.getItem(key);
+        if (!saved) return;
+        try { if (JSON.parse(saved).started !== started) return; } catch (_) { return; }
+        appendSystemMessage(caseKey, thread, `48-hour close point reached for ${label}: no recorded customer response. Closing now while this page is open.`);
+        notifyOperator(`Auto-close point: ${label}`, '48 hours passed. The page will try to close the case now.');
+        if (id) updateStatus(id, 'closed');
+      }, msUntilClose);
+      rememberWaitingTimerHandle(caseKey, halfTimer);
+      rememberWaitingTimerHandle(caseKey, closeTimer);
+    }
+
+
+    function closedArchiveDate(c) {
+      const raw = c.closed_at || c.updated_at || c.created_at || '';
+      const t = raw ? new Date(raw).getTime() : 0;
+      return Number.isFinite(t) ? t : 0;
+    }
+
+    function closedOverOneWeek(c) {
+      if (!isClosed(c)) return false;
+      const t = closedArchiveDate(c);
+      if (!t) return false;
+      return Date.now() - t >= 7 * 24 * 60 * 60 * 1000;
+    }
+
+    async function updateStatusQuiet(id, status) {
+      const res = await fetch('/.netlify/functions/update-consult-status', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', ...pinHeader() },
+        body: JSON.stringify({ id, status })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Archive failed');
+      return data;
+    }
+
+    async function archiveOldClosedCases(options = {}) {
+      const manual = options.manual !== false;
+      const items = Array.isArray(window.__widAllConsults) ? window.__widAllConsults : [];
+      const due = items.filter(c => c && c.id && closedOverOneWeek(c));
+      if (!due.length) {
+        if (manual) statusLine.textContent = 'No closed cases older than 1 week to archive';
+        return false;
+      }
+      if (manual && !window.confirm(`Archive ${due.length} closed case(s) older than 1 week?`)) return false;
+      window.__widAutoArchiveRunning = true;
+      statusLine.textContent = `Archiving ${due.length} old closed case(s)...`;
+      try {
+        for (const c of due) {
+          clearWaitingWorkflow(getCaseKey(c, 0));
+          await updateStatusQuiet(c.id, 'archived');
+        }
+        statusLine.textContent = `Archived ${due.length} old closed case(s)`;
+        if (!options.skipReload) await loadConsults();
+        return true;
+      } catch (err) {
+        list.innerHTML = `<div class="error">${escapeHtml(err.message || String(err))}</div>`;
+        statusLine.textContent = 'Archive failed';
+        return false;
+      } finally {
+        window.__widAutoArchiveRunning = false;
+      }
+    }
+
+    async function updateStatus(id, status) {
+      statusLine.textContent = 'Updating...';
+      const buttons = Array.from(document.querySelectorAll('[data-action-status]'));
+      buttons.forEach(btn => btn.disabled = true);
+      const wasFocused = document.body.classList.contains('focus-mode');
+      if (wasFocused) exitFocusMode({ restoreScroll:false });
+      try {
+        const res = await fetch('/.netlify/functions/update-consult-status', {
+          method: 'POST', headers: { 'Content-Type':'application/json', ...pinHeader() }, body: JSON.stringify({ id, status })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Update failed');
+        await loadConsults();
+        window.scrollTo({ top:0, behavior:'smooth' });
+      } catch (err) {
+        list.innerHTML = `<div class="error">${escapeHtml(err.message || String(err))}</div>`;
+        statusLine.textContent = 'Update failed';
+      } finally {
+        buttons.forEach(btn => btn.disabled = false);
+      }
+    }
+
+    function pinHeader() { const pin = pinInput.value || ''; return pin ? { 'x-operator-pin': pin } : {}; }
+    function escapeHtml(v) { return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+    function escapeAttr(v) { return escapeHtml(v); }
+
+
+    function scrubBrokenWaitingWorkflows() {
+      const now = Date.now();
+      const prefix = 'wid_waiting_workflow_';
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith(prefix)) continue;
+        try {
+          const wf = JSON.parse(localStorage.getItem(key) || 'null');
+          const closeAt = Number(wf && wf.closeAt);
+          const started = Number(wf && wf.started);
+          if (!wf || !closeAt || !started || closeAt < now - 6 * 60 * 60 * 1000) {
+            localStorage.removeItem(key);
+          }
+        } catch (_) {
+          localStorage.removeItem(key);
+        }
+      }
+    }
+
+    installViewportSizing();
+    scrubBrokenWaitingWorkflows();
+    syncAutoArchiveButton();
+    loadConsults();
+  </script>
+</body>
+</html>

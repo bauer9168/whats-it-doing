@@ -1,0 +1,65 @@
+What's it Doing? — v81 Deploy-Ready Status
+Base used: current uploaded deploy files plus v80 function scaffold.
+
+Purpose of this pass
+- Verify the current deploy folder and make a cleaner Netlify-ready package.
+- Remove test-only files from deploy.
+- Add the missing operator functions required by operator.html.
+- Keep the paid checkout/customer-thread flow.
+
+File naming / deploy structure
+- index(4).html was renamed to index.html for deployment.
+- customer-thread.html stays customer-thread.html.
+- operator.html stays operator.html.
+- netlify.toml stays netlify.toml at the site root.
+- supabase_thread_schema.sql stays at the root for you to run manually in Supabase; Netlify does not execute it.
+- customer-thread.html.jscheck.js is only a syntax-test helper and should not be deployed.
+- package.json is now included at the root. It does not install dependencies; it only identifies the site and pins Node >=18.
+
+Netlify functions included and needed
+Required by public/customer flow:
+- create-checkout-session.js
+- get-customer-thread.js
+- post-customer-message.js
+- stripe-webhook.js
+- _wid-shared.js
+
+Required by operator.html:
+- list-consults.js
+- update-consult-status.js
+- post-operator-message.js
+
+Function notes
+- The v80 package did not include list-consults.js or update-consult-status.js even though operator.html calls them.
+- v81 adds those functions.
+- v81 also adds post-operator-message.js so operator replies can be written to the same paid customer thread.
+- Operator messages still retain the old local/copy fallback if the server save fails during testing.
+
+Customer checkout update
+- The v80 customer page prepared full base64 uploads before calling create-checkout-session even though uploads were not wired server-side yet.
+- v81 stops sending the full upload/voice data to checkout to avoid large request failures.
+- It only sends upload_count / has_voice_note flags for now.
+- Full upload storage should be wired as the next separate step.
+
+Database support
+- supabase_thread_schema.sql was expanded to add the minimal paid-thread consult fields and consult_messages table.
+- Run it in Supabase SQL editor before testing paid threads.
+
+Required Netlify environment variables
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
+- SUPABASE_URL
+- SUPABASE_SERVICE_ROLE_KEY
+
+Recommended Netlify environment variable
+- OPERATOR_PIN
+
+Optional email thread-link variables
+- RESEND_API_KEY
+- FROM_EMAIL
+
+Validation
+- index.html inline JavaScript passed node --check.
+- customer-thread.html inline JavaScript passed node --check.
+- operator.html inline JavaScript passed node --check.
+- All Netlify function JavaScript files passed node --check.

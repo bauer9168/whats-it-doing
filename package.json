@@ -1,0 +1,9 @@
+{
+  "name": "whats-it-doing-deploy",
+  "version": "0.81.0",
+  "private": true,
+  "description": "What's it Doing? Netlify static pages and serverless functions.",
+  "engines": {
+    "node": ">=18"
+  }
+}
