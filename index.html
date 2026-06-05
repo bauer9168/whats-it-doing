@@ -1,868 +1,742 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="WID Operator" />
-  <meta name="theme-color" content="#244fbe" />
-  <meta name="msapplication-navbutton-color" content="#244fbe" />
+  <meta name="apple-mobile-web-app-title" content="What's it Doing?" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>What's it Doing? — Operator v77-safe</title>
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#244fbe" />
+  <title>What's it Doing? — Customer Shell V17 Blue Border Safe</title>
   <style>
     :root {
-      --bg:#f7faff;
-      --bg2:#e8eef8;
-      --text:#0e0f12;
-      --muted:#5f6470;
-      --border:#d4dce8;
-      --dash:#a9b5c8;
-      --blue:#244fbe;
-      --ok:#166534;
-      --warn:#9a5b00;
-      --danger:#9f1239;
-      --priority:#b91c1c;
-      --priority-bg:#fff1f2;
-      --extended:#15803d;
-      --extended-bg:#f0fdf4;
-      --line:#244fbe;
+      --bg-top: #f5f8fc;
+      --bg-bottom: #e9eef7;
+      --card: rgba(255, 255, 255, 0.84);
+      --card-strong: rgba(255, 255, 255, 0.95);
+      --text: #111114;
+      --muted: #5f6470;
+      --border: rgba(148, 163, 184, 0.28);
+      --soft: #edf2f8;
+      --soft-2: #e7edf7;
+      --dark: #111114;
+      --ok: #166534;
+      --accent: #2d5bff;
+      --accent-dark: #173ea9;
+      --yellow: #fff7d4;
+      --yellow-border: #e0cf73;
+      --danger-soft: #ffe7e7;
+      --danger-border: #efb1b1;
+      --radius-xl: 28px;
+      --radius-lg: 18px;
+      --shell-shadow: 0 0 0 1px rgba(17,24,39,.06), 0 18px 40px rgba(15, 23, 42, 0.12);
+      --card-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
     }
-    * { box-sizing:border-box; }
-    html { margin:0; min-height:100%; background:var(--blue); overflow-x:hidden; }
-    body { margin:0; min-height:100%; width:100%; max-width:100vw; overflow-x:hidden; }
-    body {
-      background:linear-gradient(180deg,var(--bg),var(--bg2));
-      color:var(--text);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-      -webkit-text-size-adjust:120%;
-    }
-    .app {
-      width:100%;
-      max-width:900px;
-      min-width:0;
-      margin:0 auto;
-      min-height:100dvh;
-      padding:12px 8px calc(72px + env(safe-area-inset-bottom, 0px));
-    }
-    .top {
-      margin:0 0 10px;
-      padding:2px 2px 10px;
-      background:transparent;
-      border-bottom:2px dotted var(--dash);
-    }
-    h1 { margin:0; font-size:25px; letter-spacing:-.04em; line-height:1.05; }
-    .top-title-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px; }
-    .top-title-row h1 { min-width:0; }
-    .sub { color:var(--muted); font-size:13px; margin-top:2px; line-height:1.25; }
-    .controls { display:block; margin-top:6px; }
-    .filter-refresh-row { display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:6px; align-items:center; width:100%; max-width:100%; overflow:hidden; }
-    .filter-refresh-row select,
-    .filter-refresh-row button { min-height:36px; height:36px; padding-top:6px; padding-bottom:6px; line-height:1.1; }
-    .filter-refresh-row select { appearance:auto; -webkit-appearance:menulist; min-width:0; width:100%; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
-    .pin-row { display:block; margin-top:6px; }
-    .pin-row input { width:100%; }
-    .auto-archive-toggle { font-size:11px !important; padding:5px 7px !important; border-radius:999px !important; min-height:0 !important; white-space:nowrap; flex:0 0 auto; }
-    .queue-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:9px; }
-    .queue-tile { border:1px solid var(--border); border-radius:14px; background:rgba(255,255,255,.64); padding:7px 8px; min-height:46px; }
-    .queue-tile .k { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:900; }
-    .queue-tile .v { margin-top:2px; font-size:17px; line-height:1; color:var(--blue); font-weight:1000; }
-    .queue-tile.priority .v { color:var(--priority); }
-    .queue-tile.extended .v { color:var(--extended); }
-    .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-    input, select, button, textarea {
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:10px 12px;
-      font-size:16px;
-      font-family:inherit;
-      max-width:100%;
-    }
-    select { min-width:0; }
-    input { min-width:150px; flex:1; }
-    button { background:#fff; cursor:pointer; font-weight:700; }
-    button.dark { background:linear-gradient(180deg,#244fbe,#173a93); color:#fff; border-color:#173a93; }
-    button.small { font-size:14px; padding:8px 10px; border-radius:12px; }
-    button.close-case { border-color:#fecdd3; color:var(--danger); background:#fff7f8; }
-    button.reopen-case { border-color:#bbf7d0; color:var(--ok); background:#f0fdf4; }
-    .queue { display:block; }
-    .case {
-      position:relative;
-      background:transparent;
-      border:0;
-      border-radius:0;
-      padding:13px 2px 15px;
-      box-shadow:none;
-      border-bottom:2px dotted var(--dash);
-      cursor:default;
-      touch-action:manipulation;
-    }
-    .case:first-child { border-top:2px dotted var(--dash); }
-    .case.extended {
-      background:linear-gradient(90deg, rgba(240,253,244,.92), transparent 74%);
-      margin-left:-8px;
-      margin-right:-8px;
-      padding-left:8px;
-      padding-right:8px;
-    }
-    .case.waiting-me {
-      background:linear-gradient(90deg, rgba(255,241,242,.88), transparent 74%);
-      margin-left:-8px;
-      margin-right:-8px;
-      padding-left:8px;
-      padding-right:8px;
-    }
-    .case-head { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:flex-start; }
-    .left-lines { min-width:0; padding-right:4px; }
-    .customer-name,
-    .vehicle-line {
-      font-size:21px;
-      font-weight:900;
-      line-height:1.08;
-      letter-spacing:-.025em;
-      overflow-wrap:anywhere;
-    }
-    .vehicle-line { margin-top:3px; }
-    .symptom-line {
-      color:#171a20;
-      font-size:20px;
-      font-weight:900;
-      line-height:1.12;
-      margin-top:8px;
-      letter-spacing:-.025em;
-      overflow-wrap:anywhere;
-    }
-    .meta { color:var(--muted); font-size:12px; line-height:1.35; margin-top:6px; }
-    .right-stack {
-      display:flex;
-      flex-direction:column;
-      align-items:flex-end;
-      gap:7px;
-      min-width:78px;
-    }
-    .case-number {
-      align-self:flex-end;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-width:76px;
-      padding:7px 8px 6px;
-      border:3px solid var(--blue);
-      border-radius:16px 16px 16px 4px;
-      background:#fff;
-      box-shadow:3px 3px 0 var(--blue);
-      color:var(--blue);
-      font-size:23px;
-      font-weight:1000;
-      letter-spacing:.02em;
-      line-height:1;
-      transform:rotate(1deg);
-    }
-    .case.waiting-me .case-number { border-color:var(--blue); color:var(--blue); box-shadow:3px 3px 0 var(--blue); }
-    body:not(.focus-mode) .case.waiting-me .status-label { color:var(--priority); font-weight:1000; }
-    .queue-badge {
-      display:inline-flex;
-      align-items:center;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.72);
-      border-radius:999px;
-      padding:5px 8px;
-      font-size:12px;
-      color:var(--blue);
-      white-space:nowrap;
-      line-height:1.1;
-      font-weight:850;
-    }
-    .queue-badge.priority { color:var(--priority); border-color:#fecdd3; background:var(--priority-bg); }
-    .queue-badge.extended { color:var(--extended); border-color:#bbf7d0; background:var(--extended-bg); }
-    .case.extended .case-number { border-color:var(--extended); color:var(--extended); box-shadow:3px 3px 0 var(--extended); }
-    .case.extended.waiting-me .status-label,
-    .case.extended.waiting-me .meta,
-    body.focus-mode .case.extended.waiting-me .status-label { color:var(--priority) !important; font-weight:1000 !important; }
-    .case.waiting-me .status-label,
-    .case.waiting-me .meta,
-    body.focus-mode .case.waiting-me .status-label,
-    body.focus-mode .case.waiting-me .meta { color:var(--priority) !important; font-weight:1000 !important; }
-    body.focus-mode .case.focused .symptom-line { font-size:16px !important; line-height:1.18 !important; }
-    body.focus-mode .case.focused .meta { font-size:11px !important; line-height:1.25 !important; }
-    .timer-summary {
-      margin-top:8px;
-      border:1px solid #fed7aa;
-      background:#fff7ed;
-      color:#7c4a03;
-      border-radius:13px;
-      padding:8px 10px;
-      font-size:12px;
-      line-height:1.32;
-      font-weight:800;
-      white-space:normal;
-    }
-    .autoclose-thread-note {
-      display:none;
-      border-top:1px solid rgba(148,163,184,.20);
-      background:#fff;
-      color:#9aa3af;
-      font-size:9.5px;
-      line-height:1.15;
-      padding:3px 9px 2px;
-      font-weight:700;
-      text-align:right;
-      letter-spacing:.01em;
-    }
-    .autoclose-thread-note.active { display:block; }
-    .autoclose-countdown { font-weight:1000; color:#7c4a03; }
-    .icons { display:flex; gap:7px; justify-content:flex-end; flex-wrap:wrap; margin-top:2px; }
-    .icon {
-      min-width:34px;
-      height:34px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      border:2px dashed var(--dash);
-      border-radius:999px;
-      background:rgba(255,255,255,.54);
-      color:#293241;
-      font-size:16px;
-      font-weight:900;
-      cursor:pointer;
-      user-select:none;
-    }
-    .icon.on { border-style:solid; background:#fff; }
-    .case { cursor:pointer; }
-    .case:active { transform:translateY(1px); }
-    .message-panel { margin-top:10px; display:grid; gap:8px; }
-    textarea.replybox { width:100%; min-height:86px; resize:vertical; border:1px solid var(--border); border-radius:14px; padding:10px 12px; font:inherit; font-size:16px; background:#fff; color:var(--text); }
-    .message-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-    .message-actions button { font-size:13px; padding:7px 10px; border-radius:11px; }
-    .copy-btn { border-color:#bcd0ff; color:#fff; background:linear-gradient(180deg,#244fbe,#173a93); }
-    .workflow-actions { margin:12px 0 10px; padding:10px 0 0; border-top:1px dotted var(--dash); display:grid; grid-template-columns:1fr 1fr; gap:7px; align-items:stretch; }
-    .workflow-actions button { font-size:13px; padding:8px 9px; border-radius:11px; opacity:.96; min-height:38px; }
-    .workflow-actions .waiting-btn { color:#7c4a03; border-color:#fed7aa; background:#fff7ed; grid-column:2; grid-row:1; }
-    .workflow-actions .reset-btn { color:#334155; border-color:#cbd5e1; background:#f8fafc; grid-column:1; grid-row:2; }
-    .workflow-actions .undo-btn { color:#334155; border-color:#cbd5e1; background:#f8fafc; grid-column:2; grid-row:2; }
-    .workflow-actions .close-case, .workflow-actions .reopen-case { grid-column:1; grid-row:1; }
-    .workflow-actions .archive-btn { grid-column:1 / -1; grid-row:3; }
-    .operator-action-buttons { justify-content:flex-end; gap:6px; }
-    .operator-action-buttons button { white-space:nowrap; }
-    .archive-btn { color:#475569; border-color:#cbd5e1; background:#f8fafc; }
 
-    .timer-note { margin-top:6px; color:var(--muted); font-size:11px; text-align:right; width:100%; }
-    .details { display:none; margin-top:12px; }
-    .details.open { display:block; }
-    .box {
-      background:rgba(255,255,255,.7);
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:10px 12px;
-      font-size:15px;
-      line-height:1.42;
-      white-space:pre-wrap;
-      overflow-wrap:anywhere;
-    }
-    .label {
-      color:var(--muted);
-      font-size:11px;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-      font-weight:900;
-      margin:10px 0 5px;
-    }
-    .pathline { display:block; margin-top:3px; color:var(--muted); font-size:12px; font-weight:600; word-break:break-all; }
-    audio { width:100%; margin-top:6px; }
-    img.thumb { width:100%; max-height:380px; object-fit:contain; background:#fff; border:1px solid var(--border); border-radius:14px; margin-top:8px; cursor:zoom-in; }
-    a.filelink { display:block; margin-top:8px; color:var(--blue); font-weight:750; text-decoration:none; word-break:break-word; }
-    .muted { color:var(--muted); }
-    .error { color:#9f1239; background:#fff1f2; border:1px solid #fecdd3; border-radius:14px; padding:10px 12px; margin-top:10px; font-size:14px; }
-    .empty { text-align:center; color:var(--muted); padding:36px 10px; }
-
-    .message-tabs { display:flex; gap:7px; margin:2px 0 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
-    .message-tab { flex:0 0 auto; border:1px solid var(--border); background:#fff; color:var(--muted); border-radius:999px; padding:7px 10px; font-size:13px; font-weight:900; }
-    .message-tab.active { background:var(--blue); border-color:var(--blue); color:#fff; }
-    .texting-shell { margin-top:10px; border:1px solid var(--border); border-radius:18px; background:rgba(255,255,255,.76); overflow:hidden; }
-    .texting-head { padding:9px 11px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; gap:8px; align-items:center; }
-    .texting-title { font-size:14px; font-weight:1000; color:var(--blue); }
-    .texting-sub { font-size:11px; color:var(--muted); font-weight:750; text-align:right; }
-    .thread { padding:12px 10px 10px; max-height:52dvh; overflow:auto; scroll-padding-bottom:110px; background:linear-gradient(180deg,#fff,rgba(248,251,255,.94)); }
-    .bubble { max-width:88%; padding:10px 12px; border-radius:18px; margin:0 0 8px; font-size:15px; line-height:1.35; white-space:pre-wrap; overflow-wrap:anywhere; }
-    .bubble.customer { background:#f1f5f9; border:1px solid #dbe3ef; border-bottom-left-radius:6px; color:#111827; }
-    .bubble.operator { background:linear-gradient(180deg,#244fbe,#173a93); color:#fff; margin-left:auto; border-bottom-right-radius:6px; }
-    .bubble.system { margin-left:auto; margin-right:auto; max-width:96%; background:#fff; border:1px dashed var(--dash); color:var(--muted); font-size:12px; text-align:center; }
-    .bubble.info { margin-left:auto; margin-right:auto; max-width:92%; background:#f8fafc; border:1px solid #e5e7eb; color:#7a8493; font-size:11px; line-height:1.22; text-align:center; padding:7px 9px; }
-    .bubble-meta { display:block; margin-top:4px; font-size:10px; opacity:.72; font-weight:750; }
-    .bubble-image-thumb { display:block; width:100%; max-width:240px; max-height:180px; object-fit:cover; border-radius:13px; margin-top:7px; border:1px solid rgba(255,255,255,.55); background:#fff; cursor:zoom-in; }
-    .bubble.customer .bubble-image-thumb, .bubble.system .bubble-image-thumb { border-color:var(--border); }
-    .message-image-modal { position:fixed; inset:0; z-index:90; background:rgba(15,23,42,.92); display:flex; align-items:center; justify-content:center; padding:14px; }
-    .message-image-modal img { max-width:100%; max-height:100%; object-fit:contain; border-radius:12px; background:#fff; }
-    .message-image-modal .close-image { position:fixed; top:10px; right:10px; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12); color:#fff; border-radius:999px; padding:9px 12px; font-size:13px; font-weight:900; }
-    .quick-replies {
-      display:grid !important;
-      grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
-      grid-template-rows:repeat(2, 18px) !important;
-      grid-auto-rows:18px !important;
-      gap:2px !important;
-      padding:3px 7px 2px !important;
-      background:#fff;
-      border-top:1px solid var(--border);
-      touch-action:pan-y;
-      max-height:41px !important;
-      min-height:0 !important;
-      overflow:hidden;
-    }
-    .quick-replies button {
-      width:100%;
-      min-width:0;
-      font-size:8.5px !important;
-      padding:1px 3px !important;
-      border-radius:999px;
-      line-height:1 !important;
-      min-height:0 !important;
-      height:18px !important;
-      max-height:18px !important;
-      white-space:nowrap !important;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      touch-action:pan-y;
-    }
-    .last-message-preview { margin-top:5px; color:var(--muted); font-size:12px; line-height:1.22; font-weight:800; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-    body.focus-mode .case.focused .last-message-preview { display:none !important; }
-    .phone-compose { display:grid; grid-template-columns:minmax(0,1fr) 72px; gap:7px; padding:8px 9px 9px; background:#fff; align-items:stretch; }
-    .phone-compose textarea { min-height:54px; max-height:132px; width:100%; min-width:0; resize:none; border-radius:16px; font-size:16px; line-height:1.28; padding:10px 11px; overflow:auto; }
-    .phone-compose textarea:focus { min-height:82px; }
-    .phone-compose textarea.is-growing { transition:height .08s ease; }
-    .phone-buttons { display:flex; flex-direction:column; gap:5px; min-width:0; }
-    .phone-buttons button { padding:7px 6px; font-size:12px; border-radius:11px; width:100%; touch-action:manipulation; }
-    .phone-buttons .photo-btn { padding:4px 5px; min-height:24px; font-size:11px; line-height:1; border-radius:999px; color:var(--blue); border-color:#bcd0ff; background:#f8fbff; }
-    .phone-buttons .send { background:linear-gradient(180deg,#244fbe,#173a93); color:#fff; border-color:#173a93; }
-    .case-detail-grid { margin-top:12px; }
-
-    body.focus-mode { overflow:hidden; overscroll-behavior:none; position:fixed; left:0; right:0; width:100%; max-width:100vw; background:var(--blue); }
-    body.focus-mode .top { display:none; }
-    body.focus-mode .app { max-width:900px; height:100dvh; overflow:hidden; overscroll-behavior:none; padding:0 8px env(safe-area-inset-bottom, 0px); }
-    body.focus-mode .case:not(.focused) { display:none; }
-    body.focus-mode .case.focused {
-      position:fixed;
-      left:0;
-      right:0;
-      top:0;
-      width:100vw;
-      max-width:100vw;
-      bottom:0;
-      height:auto;
-      z-index:40;
-      overflow:auto;
-      overscroll-behavior:none;
-      touch-action:pan-y;
-      -webkit-overflow-scrolling:auto;
-      border-top:0;
-      border-bottom:0;
-      padding:10px 8px 0;
-      background:linear-gradient(180deg,#f7faff,#eef4ff);
-    }
-    body.focus-mode.keyboard-active .case.focused.keyboard-space {
-      padding-bottom:calc(46dvh + env(safe-area-inset-bottom, 0px));
-    }
-    body.focus-mode .case.focused .details { display:block; }
-    body.focus-mode .case.focused .details::after { content:''; display:block; height:0; }
-    body.focus-mode .case.focused .texting-shell { margin-bottom:0; border-bottom-left-radius:0; border-bottom-right-radius:0; }
-    body.focus-mode .case.focused .phone-compose { padding-bottom:0 !important; }
-    body.focus-mode .case.focused .phone-buttons { padding-bottom:0 !important; }
-    body.focus-mode .case.focused .workflow-actions { margin-bottom:6px; }
-    .workflow-actions .undo-btn { display:block !important; visibility:visible !important; opacity:1 !important; }
-
-    .call-btn { display:inline-flex; align-items:center; justify-content:center; margin-top:8px; width:100%; text-decoration:none; border:1px solid #bcd0ff; color:#fff; background:linear-gradient(180deg,#244fbe,#173a93); border-radius:13px; padding:10px 12px; font-size:15px; font-weight:900; }
-    .uploads-list { display:grid; gap:6px; margin-top:6px; }
-    .upload-row { display:flex; gap:8px; align-items:center; justify-content:flex-start; padding:0; background:transparent; border:0; }
-    .upload-row a { color:var(--blue); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:900; text-decoration:none; }
-    .bubble { cursor:pointer; }
-    .texting-shell { overscroll-behavior:contain; }
-    .texting-shell.collapsed .thread,
-    .texting-shell.collapsed .quick-replies,
-    .texting-shell.collapsed .autoclose-thread-note,
-    .texting-shell.collapsed .phone-compose { display:none; }
-    .texting-shell.collapsed .texting-head { border-bottom:0; }
-    body.focus-mode .texting-shell .thread { max-height:62dvh; }
-    body.focus-mode .texting-shell .bubble { max-width:96%; font-size:17px; line-height:1.38; }
-    .texting-shell.message-zoom {
-      position:fixed;
-      left:0;
-      right:0;
-      top:0;
-      width:100vw;
-      max-width:100vw;
-      bottom:0;
-      height:calc(var(--vvh, 100dvh) - env(safe-area-inset-bottom, 0px));
-      z-index:60;
-      background:#fff;
-      box-shadow:0 18px 60px rgba(15,23,42,.25);
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-      overscroll-behavior:none;
-      touch-action:pan-y;
-    }
-    .texting-shell.message-zoom .texting-head { flex:0 0 auto; }
-    .texting-shell.message-zoom .thread { flex:1 1 auto; max-height:none; min-height:0; scroll-padding-bottom:18px; overscroll-behavior:none; }
-    .texting-shell.message-zoom .quick-replies,
-    .texting-shell.message-zoom .phone-compose { flex:0 0 auto; }
-
-
-
-    /* v58 hard overrides: keep these late so older mobile rules cannot win. */
-    .quick-replies.wid-v58-quick {
-      display:grid !important;
-      grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
-      grid-template-rows:repeat(2, 20px) !important;
-      grid-auto-rows:0 !important;
-      gap:3px !important;
-      padding:4px 6px !important;
-      max-height:49px !important;
-      min-height:49px !important;
-      height:49px !important;
-      overflow:hidden !important;
-      align-content:start !important;
-    }
-    .quick-replies.wid-v58-quick button {
-      display:block !important;
-      height:20px !important;
-      min-height:20px !important;
-      max-height:20px !important;
-      padding:2px 4px !important;
-      font-size:9px !important;
-      line-height:1 !important;
-      white-space:nowrap !important;
-      overflow:hidden !important;
-      text-overflow:clip !important;
-    }
-    .workflow-actions.wid-v58-workflow {
-      display:grid !important;
-      grid-template-columns:1fr 1fr !important;
-      grid-template-areas:
-        "close waiting"
-        "reset undo"
-        "archive archive" !important;
-      gap:7px !important;
-    }
-    .workflow-actions.wid-v58-workflow .close-case,
-    .workflow-actions.wid-v58-workflow .reopen-case { grid-area:close !important; }
-    .workflow-actions.wid-v58-workflow .waiting-btn { grid-area:waiting !important; }
-    .workflow-actions.wid-v58-workflow .archive-btn { grid-area:archive !important; }
-    .workflow-actions.wid-v58-workflow .reset-btn { grid-area:reset !important; }
-    .workflow-actions.wid-v58-workflow .undo-btn {
-      grid-area:undo !important;
-      display:flex !important;
-      align-items:center !important;
-      justify-content:center !important;
-      visibility:visible !important;
-      opacity:1 !important;
-      min-height:40px !important;
-      background:#f8fafc !important;
-      border:2px solid #cbd5e1 !important;
-      color:#111827 !important;
-      font-weight:1000 !important;
-      z-index:2 !important;
-      position:relative !important;
-    }
-    .phone-buttons .photo-btn.wid-v58-photo {
-      display:block !important;
-      visibility:visible !important;
-      opacity:1 !important;
-      min-height:28px !important;
-      padding:5px 5px !important;
-      font-size:12px !important;
-      font-weight:1000 !important;
-      border:2px solid #bcd0ff !important;
-      background:#eef4ff !important;
-      color:var(--blue) !important;
-    }
-    .texting-shell.message-zoom {
-      inset:0 !important;
-      width:100vw !important;
-      height:100dvh !important;
-      margin:0 !important;
-      border:0 !important;
-      border-radius:0 !important;
-      box-shadow:none !important;
-    }
-    .texting-shell.message-zoom .phone-compose {
-      padding-bottom:calc(6px + env(safe-area-inset-bottom, 0px)) !important;
-      border-top:1px solid var(--border) !important;
-    }
-    body.focus-mode .case.focused {
-      padding-bottom:0 !important;
-      margin-bottom:0 !important;
-      border-radius:0 !important;
-    }
-    body.focus-mode .case.focused .details,
-    body.focus-mode .case.focused .texting-shell { padding-bottom:0 !important; margin-bottom:0 !important; }
-
-    /* v76 blue border persistence / centering guard
-       Keeps the blue shell visible in normal list, focused case view, and after exiting focus mode. */
+    * { box-sizing: border-box; }
     html, body {
-      background-color: var(--blue) !important;
-      overscroll-behavior-x: none;
+      margin: 0;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100%;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(45,91,255,.08), transparent 26%),
+        radial-gradient(circle at 100% 18%, rgba(45,91,255,.06), transparent 24%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
     }
+
+    body { display: flex; justify-content: center; }
+
     .app {
-      width:min(100%, 900px) !important;
-      max-width:900px !important;
-      margin-left:auto !important;
-      margin-right:auto !important;
-      border-left:3px solid var(--blue) !important;
-      border-right:3px solid var(--blue) !important;
-      background:linear-gradient(180deg,var(--bg),var(--bg2)) !important;
-      overflow-x:hidden !important;
+      position: relative;
+      width: 100vw;
+      max-width: 100vw;
+      min-height: 100dvh;
+      box-shadow: none;
+      padding-bottom: calc(34px + env(safe-area-inset-bottom, 0px));
+      overflow: hidden;
+      background: transparent;
     }
-    .top,
-    .case,
-    .case:first-child {
-      border-color:rgba(36,79,190,.62) !important;
+
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: .42;
+      background-image:
+        radial-gradient(circle at 14px 14px, rgba(76,112,255,.14) 0 1.5px, transparent 2px),
+        radial-gradient(circle at 14px 14px, transparent 0 13px, rgba(76,112,255,.08) 13.5px 14.5px, transparent 15px),
+        linear-gradient(45deg, transparent 47%, rgba(76,112,255,.05) 48% 52%, transparent 53%),
+        linear-gradient(-45deg, transparent 47%, rgba(76,112,255,.04) 48% 52%, transparent 53%);
+      background-size: 210px 210px;
+      background-position: 0 0, 0 0, 0 0, 105px 105px;
     }
-    .filter-refresh-row,
-    .queue-strip,
-    .case-head,
-    .details,
-    .texting-shell,
-    .phone-compose,
-    .thread,
-    .workflow-actions {
-      min-width:0 !important;
-      max-width:100% !important;
+
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      padding: 0 0 calc(96px + env(safe-area-inset-bottom, 0px));
+      width: 100%;
     }
-    .queue-tile,
-    .texting-shell,
-    .texting-head,
-    .box,
-    .soft,
-    .summary-bubble,
-    input,
-    select,
-    textarea,
-    button {
-      border-color:rgba(36,79,190,.38);
+
+    .card {
+      width: 100%;
+      max-width: 100%;
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 16px;
+      transition: transform .22s ease, box-shadow .22s ease, opacity .18s ease;
     }
-    .case-number {
-      border-color:var(--blue) !important;
-      color:var(--blue) !important;
-      box-shadow:3px 3px 0 var(--blue) !important;
+
+    .screen { display: none; opacity: 0; transform: translateY(8px); }
+    .screen.active { display: block; opacity: 1; transform: translateY(0); }
+
+    .big-center {
+      min-height: calc(74vh - env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      text-align: center;
+      padding: 8px 18px calc(28px + env(safe-area-inset-bottom, 0px));
     }
-    body.focus-mode {
-      background:var(--blue) !important;
-      overflow:hidden !important;
-      width:100% !important;
-      max-width:100vw !important;
+
+    .hero-title {
+      font-size: 33px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.02;
+      white-space: nowrap;
+      margin-top: 48px;
+      margin-bottom: 34px;
+      color: var(--text);
     }
-    body.focus-mode .app {
-      width:min(100vw, 900px) !important;
-      max-width:900px !important;
-      margin-left:auto !important;
-      margin-right:auto !important;
-      border-left:3px solid var(--blue) !important;
-      border-right:3px solid var(--blue) !important;
-      background:linear-gradient(180deg,var(--bg),var(--bg2)) !important;
-      overflow:hidden !important;
+
+    .hero-sub {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 0;
     }
-    body.focus-mode .case.focused {
-      left:50% !important;
-      right:auto !important;
-      transform:translateX(-50%) !important;
-      width:min(100vw, 900px) !important;
-      max-width:900px !important;
-      margin:0 !important;
-      border-left:3px solid var(--blue) !important;
-      border-right:3px solid var(--blue) !important;
-      border-top:3px solid var(--blue) !important;
-      border-bottom:3px solid var(--blue) !important;
-      background:linear-gradient(180deg,#f7faff,#eef4ff) !important;
-      overflow-x:hidden !important;
+
+    .hero-lead {
+      font-size: 18px;
+      color: #353840;
+      line-height: 1.42;
+      margin-top: 120px;
+      max-width: 290px;
     }
-    body.focus-mode .case.focused .details,
-    body.focus-mode .case.focused .texting-shell,
-    body.focus-mode .case.focused .texting-head,
-    body.focus-mode .case.focused .phone-compose,
-    body.focus-mode .case.focused .thread,
-    body.focus-mode .case.focused .box,
-    body.focus-mode .case.focused input,
-    body.focus-mode .case.focused select,
-    body.focus-mode .case.focused textarea,
-    body.focus-mode .case.focused button {
-      border-color:rgba(36,79,190,.42) !important;
+
+    .hero-actions {
+      margin-top: 44px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
     }
-    body.focus-mode .case.focused .case-number {
-      border-color:var(--blue) !important;
-      color:var(--blue) !important;
-      box-shadow:3px 3px 0 var(--blue) !important;
+
+    .bottom-choice {
+      min-height: calc(74vh - env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding-top: 8px;
     }
-    .texting-shell.message-zoom {
-      border-left:3px solid var(--blue) !important;
-      border-right:3px solid var(--blue) !important;
-      border-top:3px solid var(--blue) !important;
-      border-bottom:3px solid var(--blue) !important;
-      background:#fff !important;
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 33px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
     }
-    @media (max-width:560px) {
-      .app { border-left:2px solid var(--blue) !important; border-right:2px solid var(--blue) !important; }
-      body.focus-mode .case.focused,
-      .texting-shell.message-zoom { border-left-width:2px !important; border-right-width:2px !important; }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.38;
+      margin: 0 0 14px;
+    }
+
+    .grid { display: grid; gap: 10px; }
+
+    .btn, .opt, .input, textarea {
+      width: 100%;
+      border-radius: var(--radius-lg);
+      border: 1px solid #cfd3da;
+      background: var(--card-strong);
+      padding: 16px 16px;
+      font-size: 17px;
+      color: var(--text);
+      transition: background-color .22s ease, color .22s ease, border-color .22s ease, box-shadow .22s ease, transform .18s ease;
+    }
+
+    .btn, .opt { cursor: pointer; }
+    .btn:active, .opt:active { transform: translateY(1px); }
+
+    .btn.dark, .opt.active, .btn.listening {
+      background: linear-gradient(180deg, #244fbe, #173a93 58%, #122f77);
+      color: #fff;
+      border-color: rgba(15,23,42,.42);
+      box-shadow: 0 10px 22px rgba(23, 58, 146, .18);
+    }
+
+    .btn.captured {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn:disabled, .opt:disabled {
+      opacity: .62;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .voice-btn {
+      font-size: 18px;
+      padding: 18px 16px;
+      font-weight: 700;
+    }
+
+
+    .btn-row { display: flex; gap: 12px; }
+    .btn-row > * { flex: 1; }
+
+    .soft {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      font-size: 15px;
+      line-height: 1.42;
+    }
+
+    .summary-bubble {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 16px;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .input-accent {
+      background: linear-gradient(180deg, #fffdf2, #fff7d2) !important;
+      border-color: rgba(224,207,115,.95) !important;
+      box-shadow: 0 0 0 3px rgba(255,232,130,.12) !important;
+    }
+
+    .upload-selected {
+      background: linear-gradient(180deg, #eef4ff, #e1ebff) !important;
+      border-color: rgba(31,41,55,.28) !important;
+      color: var(--accent-dark) !important;
+      font-weight: 700;
+    }
+
+    .upload-preview {
+      margin-top: 8px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .upload-preview-row {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 8px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: left;
+      overflow: hidden;
+    }
+
+    .upload-preview-row img {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--soft);
+    }
+
+    .upload-preview-name {
+      font-weight: 700;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .warning-box {
+      background: var(--danger-soft) !important;
+      border-color: var(--danger-border) !important;
+    }
+
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.42;
+      outline: none;
+    }
+
+    #inputText {
+      min-height: 235px;
+    }
+
+    .utility-row-main {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr auto 1fr;
+      margin-top: 12px;
+      align-items: stretch;
+    }
+
+    .utility-row-followup {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+      margin-top: 12px;
+      align-items: stretch;
+    }
+
+    .small {
+      padding: 10px 12px;
+      font-size: 14px;
+      border-radius: 16px;
+    }
+
+    .limit-box {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .example-box {
+      border-radius: 18px;
+      padding: 12px 14px;
+      background: linear-gradient(180deg, rgba(31,41,55,.08), rgba(31,41,55,.035));
+      color: #3c4c64;
+      font-size: 16px;
+      line-height: 1.45;
+      margin-bottom: 10px;
+      border: 1px solid rgba(31,41,55,.12);
+    }
+
+    .example-box strong { color: var(--text); }
+    .stack > * + * { margin-top: 8px; }
+
+    .meta-line {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .summary-line, .summary-inline {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.35;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .hidden { display: none !important; }
+
+    .saved-note {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .saved-note.saved {
+      color: var(--text);
+      -webkit-text-fill-color: var(--text);
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    .queue-price {
+      font-size: 13px;
+      margin-top: 6px;
+      opacity: .9;
+    }
+
+    .queue-meta {
+      margin-top: 14px;
+    }
+
+    .bottom-callout {
+      margin-top: 16px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .update-attention {
+      color: var(--accent-dark) !important;
+      -webkit-text-fill-color: var(--accent-dark);
+      font-weight: 700 !important;
+      font-style: normal;
+    }
+
+    .btn.update-attention:not(.dark) {
+      color: var(--accent-dark) !important;
+      -webkit-text-fill-color: var(--accent-dark);
+      font-weight: 700 !important;
+      font-style: normal;
+    }
+
+    .btn.confirm-update-attention:not(.dark) {
+      color: var(--accent-dark) !important;
+      -webkit-text-fill-color: var(--accent-dark);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-weight: 700 !important;
+      font-style: normal;
+    }
+
+    .review-attention {
+      color: var(--text) !important;
+      -webkit-text-fill-color: var(--text);
+      font-weight: 400 !important;
+      font-style: normal;
+    }
+
+    .updated-summary-anchor {
+      display: none !important;
+    }
+
+    .updated-vehicle-inline {
+      color: var(--accent-dark) !important;
+      -webkit-text-fill-color: var(--accent-dark);
+      font-weight: 700 !important;
+      font-style: normal;
+      margin-left: 4px;
+    }
+
+    .save-details-attention {
+      color: var(--accent-dark) !important;
+      -webkit-text-fill-color: var(--accent-dark);
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .tap-note {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.35;
+      margin-top: 8px;
+    }
+    @media (max-width: 430px) {
+      .page-wrap { padding-left: 0; padding-right: 0; }
+      .card { border-radius: 0; padding-left: 14px; padding-right: 14px; }
+      .btn, .opt, .input, textarea { font-size: 18px; }
+      .example-box { font-size: 16px; }
+      .summary-bubble { font-size: 20px; }
     }
 
 
 
-    /* v77 hard border/viewport guard
-       Re-applies the blue shell from CSS alone so Safari/focus-mode state changes cannot drop it. */
+    /* v8: hard-hide any leftover prototype chrome/nav if older markup is reintroduced. */
+    .sticky,
+    .header,
+    .chips,
+    .screen-tab,
+    .dev-nav,
+    .prototype-nav,
+    [data-dev-nav="true"] {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+      min-height: 0 !important;
+      max-height: 0 !important;
+      overflow: hidden !important;
+      pointer-events: none !important;
+    }
+
+    /* v8: give mobile Safari enough scroll room to collapse browser chrome after first interaction. */
+    html, body { min-height: calc(100dvh + 2px); }
+    body { overscroll-behavior-y: contain; }
+
+  
+
+    /* v17 blue border / browser banner retention
+       Keep the customer side visually matched to the operator side. */
+    :root {
+      --accent:#244fbe !important;
+      --accent-dark:#173a93 !important;
+      --wid-blue:#244fbe;
+      --border:rgba(36,79,190,.42) !important;
+    }
     html,
     body {
       width:100% !important;
       max-width:100% !important;
       margin:0 !important;
       overflow-x:hidden !important;
+      overscroll-behavior-x:none !important;
       background:#244fbe !important;
+    }
+    body {
+      justify-content:center !important;
     }
     .app {
       width:100% !important;
       max-width:900px !important;
       margin-inline:auto !important;
       border-inline:3px solid #244fbe !important;
-      background:linear-gradient(180deg,var(--bg),var(--bg2)) !important;
-      transform:none !important;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(45,91,255,.08), transparent 26%),
+        radial-gradient(circle at 100% 18%, rgba(45,91,255,.06), transparent 24%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom)) !important;
+      overflow-x:hidden !important;
       contain:layout paint;
     }
-    .top,
-    .queue-tile,
-    .case,
-    .case:first-child,
-    .texting-shell,
-    .texting-head,
-    .box,
-    input,
-    select,
-    textarea,
-    button {
-      border-color:rgba(36,79,190,.52) !important;
-    }
-    .filter-refresh-row select,
-    #statusFilter {
-      width:100% !important;
+    .page-wrap,
+    .card,
+    .screen,
+    .bottom-choice,
+    .big-center,
+    .grid,
+    .btn-row,
+    .utility-row-main,
+    .utility-row-followup {
       min-width:0 !important;
       max-width:100% !important;
     }
-    body.focus-mode {
-      left:0 !important;
-      right:0 !important;
-      width:100% !important;
-      max-width:100% !important;
-      overflow-x:hidden !important;
-      background:#244fbe !important;
+    .card.screen.active,
+    .card,
+    .btn,
+    .opt,
+    .input,
+    textarea,
+    .soft,
+    .summary-bubble,
+    .example-box,
+    .limit-box,
+    .upload-preview-row,
+    .queue-meta {
+      border-color:rgba(36,79,190,.52) !important;
     }
-    body.focus-mode .app {
-      width:100% !important;
-      max-width:900px !important;
-      margin-inline:auto !important;
-      border-inline:3px solid #244fbe !important;
-      background:linear-gradient(180deg,var(--bg),var(--bg2)) !important;
+    .card {
+      border-left:0 !important;
+      border-right:0 !important;
     }
-    body.focus-mode .case.focused {
-      left:50% !important;
-      right:auto !important;
-      width:min(100%, 900px) !important;
-      max-width:900px !important;
-      transform:translateX(-50%) !important;
-      border:3px solid #244fbe !important;
-      border-radius:0 !important;
-      background:linear-gradient(180deg,#f7faff,#eef4ff) !important;
-      overflow-x:hidden !important;
+    .input-accent,
+    textarea.input-accent,
+    input.input-accent {
+      border-color:rgba(36,79,190,.68) !important;
+      box-shadow:0 0 0 3px rgba(36,79,190,.10) !important;
     }
-    .texting-shell.message-zoom {
-      border:3px solid #244fbe !important;
-      border-radius:0 !important;
+    .btn.dark,
+    .opt.active,
+    .btn.listening {
+      background:linear-gradient(180deg,#244fbe,#173a93 58%,#122f77) !important;
+      border-color:#173a93 !important;
+    }
+    .upload-selected,
+    .update-attention,
+    .btn.update-attention:not(.dark),
+    .btn.confirm-update-attention:not(.dark),
+    .updated-vehicle-inline,
+    .save-details-attention {
+      color:#173a93 !important;
+      -webkit-text-fill-color:#173a93 !important;
     }
     @media (max-width:560px) {
-      .app,
-      body.focus-mode .app {
+      .app {
         border-inline-width:2px !important;
       }
-      body.focus-mode .case.focused,
-      .texting-shell.message-zoom {
-        border-width:2px !important;
-      }
     }
-
-
-    /* v60 hard fixes */
-    .texting-shell.collapsed > .thread,
-    .texting-shell.collapsed > .quick-replies,
-    .texting-shell.collapsed > .autoclose-thread-note,
-    .texting-shell.collapsed > .phone-compose {
-      display:none !important;
-      height:0 !important;
-      max-height:0 !important;
-      min-height:0 !important;
-      padding:0 !important;
-      margin:0 !important;
-      border:0 !important;
-      overflow:hidden !important;
-      visibility:hidden !important;
-      pointer-events:none !important;
-    }
-    .texting-shell.collapsed .texting-sub::before { content:'tap to expand'; }
-    .texting-shell:not(.collapsed) .texting-sub::before { content:'tap to collapse'; }
-    .texting-shell .texting-sub { font-size:0 !important; }
-    .texting-shell .texting-sub::before { font-size:11px; }
-    .phone-compose textarea,
-    .phone-compose textarea:focus {
-      min-height:72px !important;
-      height:auto;
-    }
-    @media (max-width:390px) {
-      .quick-replies { grid-template-rows:repeat(2, 18px) !important; grid-auto-rows:18px !important; gap:2px !important; padding-top:3px !important; max-height:41px !important; }
-      .quick-replies button { height:18px !important; max-height:18px !important; font-size:8px !important; padding-left:2px !important; padding-right:2px !important; }
-    }
-    @media (max-width:560px) {
-      .app { padding-left:8px; padding-right:8px; }
-      .controls { display:block; }
-      .filter-refresh-row { grid-template-columns:minmax(0, 1fr) auto; gap:6px; }
-      .filter-refresh-row select { min-width:0; width:100%; }
-      .filter-refresh-row #refreshBtn { padding-left:9px; padding-right:9px; }
-      .top-title-row { align-items:flex-start; }
-      .auto-archive-toggle { max-width:118px; overflow:hidden; text-overflow:ellipsis; }
-      .case-head { grid-template-columns:1fr auto; gap:8px; }
-      .customer-name,.vehicle-line { font-size:20px; }
-      .symptom-line { font-size:19px; }
-      .case-number { font-size:22px; min-width:72px; }
-      .message-actions button { flex:1; }
-    }
-    @media (max-width:390px) {
-      .customer-name,.vehicle-line { font-size:19px; }
-      .symptom-line { font-size:18px; }
-      .case-number { min-width:68px; font-size:20px; padding:7px 7px 6px; }
-    }
-
-
-    /* v78 iPhone native banner / safe-area blue lock
-       Keep Safari/PWA top and bottom chrome sampling blue even when a light case is expanded. */
-    :root { --wid-native-blue:#244fbe; }
-    html,
-    body {
-      background-color:var(--wid-native-blue) !important;
-      overscroll-behavior-x:none !important;
-    }
-    body::before,
-    body::after {
-      content:"";
-      position:fixed;
-      left:0;
-      right:0;
-      z-index:2147483000;
-      pointer-events:none;
-      background:var(--wid-native-blue) !important;
-      transform:translateZ(0);
-    }
-    body::before {
-      top:0;
-      height:max(10px, env(safe-area-inset-top, 0px));
-    }
-    body::after {
-      bottom:0;
-      height:max(10px, env(safe-area-inset-bottom, 0px));
-    }
-    .app {
-      background-clip:padding-box !important;
-    }
-    body.focus-mode .app,
-    body.focus-mode .case.focused,
-    .texting-shell.message-zoom {
-      background-clip:padding-box !important;
-    }
-    body.focus-mode .case.focused {
-      top:max(10px, env(safe-area-inset-top, 0px)) !important;
-      bottom:max(10px, env(safe-area-inset-bottom, 0px)) !important;
-      height:auto !important;
-    }
-    .texting-shell.message-zoom {
-      top:max(10px, env(safe-area-inset-top, 0px)) !important;
-      bottom:max(10px, env(safe-area-inset-bottom, 0px)) !important;
-      height:auto !important;
-    }
-    @supports (height: 100svh) {
-      body.focus-mode .case.focused,
-      .texting-shell.message-zoom { max-height:calc(100svh - max(10px, env(safe-area-inset-top, 0px)) - max(10px, env(safe-area-inset-bottom, 0px))) !important; }
-    }
-
-  </style>
+</style>
 </head>
 <body>
   <div class="app">
-    <div class="top">
-      <div class="top-title-row">
-        <h1>What's it Doing?</h1>
-        <button id="autoArchiveToggleBtn" class="small auto-archive-toggle" type="button">Auto archive: off</button>
-      </div>
-      <div class="sub">Operator queue</div>
-      <div class="controls">
-        <div class="filter-refresh-row">
-          <select id="statusFilter">
-            <option value="open">Open queue</option>
-            <option value="waiting_on_customer">Waiting cust.</option>
-            <option value="closed">Closed</option>
-            <option value="archived">Archived</option>
-          </select>
-          <button id="refreshBtn" class="dark small">Refresh</button>
-        </div>
-        <div class="pin-row">
-          <input id="operatorPin" type="password" placeholder="Operator PIN" />
+    <div class="page-wrap">
+      <div class="card screen active" data-screen="0">
+        <div class="big-center">
+          <div class="hero-title">What's it Doing?</div>
+          <div class="hero-sub">an Automotive Consultation Service</div>
+          <div class="hero-lead">I explain what it means, or what I'd do next.</div>
+          <div class="hero-actions">
+            <button class="btn dark" id="continueBtn" style="max-width: 210px;">Continue</button>
+          </div>
         </div>
       </div>
-      <div class="queue-strip" aria-label="queue summary">
-        <div class="queue-tile priority"><div class="k">Priority</div><div class="v" id="priorityCount">0</div></div>
-        <div class="queue-tile extended"><div class="k">Extended</div><div class="v" id="extendedCount">0</div></div>
-        <div class="queue-tile"><div class="k">Normal</div><div class="v" id="normalCount">0</div></div>
-        <div class="queue-tile"><div class="k">Open queue</div><div class="v" id="totalCount">0</div></div>
+
+      <div class="card screen" data-screen="1">
+        <div class="bottom-choice">
+          <div style="margin-top: 60px; margin-bottom: 40px; text-align: center;">
+            <h2>Who's working on it?</h2>
+          </div>
+          <div class="grid" style="margin: 180px 0 0 0;">
+            <button class="btn who-btn" data-who="I'm working on it">I am</button>
+            <button class="btn who-btn" data-who="Someone else is working on it">Someone else is</button>
+          </div>
+        </div>
       </div>
-      <div id="statusLine" class="sub"></div>
+
+      <div class="card screen" data-screen="2">
+        <h2>What's it Doing?</h2>
+        <div class="example-box">
+          <strong>Examples of helpful descriptions</strong><br><br>
+          <strong>If you're working on it:</strong><br>
+          2011 Civic, 142k - check engine light is on and it runs rough sometimes when I first start it.<br>
+          Once it warms up it usually smooths out.<br>
+          I already did plugs and looked over a few obvious things.<br>
+          Part store says the code is P0300, and I’m not sure what to check next.<br><br>
+          <strong>If someone else is working on it:</strong><br>
+          2016 Explorer, 122k — it jerks or shakes sometimes when driving. One shop mentioned one possibility, now another is leaning toward the transmission, but the problem comes and goes and the estimate is getting bigger.<br>
+          I have the estimate and notes from the conversations if that helps.<br>
+          Looking for a second opinion before I go any farther with it.
+        </div>
+        <p class="section-sub" id="ymmPrompt" style="margin-bottom:6px;">Year model mileage - what's going on?</p>
+        <textarea id="inputText" class="input-accent" placeholder="Pretend I'm standing in front of you and tell me what it's doing, what's been done recently, and/or what you're concerned with."></textarea>
+        <div class="tap-note">Prefer talking? Use the microphone on your phone keyboard in this box, then review the text before continuing.</div>
+        <div class="utility-row-main" style="grid-template-columns: 1fr;">
+          <button class="btn small" id="mainClearBtn" type="button">Clear / start over</button>
+        </div>
+        <div class="soft" style="margin-top:10px;">
+          <div style="font-size:16px; font-weight:700; margin-bottom:8px;">Optional voice note</div>
+          <div style="font-size:13px; color: var(--muted); line-height:1.35; margin-bottom:10px;">
+            Do you have a noise that might help, or want me to hear it the way you would explain it?
+          </div>
+          <div class="btn-row">
+            <button class="btn dark voice-btn" type="button" id="recordAudioBtn">Record voice note</button>
+            <button class="btn voice-btn" type="button" id="stopAudioBtn" disabled>Stop recording</button>
+          </div>
+          <div id="audioStatus" class="saved-note" style="margin-top:8px;">Optional. Up to about 2 minutes works best. This saves a voice note in the current session.</div>
+          <audio id="audioPlayback" class="hidden" controls style="width:100%; margin-top:10px;"></audio>
+        </div>
+                <button class="btn" type="button" id="uploadBtn" style="margin-top:10px; text-align:left;">Optional upload (code scan / photo / video / estimate)</button>
+        <input type="file" id="uploadInput" class="hidden" accept="image/*,.heic,.heif,video/*,.pdf,.txt,.csv,.jpg,.jpeg,.png,.webp,.heic,.heif" multiple="multiple" />
+        <div id="uploadPreview" class="upload-preview hidden"></div>
+        <div id="uploadHint" class="saved-note" style="margin-top:6px;">Photos can be added more than once; each selection is kept for submit. On iPhone, tap Select in the photo picker to choose more than one.</div>
+        <input class="input input-accent" id="customerName" placeholder="Your name" style="margin-top:10px;" />
+        <input class="input input-accent" id="customerEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email for receipt and case link" style="margin-top:10px;" />
+        <div class="soft" style="margin-top:10px;">
+          <label style="display:flex; align-items:center; gap:10px; font-size:14px; line-height:1.35;"><input type="checkbox" id="phoneConsultOk" style="width:18px; height:18px;" /> Willing to accept phone consult if necessary</label>
+          <input class="input input-accent hidden" id="phoneConsultNumber" placeholder="Best phone number" style="margin-top:10px;" />
+        </div>
+        <div class="btn-row" style="margin-top:18px;">
+          <button class="btn" data-back="1">Back</button>
+          <button class="btn dark" id="toSummaryBtn">Continue</button>
+        </div>
+      </div>
+
+      <div class="card screen" data-screen="3">
+        <div class="meta-line" id="sumMeta"></div>
+        <div class="summary-inline" id="sumSingleLine"></div>
+
+        <h2 style="margin-top:10px;">Name</h2>
+        <input class="input input-accent" id="sumNameEdit" />
+        
+        <div style="margin-top:16px;">
+          <div style="font-size:14px; font-weight:700; margin-bottom:8px;" id="summaryHeading">SUMMARY:</div>
+          <div class="soft" id="sumRestatement" style="min-height:260px;"></div>
+        </div>
+
+        <div id="updatedSummaryAnchor" class="updated-summary-anchor hidden"></div>
+
+        <div id="summaryConfirmWrap" style="margin-top:16px;">
+          <div class="summary-bubble" id="summaryBubble">Close enough to submit?</div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn" id="summaryBackBtn">Go Back</button>
+            <button class="btn dark" id="summaryConfirmBtn">Close Enough</button>
+          </div>
+        </div>
+
+        <div id="abilityWrap" class="hidden" style="margin-top:16px;">
+          <div style="font-size:14px; font-weight:700; margin-bottom:8px;">How hands-on are you?</div>
+          <div class="grid" id="abilityGrid"></div>
+        </div>
+
+        <div id="followupSection" class="hidden" style="margin-top:16px;">
+          <div style="font-size:14px; font-weight:700; margin-bottom:8px;">Additional details</div>
+          <div class="soft" id="followupPrompt"><strong>Still helpful suggestions:</strong> <span id="followupPromptText"></span></div>
+          <textarea id="followupText" class="input-accent" placeholder="Add follow-up details here" style="min-height:160px; margin-top:10px;"></textarea>
+          <div class="tap-note">You can use the microphone on your phone keyboard here too, then review the added text before saving.</div>
+          <div class="utility-row-followup" style="grid-template-columns: 1fr;">
+            <button class="btn small" type="button" id="followupClearBtn">Clear / start over</button>
+          </div>
+          <div class="saved-note" id="followupSavedNote">Nothing saved yet.</div>
+          <div class="btn-row" style="margin-top:16px;">
+            <button class="btn" id="detailsBackBtn">Go Back</button>
+            <button class="btn" id="saveFollowupBtn">Save details</button>
+          </div>
+        </div>
+
+        <button class="btn hidden" id="queueBtn" style="margin-top:14px;">No additional Details</button>
+      </div>
+
+      <div class="card screen" data-screen="4">
+        <h2>Advanced Driveability Technician</h2>
+        <p class="section-sub">We’ll work through the issue by text first. If needed, I may call. When complete, the thread and final notes are your written diagnostic review.</p>
+        <div class="grid">
+          <button class="opt active queue-btn" data-queue="guided">
+            <div style="font-weight:600; text-align:left;">Guided consult</div>
+            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Text-based diagnostic review with clarifying follow-up; phone included if needed</div>
+            <div class="queue-price" style="text-align:left;">$39 · avg. reply 1–2 business days</div>
+          </button>
+          <button class="opt queue-btn" data-queue="priority">
+            <div style="font-weight:600; text-align:left;">Priority</div>
+            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Same diagnostic review, moved ahead in line for faster first response</div>
+            <div class="queue-price" style="text-align:left;">$79 · avg. reply same day / next business day</div>
+          </button>
+          <button class="opt queue-btn" data-queue="extended">
+            <div style="font-weight:600; text-align:left;">Extended vehicle thread · 3 days</div>
+            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Priority-level first response plus a 3-day vehicle thread for the same issue; best for follow-up tests, photos, updates, and repair-decision support</div>
+            <div class="queue-price" style="text-align:left;">$249 · avg. first reply same day / next business day</div>
+          </button>
+        </div>
+        <div class="soft queue-meta">
+          <div><strong>Current queue:</strong> 3 ahead of you</div>
+          <div style="margin-top:6px;"><strong>Replies during business hours:</strong> Mon–Fri 9am–5pm</div>
+          <div style="margin-top:6px;"><strong>Reply window:</strong> Please reply within 48 hours after I ask a question. I’ll send a 24-hour reminder before any case auto-close.</div>
+          <div style="margin-top:6px;"><strong>Status:</strong> <strong id="availabilityStatus">Available Now</strong></div>
+          <div class="bottom-callout">Not live chat or emergency service. If I can’t be meaningfully helpful after review, I’ll say so and make it right.</div>
+        </div>
+        <div class="btn-row" style="margin-top:18px;">
+          <button class="btn" data-back="3">Back</button>
+          <button class="btn dark" type="button" id="paySubmitBtn">Pay &amp; submit</button>
+        </div>
+      </div>
     </div>
-    <div id="list" class="queue"></div>
   </div>
 
-  <script>
-    const list = document.getElementById('list');
-    const statusLine = document.getElementById('statusLine');
-    const pinInput = document.getElementById('operatorPin');
-    const savedPin = localStorage.getItem('wid_operator_pin') || '';
-    pinInput.value = savedPin;
-    window.__widWaitingTimers = window.__widWaitingTimers || {};
+    <script>
 
-    const BLUE_BAR = '#244fbe';
-
-    function lockBlueBrowserBars() {
-      document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => {
-        meta.setAttribute('content', BLUE_BAR);
-      });
-      document.documentElement.style.backgroundColor = BLUE_BAR;
-      document.body.style.backgroundColor = BLUE_BAR;
+    const WID_BLUE_BAR = '#244fbe';
+    function widLockBlueBrowserBars() {
+      document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
+      document.documentElement.style.backgroundColor = WID_BLUE_BAR;
+      document.body.style.backgroundColor = WID_BLUE_BAR;
       document.documentElement.style.overflowX = 'hidden';
       document.body.style.overflowX = 'hidden';
-    }
-
-    function lockBlueBrowserBarsSoon() {
-      lockBlueBrowserBars();
-      requestAnimationFrame(lockBlueBrowserBars);
-      setTimeout(lockBlueBrowserBars, 60);
-      setTimeout(lockBlueBrowserBars, 220);
-      setTimeout(lockBlueBrowserBars, 600);
-    }
-
-    lockBlueBrowserBarsSoon();
-    window.addEventListener('pageshow', lockBlueBrowserBarsSoon, { passive:true });
-    window.addEventListener('resize', lockBlueBrowserBarsSoon, { passive:true });
-    window.addEventListener('orientationchange', lockBlueBrowserBarsSoon, { passive:true });
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', lockBlueBrowserBarsSoon, { passive:true });
-      window.visualViewport.addEventListener('scroll', lockBlueBrowserBarsSoon, { passive:true });
-    }
-
-    function recenterShell() {
-      lockBlueBrowserBars();
-      try { window.scrollTo(Math.max(0, window.scrollX || window.pageXOffset || 0) ? 0 : 0, window.scrollY || window.pageYOffset || 0); } catch (_) {}
-      document.documentElement.scrollLeft = 0;
-      document.body.scrollLeft = 0;
       const app = document.querySelector('.app');
       if (app) {
         app.scrollLeft = 0;
@@ -870,1249 +744,633 @@
         app.style.marginRight = 'auto';
       }
     }
-
-    window.addEventListener('orientationchange', () => setTimeout(recenterShell, 120), { passive:true });
-
-
-    function installViewportSizing() {
-      const set = () => {
-        const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        document.documentElement.style.setProperty('--vvh', Math.round(h) + 'px');
-      };
-      set();
-      window.addEventListener('resize', set, { passive:true });
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', set, { passive:true });
-        window.visualViewport.addEventListener('scroll', set, { passive:true });
-      }
+    function widLockBlueBrowserBarsSoon() {
+      widLockBlueBrowserBars();
+      requestAnimationFrame(widLockBlueBrowserBars);
+      setTimeout(widLockBlueBrowserBars, 60);
+      setTimeout(widLockBlueBrowserBars, 220);
+      setTimeout(widLockBlueBrowserBars, 600);
     }
 
-    function autosizeReplyBox(box) {
-      if (!box) return;
-      box.classList.add('is-growing');
-      box.style.height = 'auto';
-      const max = 132;
-      // v60: never collapse to a one-line box. The button stack already uses
-      // roughly two lines of vertical room, so the textarea should match it.
-      const min = 72;
-      const next = Math.max(min, Math.min(max, box.scrollHeight));
-      box.style.height = next + 'px';
+    widLockBlueBrowserBarsSoon();
+    window.addEventListener('pageshow', widLockBlueBrowserBarsSoon, { passive:true });
+    window.addEventListener('resize', widLockBlueBrowserBarsSoon, { passive:true });
+    window.addEventListener('orientationchange', () => setTimeout(widLockBlueBrowserBars, 120), { passive:true });
+
+    const state = {
+      screen: 0,
+      who: "",
+      ability: "",
+      caseId: "WID-0001",
+      summaryConfirmed: false,
+      followupSaved: false,
+      queue: 'guided',
+      activeRecognition: null,
+      activeMicButtonId: '',
+      dictationBaseText: '',
+      mediaRecorder: null,
+      audioChunks: [],
+      audioBlob: null,
+      audioUrl: '',
+      uploadFiles: []
+    };
+
+    const abilityOptions = ['I just need advice', 'Can do basic checks', "I'm IN IT", 'Advanced Troubleshooting'];
+
+    const els = {
+      screens: [...document.querySelectorAll('.screen')],
+      inputText: document.getElementById('inputText'),
+      customerName: document.getElementById('customerName'),
+      customerEmail: document.getElementById('customerEmail'),
+      phoneConsultOk: document.getElementById('phoneConsultOk'),
+      phoneConsultNumber: document.getElementById('phoneConsultNumber'),
+      sumNameEdit: document.getElementById('sumNameEdit'),
+      sumMeta: document.getElementById('sumMeta'),
+      sumSingleLine: document.getElementById('sumSingleLine'),
+      sumRestatement: document.getElementById('sumRestatement'),
+      summaryHeading: document.getElementById('summaryHeading'),
+      updatedSummaryAnchor: document.getElementById('updatedSummaryAnchor'),
+      summaryBubble: document.getElementById('summaryBubble'),
+      summaryConfirmBtn: document.getElementById('summaryConfirmBtn'),
+      abilityWrap: document.getElementById('abilityWrap'),
+      abilityGrid: document.getElementById('abilityGrid'),
+      followupSection: document.getElementById('followupSection'),
+      followupText: document.getElementById('followupText'),
+      followupPromptText: document.getElementById('followupPromptText'),
+      followupSavedNote: document.getElementById('followupSavedNote'),
+      queueBtn: document.getElementById('queueBtn'),
+      uploadBtn: document.getElementById('uploadBtn'),
+      uploadInput: document.getElementById('uploadInput'),
+      uploadPreview: document.getElementById('uploadPreview'),
+      uploadHint: document.getElementById('uploadHint'),
+      recordAudioBtn: document.getElementById('recordAudioBtn'),
+      stopAudioBtn: document.getElementById('stopAudioBtn'),
+      audioStatus: document.getElementById('audioStatus'),
+      audioPlayback: document.getElementById('audioPlayback'),
+      paySubmitBtn: document.getElementById('paySubmitBtn'),
+      ymmPrompt: document.getElementById('ymmPrompt')
+    };
+
+    const MAKES = ['acura','alfa romeo','audi','bmw','buick','cadillac','chevrolet','chevy','chrysler','dodge','ford','gmc','honda','hyundai','infiniti','isuzu','jeep','kia','lexus','lincoln','mazda','mercedes','mercedes-benz','mercury','mini','mitsubishi','nissan','oldsmobile','pontiac','porsche','ram','saturn','scion','subaru','suzuki','toyota','volkswagen','vw','volvo'];
+    const COMMON_MODELS = ['tahoe','suburban','yukon','crv','cr-v','s10','s-10','mr2','mighty max','blazer','trailblazer','civic','accord','camry','corolla','cruze','malibu','impala','explorer','escape','focus','fusion','pilot','odyssey','rav4','highlander','forester','outback','wrangler','cherokee','grand cherokee','silverado','sierra','expedition','durango','charger','challenger','altima','sentra','maxima','frontier','tacoma','tundra','4runner'];
+    const STOPWORDS = new Set(['with','w','has','have','had','runs','run','running','started','start','sometimes','most','time','light','lights','code','codes','after','before','because','but','and','it','is','was','were','needs','need','when','where','that','this','on','off','at','for','my','me','a','an','the']);
+
+    function showScreen(index, behavior = 'smooth') {
+      state.screen = index;
+      els.screens.forEach((screen, i) => screen.classList.toggle('active', i === index));
+      window.scrollTo({ top: 0, behavior });
     }
 
-    function setKeyboardSpace(box, on = true) {
-      const card = box && box.closest('.case.focused');
-      if (!card) return;
-      card.classList.toggle('keyboard-space', !!on);
-      document.body.classList.toggle('keyboard-active', !!on);
-    }
-
-    function closeComposeSpace(box) {
-      if (!box) return;
-      clearComposeScrollTimers(box);
-      try { box.blur(); } catch (_) {}
-      setKeyboardSpace(box, false);
-      const card = box.closest('.case.focused');
-      if (card) card.classList.remove('keyboard-space');
-      document.body.classList.remove('keyboard-active');
-    }
-
-    function alignComposeBottom(box, instant = true) {
-      if (!box) return;
-      const card = box.closest('.case.focused');
-      const compose = box.closest('.phone-compose');
-      if (!card || !compose || !document.body.classList.contains('focus-mode')) return;
-      const vvHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      const targetBottom = Math.max(140, vvHeight - 2);
-      const rect = compose.getBoundingClientRect();
-      const delta = rect.bottom - targetBottom;
-      if (Math.abs(delta) > 3) {
-        card.scrollTo({ top:Math.max(0, card.scrollTop + delta), behavior: instant ? 'auto' : 'smooth' });
-      }
-    }
-
-    function settleComposeBottomAfterKeyboard(box) {
-      if (!box) return;
-      [80, 180, 320].forEach(delay => setTimeout(() => alignComposeBottom(box, true), delay));
-    }
-
-    function activeComposeBox() {
-      const el = document.activeElement;
-      return el && el.matches && el.matches('textarea[data-reply-draft]') ? el : null;
-    }
-
-    function dismissKeyboardFromOuterScroll(target) {
-      const box = activeComposeBox();
-      if (!box) return;
-      const node = target && target.nodeType === 1 ? target : (target && target.parentElement);
-      clearComposeScrollTimers(box);
-      if (node && node.closest && node.closest('.phone-compose,.quick-replies')) return;
-      try { box.blur(); } catch (_) {}
-      setKeyboardSpace(box, false);
-    }
-
-    const composeScrollTimers = new WeakMap();
-
-    function clearComposeScrollTimers(box) {
-      if (!box) return;
-      const timers = composeScrollTimers.get(box) || [];
-      timers.forEach(id => clearTimeout(id));
-      composeScrollTimers.set(box, []);
-    }
-
-    function scheduleComposeScroll(box, delay, options = {}) {
-      if (!box) return;
-      const timers = composeScrollTimers.get(box) || [];
-      const id = setTimeout(() => {
-        const current = composeScrollTimers.get(box) || [];
-        composeScrollTimers.set(box, current.filter(item => item !== id));
-        if (document.activeElement === box) keepComposeVisible(box, options);
-      }, delay);
-      timers.push(id);
-      composeScrollTimers.set(box, timers);
-    }
-
-    function composeLooksVisible(compose) {
-      if (!compose) return false;
-      const rect = compose.getBoundingClientRect();
-      const vvHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      return rect.top >= 10 && rect.bottom <= (vvHeight - 8);
-    }
-
-    function keepComposeVisible(box, options = {}) {
-      if (!box) return;
-      setKeyboardSpace(box, true);
-      const shell = box.closest('.texting-shell');
-      const thread = shell && shell.querySelector('.thread');
-      const compose = box.closest('.phone-compose') || box;
-      if (thread && options.threadBottom !== false) thread.scrollTop = thread.scrollHeight;
-      if (options.skipIfVisible !== false && composeLooksVisible(compose)) return;
-
-      const doScroll = () => {
-        const card = box.closest('.case.focused');
-        if (card && document.body.classList.contains('focus-mode')) {
-          const vvHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-          const keyboardReserve = Math.round(vvHeight * 0.45);
-          const visibleArea = Math.max(190, vvHeight - keyboardReserve);
-          const bottomGap = options.tight ? -3 : 0;
-          const target = Math.max(0, compose.offsetTop + compose.offsetHeight - visibleArea + bottomGap);
-          card.scrollTo({ top:target, behavior: options.instant ? 'auto' : 'smooth' });
-        } else {
-          compose.scrollIntoView({ block:'end', behavior: options.instant ? 'auto' : 'smooth' });
-        }
-      };
-      doScroll();
-    }
-
-    function focusComposeCursor(box, forceKeyboard = false) {
-      if (!box) return;
-      try {
-        // v60: prescribed buttons must actually bring up the keyboard on iOS.
-        // A normal focus from the tap handler is more reliable than preventScroll.
-        if (forceKeyboard) box.focus();
-        else box.focus({ preventScroll:true });
-        const len = box.value.length;
-        if (box.setSelectionRange) box.setSelectionRange(len, len);
-      } catch (_) {
-        try { box.focus(); } catch (__) {}
-      }
-    }
-
-    function activateComposeBox(box) {
-      if (!box) return;
-      clearComposeScrollTimers(box);
-      const shell = box.closest('.texting-shell');
-      if (shell) {
-        shell.classList.remove('collapsed');
-        updateMessageShellSubtext(shell);
-        const thread = shell.querySelector('.thread');
-        if (thread) thread.scrollTop = thread.scrollHeight;
-      }
-      autosizeReplyBox(box);
-      focusComposeCursor(box, true);
-      forceQuickReplyComposeVisible(box);
-    }
-
-    function forceQuickReplyComposeVisible(box) {
-      if (!box) return;
-      setKeyboardSpace(box, true);
-      const compose = box.closest('.phone-compose') || box;
-      const card = box.closest('.case.focused');
-      const shell = box.closest('.texting-shell');
-      const thread = shell && shell.querySelector('.thread');
-      if (shell) shell.classList.remove('collapsed');
-      const jump = (instant = true) => {
-        autosizeReplyBox(box);
-        if (thread) thread.scrollTop = thread.scrollHeight;
-        if (card && document.body.classList.contains('focus-mode')) {
-          const vvHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-          const rect = compose.getBoundingClientRect();
-          const targetBottom = Math.max(170, vvHeight - 8);
-          let nextTop = card.scrollTop + (rect.bottom - targetBottom);
-          if (!Number.isFinite(nextTop) || nextTop < 0) nextTop = 0;
-          // fallback based on actual offset inside the focused case
-          const fallbackTop = Math.max(0, compose.offsetTop + compose.offsetHeight - Math.max(200, vvHeight * 0.60));
-          nextTop = Math.max(nextTop, fallbackTop);
-          card.scrollTo({ top:nextTop, behavior:instant ? 'auto' : 'smooth' });
-        } else {
-          try { compose.scrollIntoView({ block:'end', behavior:instant ? 'auto' : 'smooth' }); } catch (_) {}
-        }
-      };
-      jump(true);
-      requestAnimationFrame(() => jump(true));
-      [60, 140, 260, 420, 700, 1000].forEach((delay, i) => setTimeout(() => {
-        if (document.activeElement !== box) focusComposeCursor(box, true);
-        jump(i < 3);
-      }, delay));
-    }
-
-    function setupQuickReplyButton(btn) {
-      if (!btn || btn.dataset.quickReady === '1') return;
-      btn.dataset.quickReady = '1';
-      let sx = 0, sy = 0, moved = false, touchHandledUntil = 0;
-      btn.addEventListener('touchstart', event => {
-        const t = event.changedTouches && event.changedTouches[0];
-        if (!t) return;
-        sx = t.clientX; sy = t.clientY; moved = false;
-      }, { passive:true });
-      btn.addEventListener('touchmove', event => {
-        const t = event.changedTouches && event.changedTouches[0];
-        if (!t) return;
-        if (Math.abs(t.clientX - sx) > 8 || Math.abs(t.clientY - sy) > 8) moved = true;
-      }, { passive:true });
-      btn.addEventListener('touchend', event => {
-        if (moved) return;
-        touchHandledUntil = Date.now() + 450;
-        insertQuickReply(btn, event);
-      }, { passive:false });
-      btn.addEventListener('click', event => {
-        if (Date.now() < touchHandledUntil) {
-          event.preventDefault();
-          event.stopPropagation();
-          return;
-        }
-        insertQuickReply(btn, event);
-      });
-    }
-
-    function insertQuickReply(btn, event) {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      if (!btn || btn.dataset.inserting === '1') return;
-      btn.dataset.inserting = '1';
-      setTimeout(() => { if (btn) btn.dataset.inserting = '0'; }, 320);
-
-      const box = document.getElementById(btn.dataset.insertReply);
-      if (!box) return;
-      const text = btn.dataset.replyText || '';
-      const before = box.value || '';
-      box.value = before ? (before.replace(/\s*$/, ' ') + text) : text;
-      box.dispatchEvent(new Event('input', { bubbles:true }));
-      activateComposeBox(box);
-    }
-
-    function directComposeFocus(box) {
-      if (!box) return;
-      const shell = box.closest('.texting-shell');
-      if (shell) {
-        shell.classList.remove('collapsed');
-        updateMessageShellSubtext(shell);
-      }
-      autosizeReplyBox(box);
-      clearComposeScrollTimers(box);
-      setKeyboardSpace(box, true);
-      keepComposeVisible(box, { tight:true, single:true, skipIfVisible:false, threadBottom:true, instant:true });
-      forceQuickReplyComposeVisible(box);
-    }
-
-
-    function setupLocalSendButton(btn) {
-      if (!btn || btn.dataset.sendReady === '1') return;
-      btn.dataset.sendReady = '1';
-      let touchHandledUntil = 0;
-      const run = event => {
-        touchHandledUntil = Date.now() + 700;
-        sendLocalReply(btn, event);
-      };
-      btn.addEventListener('touchend', run, { passive:false });
-      btn.addEventListener('pointerup', event => {
-        if (event.pointerType === 'touch') return;
-        run(event);
-      });
-      btn.addEventListener('click', event => {
-        if (Date.now() < touchHandledUntil) {
-          event.preventDefault();
-          event.stopPropagation();
-          return;
-        }
-        sendLocalReply(btn, event);
-      });
-    }
-
-    async function sendLocalReply(btn, event) {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      if (!btn || btn.dataset.sending === '1') return;
-      btn.dataset.sending = '1';
-      setTimeout(() => { if (btn) btn.dataset.sending = '0'; }, 450);
-
-      const box = document.getElementById(btn.dataset.localSend);
-      const thread = document.getElementById(btn.dataset.threadTarget);
-      const caseKey = btn.dataset.caseKey;
-      const text = (box && box.value || '').trim();
-      if (!text) { if (box) closeComposeSpace(box); return; }
-      if (box) closeComposeSpace(box);
-
-      const now = new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
-      const local = getLocalThread(caseKey);
-      local.push({ who:'operator', text, at:now });
-      saveLocalThread(caseKey, local);
-      updateLastMessagePreview(caseKey, text);
-      if (thread) thread.insertAdjacentHTML('beforeend', renderMessageBubble({ who:'operator', text, at:now }));
-      setLastUndoAction(caseKey, { type:'message', text, at:now });
-
-      // Sending your reply should not start the 48-hour autoclose timer by itself.
-      // The timer is intentionally started only when you press Waiting on customer.
-      try { await navigator.clipboard.writeText(text); } catch (_) {}
-
-      if (box) {
-        box.value = '';
-        box.dispatchEvent(new Event('input', { bubbles:true }));
-        autosizeReplyBox(box);
-        settleComposeBottomAfterKeyboard(box);
-      }
-      if (thread) thread.scrollTop = thread.scrollHeight;
-    }
-
-    const AUTO_ARCHIVE_KEY = 'wid_auto_archive_closed_after_week';
-
-    document.getElementById('refreshBtn').onclick = loadConsults;
-    const autoArchiveToggleBtn = document.getElementById('autoArchiveToggleBtn');
-    if (autoArchiveToggleBtn) autoArchiveToggleBtn.onclick = toggleAutoArchiveClosed;
-    document.getElementById('statusFilter').onchange = () => { syncArchiveControlsVisibility(); loadConsults(); };
-    pinInput.oninput = () => localStorage.setItem('wid_operator_pin', pinInput.value || '');
-
-    function syncArchiveControlsVisibility() {
-      if (!autoArchiveToggleBtn) return;
-      const selected = document.getElementById('statusFilter').value || 'open';
-      autoArchiveToggleBtn.style.display = selected === 'closed' ? '' : 'none';
-    }
-
-    function syncAutoArchiveButton() {
-      if (!autoArchiveToggleBtn) return;
-      const on = localStorage.getItem(AUTO_ARCHIVE_KEY) === '1';
-      autoArchiveToggleBtn.textContent = on ? 'Auto archive: on' : 'Auto archive: off';
-      autoArchiveToggleBtn.classList.toggle('dark', on);
-      syncArchiveControlsVisibility();
-    }
-
-    function toggleAutoArchiveClosed() {
-      const next = localStorage.getItem(AUTO_ARCHIVE_KEY) === '1' ? '0' : '1';
-      localStorage.setItem(AUTO_ARCHIVE_KEY, next);
-      syncAutoArchiveButton();
-      statusLine.textContent = next === '1' ? 'Auto archive enabled for cases closed over 1 week' : 'Auto archive disabled';
-      if (next === '1') archiveOldClosedCases({ manual:false });
-    }
-
-    async function loadConsults() {
-      const selected = document.getElementById('statusFilter').value || 'open';
-      statusLine.textContent = 'Loading...';
-      list.innerHTML = '';
-      try {
-        const functionStatus = 'all';
-        const res = await fetch('/.netlify/functions/list-consults?status=' + encodeURIComponent(functionStatus) + '&limit=100', { headers: pinHeader() });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load consults');
-        window.__widAllConsults = data.consults || [];
-        syncAutoArchiveButton();
-        if (localStorage.getItem(AUTO_ARCHIVE_KEY) === '1' && !window.__widAutoArchiveRunning) {
-          const didArchive = await archiveOldClosedCases({ manual:false, skipReload:true });
-          if (didArchive) return loadConsults();
-        }
-        const shown = filterConsults(window.__widAllConsults, selected);
-        renderConsults(sortConsults(shown), selected);
-        const priorityCount = shown.filter(isPriority).length;
-        const extendedCount = shown.filter(isExtended).length;
-        const normalCount = Math.max(0, shown.length - priorityCount - extendedCount);
-        updateTopCounts(priorityCount, normalCount, shown.length, selected, extendedCount);
-        statusLine.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}`;
-      } catch (err) {
-        list.innerHTML = `<div class="error">${escapeHtml(err.message || String(err))}</div>`;
-        statusLine.textContent = 'Load failed';
-      }
-    }
-
-    function updateTopCounts(priorityCount, normalCount, totalCount, selected, extendedCount = 0) {
-      const p = document.getElementById('priorityCount');
-      const e = document.getElementById('extendedCount');
-      const n = document.getElementById('normalCount');
-      const t = document.getElementById('totalCount');
-      if (p) p.textContent = String(priorityCount || 0);
-      if (e) e.textContent = String(extendedCount || 0);
-      if (n) n.textContent = String(normalCount || 0);
-      if (t) t.textContent = String(totalCount || 0);
-      const normalLabel = document.querySelector('.queue-tile:nth-child(3) .k');
-      if (normalLabel) normalLabel.textContent = 'Normal';
-      const totalLabel = document.querySelector('.queue-tile:nth-child(4) .k');
-      if (totalLabel) totalLabel.textContent = selectedStatusLabel(selected);
-    }
-
-    function selectedStatusLabel(selected) {
-      const filter = document.getElementById('statusFilter');
-      if (filter) {
-        const option = Array.from(filter.options || []).find(opt => opt.value === selected);
-        if (option && option.textContent) return option.textContent.trim();
-      }
-      const fallback = {
-        open:'Open queue',
-        waiting_on_customer:'Waiting cust.',
-        closed:'Closed',
-        archived:'Archived',
-        all:'All'
-      };
-      return fallback[selected] || 'Shown';
-    }
-
-    function filterConsults(items, selected) {
-      if (selected === 'archived') return items.filter(isArchived);
-      if (selected === 'all') return items.filter(c => !isArchived(c));
-      if (selected === 'open') return items.filter(c => !isClosed(c) && !isArchived(c) && String(c.status || '') !== 'waiting_on_customer');
-      return items.filter(c => String(c.status || '') === selected && !isArchived(c));
-    }
-
-    function sortConsults(items) {
-      const statusRank = { waiting_on_me:0, paid_pending:0, waiting_on_customer:2, unpaid:3, draft:4, closed:9, archived:10 };
-      return [...items].sort((a,b) => {
-        const ap = isPriority(a) ? -10 : (isExtended(a) ? -6 : 0);
-        const bp = isPriority(b) ? -10 : (isExtended(b) ? -6 : 0);
-        const ar = ap + (statusRank[a.status] ?? 1);
-        const br = bp + (statusRank[b.status] ?? 1);
-        if (ar !== br) return ar - br;
-        return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
-      });
-    }
-
-
-    function updateMessageShellSubtext(shell) {
-      if (!shell) return;
-      const sub = shell.querySelector('.texting-sub');
-      if (sub) sub.textContent = shell.classList.contains('collapsed') ? 'tap to expand' : 'tap to collapse';
-    }
-
-    function scrollMessageShellIntoView(shell) {
-      if (!shell) return;
-      const card = shell.closest('.case.focused');
-      const targetTop = Math.max(0, shell.offsetTop - 8);
-      if (card && document.body.classList.contains('focus-mode')) {
-        requestAnimationFrame(() => card.scrollTo({ top:targetTop, behavior:'smooth' }));
-      } else {
-        try { shell.scrollIntoView({ block:'start', behavior:'smooth' }); } catch (_) {}
-      }
-    }
-    function renderConsults(items, selectedView = 'open') {
-      if (!items.length) { list.innerHTML = '<div class="empty">No cases in this view.</div>'; return; }
-      const queueMeta = buildQueueMeta(items);
-      list.innerHTML = items.map((item, index) => renderCase(item, index, queueMeta, selectedView)).join('');
-      document.querySelectorAll('.case').forEach(card => {
-        card.onclick = (event) => {
-          if (event.target.closest('button,a,audio,textarea,.icon,.bubble,.texting-shell')) return;
-          registerCaseTap(card, event);
-        };
-        card.ondblclick = (event) => {
-          if (event.target.closest('button,a,audio,textarea,.icon,.bubble,.texting-shell')) return;
-          event.preventDefault();
-          if (document.body.classList.contains('focus-mode') && card.classList.contains('focused')) exitFocusMode();
-          else focusCase(card);
-        };
-        setupSwipeExit(card);
-        setupKeyboardDismiss(card);
-      });
-      document.querySelectorAll('[data-action-status]').forEach(btn => btn.onclick = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        handleStatusButton(btn);
-      });
-      document.querySelectorAll('[data-open-attachment]').forEach(btn => btn.onclick = (event) => {
-        event.stopPropagation();
-        const detailId = btn.dataset.detailId;
-        const url = btn.dataset.openAttachment;
-        openDetails(detailId);
-        if (url) window.open(url, '_blank', 'noopener');
-      });
-      document.querySelectorAll('[data-copy-reply]').forEach(btn => btn.onclick = async (event) => {
-        event.stopPropagation();
-        const box = document.getElementById(btn.dataset.copyReply);
-        if (!box) return;
-        try { await navigator.clipboard.writeText(box.value || ''); btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy reply', 1200); }
-        catch (_) { box.select(); document.execCommand('copy'); btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy reply', 1200); }
-      });
-      document.querySelectorAll('[data-reply-draft]').forEach(box => {
-        const key = 'wid_reply_' + box.dataset.replyDraft;
-        box.value = localStorage.getItem(key) || '';
-        autosizeReplyBox(box);
-        box.oninput = () => {
-          localStorage.setItem(key, box.value || '');
-          autosizeReplyBox(box);
-        };
-        box.onfocus = () => { directComposeFocus(box); };
-        box.onblur = () => { autosizeReplyBox(box); setKeyboardSpace(box, false); };
-        box.onclick = (event) => event.stopPropagation();
-      });
-      document.querySelectorAll('[data-insert-reply]').forEach(btn => {
-        setupQuickReplyButton(btn);
-      });
-      document.querySelectorAll('[data-clear-reply]').forEach(btn => btn.onclick = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const box = document.getElementById(btn.dataset.clearReply);
-        if (!box) return;
-        box.value = '';
-        localStorage.setItem('wid_reply_' + box.dataset.replyDraft, '');
-        autosizeReplyBox(box);
-        closeComposeSpace(box);
-      });
-      document.querySelectorAll('[data-local-send]').forEach(btn => {
-        setupLocalSendButton(btn);
-      });
-      document.querySelectorAll('.texting-shell').forEach(shell => {
-        updateMessageShellSubtext(shell);
-        setupSwipeExit(shell, () => shell.classList.remove('message-zoom'));
-        const head = shell.querySelector('.texting-head');
-        if (head) {
-          head.onclick = (event) => {
-            if (event.target.closest('button,textarea,a,audio')) return;
-            event.stopPropagation();
-            if (shell.classList.contains('message-zoom')) return;
-            const wasCollapsed = shell.classList.contains('collapsed');
-            shell.classList.toggle('collapsed');
-            updateMessageShellSubtext(shell);
-            if (wasCollapsed) scrollMessageShellIntoView(shell);
-          };
-          head.ondblclick = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            toggleMessageZoom(shell);
-          };
-        }
-      });
-      document.querySelectorAll('.bubble').forEach(bubble => {
-        bubble.onclick = (event) => event.stopPropagation();
-        bubble.ondblclick = (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          const shell = bubble.closest('.texting-shell');
-          if (shell) toggleMessageZoom(shell);
-        };
-      });
-      document.querySelectorAll('[data-clear-waiting-workflow]').forEach(btn => btn.onclick = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const card = btn.closest('.case');
-        const shell = card && card.querySelector('.texting-shell');
-        const caseKey = shell ? shell.dataset.caseKey : btn.dataset.id;
-        clearWaitingWorkflow(caseKey);
-        statusLine.textContent = 'Timer cleared';
-      });
-      document.querySelectorAll('[data-undo-action]').forEach(btn => btn.onclick = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        undoLastOperatorAction(btn);
-      });
-      document.querySelectorAll('[data-picture-pick]').forEach(btn => btn.onclick = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const input = document.getElementById(btn.dataset.picturePick);
-        if (input) {
-          input.value = '';
-          input.click();
-        }
-      });
-      document.querySelectorAll('[data-picture-input]').forEach(input => input.onchange = (event) => {
-        event.stopPropagation();
-        handlePictureInput(input);
-      });
-      document.querySelectorAll('[data-expand-image]').forEach(img => img.onclick = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        openMessageImage(img.dataset.expandImage || img.src);
-      });
-      document.querySelectorAll('[data-open-thread]').forEach(btn => btn.onclick = (event) => {
-        event.stopPropagation();
-        openThread(btn.dataset.openThread);
-      });
-      refreshAllAutocloseCountdowns();
-      if (!window.__widAutocloseInterval) {
-        window.__widAutocloseInterval = setInterval(refreshAllAutocloseCountdowns, 30000);
-      }
-    }
-
-
-    let tapTimer = null;
-    let lastTappedCase = null;
-    let lockedScrollY = 0;
-
-    function registerCaseTap(card, event) {
-      const now = Date.now();
-      const isFocused = document.body.classList.contains('focus-mode') && card.classList.contains('focused');
-      if (lastTappedCase === card && tapTimer && (now - Number(card.dataset.lastTap || 0)) < 360) {
-        clearTimeout(tapTimer);
-        tapTimer = null;
-        if (isFocused) exitFocusMode();
-        else focusCase(card);
-        return;
-      }
-      card.dataset.lastTap = String(now);
-      lastTappedCase = card;
-      tapTimer = setTimeout(() => { tapTimer = null; }, 370);
-    }
-
-    function focusCase(card) {
-      if (!card) return;
-      installViewportSizing();
-      lockedScrollY = window.scrollY || window.pageYOffset || 0;
-      document.querySelectorAll('.texting-shell.message-zoom').forEach(el => el.classList.remove('message-zoom'));
-      document.querySelectorAll('.case.focused').forEach(el => el.classList.remove('focused'));
-      card.classList.add('focused');
-      document.body.classList.add('focus-mode');
-      document.body.style.top = '-' + lockedScrollY + 'px';
-      recenterShell();
-      lockBlueBrowserBarsSoon();
-      openDetails(card.dataset.detailId);
-      setTimeout(() => card.scrollTo({ top:0, behavior:'auto' }), 0);
-    }
-
-    function exitFocusMode(options = {}) {
-      const focusedCards = Array.from(document.querySelectorAll('.case.focused'));
-      document.querySelectorAll('.texting-shell.message-zoom').forEach(el => el.classList.remove('message-zoom'));
-      document.querySelectorAll('textarea').forEach(box => box.blur());
-      focusedCards.forEach(card => {
-        card.querySelectorAll('.details.open').forEach(detail => detail.classList.remove('open'));
-        card.querySelectorAll('.texting-shell').forEach(shell => shell.classList.remove('message-zoom'));
-        card.classList.remove('keyboard-space');
-        document.body.classList.remove('keyboard-active');
-        card.scrollTop = 0;
-        card.classList.remove('focused');
-      });
-      document.body.classList.remove('focus-mode');
-      document.body.style.top = '';
-      recenterShell();
-      lockBlueBrowserBarsSoon();
-      if (options.restoreScroll !== false) window.scrollTo(0, lockedScrollY || 0);
-      requestAnimationFrame(() => {
-        recenterShell();
-      });
-      lastTappedCase = null;
-      if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
-    }
-
-    function toggleMessageZoom(shell) {
-      if (!shell) return;
-      const card = shell.closest('.case');
-      if (card && !document.body.classList.contains('focus-mode')) focusCase(card);
-      installViewportSizing();
-      shell.classList.remove('collapsed');
-      const willOpen = !shell.classList.contains('message-zoom');
-      document.querySelectorAll('.texting-shell.message-zoom').forEach(el => el.classList.remove('message-zoom'));
-      if (willOpen) {
-        shell.classList.add('message-zoom');
-        lockBlueBrowserBarsSoon();
-        const thread = shell.querySelector('.thread');
-        if (thread) thread.scrollTop = thread.scrollHeight;
-      }
-    }
-
-    function setupSwipeExit(el, callback) {
-      if (!el || el.dataset.swipeReady === '1') return;
-      el.dataset.swipeReady = '1';
-      let startX = 0, startY = 0;
-      el.addEventListener('touchstart', e => {
-        const t = e.changedTouches && e.changedTouches[0];
-        if (!t) return;
-        startX = t.clientX; startY = t.clientY;
-      }, { passive:true });
-      el.addEventListener('touchend', e => {
-        const t = e.changedTouches && e.changedTouches[0];
-        if (!t) return;
-        const dx = t.clientX - startX;
-        const dy = t.clientY - startY;
-        if (dx < -70 && Math.abs(dx) > Math.abs(dy) * 1.4) {
-          if (callback) callback();
-          else exitFocusMode();
-        }
-      }, { passive:true });
-    }
-
-    function setupKeyboardDismiss(card) {
-      if (!card || card.dataset.keyboardDismissReady === '1') return;
-      card.dataset.keyboardDismissReady = '1';
-      let startTarget = null;
-      card.addEventListener('touchstart', e => {
-        startTarget = e.target;
-      }, { passive:true });
-      card.addEventListener('touchmove', e => {
-        dismissKeyboardFromOuterScroll(startTarget || e.target);
-      }, { passive:true });
-      card.addEventListener('wheel', e => {
-        dismissKeyboardFromOuterScroll(e.target);
-      }, { passive:true });
-    }
-
-    function clampScrollEdges(el) {
-      if (!el || el.dataset.clampReady === '1') return;
-      el.dataset.clampReady = '1';
-      let lastY = 0;
-      el.addEventListener('touchstart', e => {
-        const t = e.touches && e.touches[0];
-        if (t) lastY = t.clientY;
-      }, { passive:true });
-      el.addEventListener('touchmove', e => {
-        if (!document.body.classList.contains('focus-mode')) return;
-        const t = e.touches && e.touches[0];
-        if (!t) return;
-        const dy = t.clientY - lastY;
-        lastY = t.clientY;
-        const atTop = el.scrollTop <= 0;
-        const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
-        if ((atTop && dy > 0) || (atBottom && dy < 0)) e.preventDefault();
-      }, { passive:false });
-    }
-
-    function toggleDetails(detailId) {
-      const el = document.getElementById(detailId);
+    function smoothScrollTo(el, block = 'start') {
       if (!el) return;
-      el.classList.toggle('open');
+      requestAnimationFrame(() => {
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block }), 120);
+      });
     }
 
-    function openDetails(detailId) {
-      const el = document.getElementById(detailId);
-      if (el) el.classList.add('open');
+    function syncWhoButtons() {
+      document.querySelectorAll('.who-btn').forEach(other => other.classList.toggle('dark', !!state.who && other.dataset.who === state.who));
     }
 
-    function renderCase(c, index, queueMeta, selectedView = 'open') {
-      const caseNo = formatCaseNumber(c, index, queueMeta);
-      const created = c.created_at ? new Date(c.created_at).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '';
-      const name = c.customer_name || 'Name missing';
-      const vehicle = c.vehicle_summary || compactVehicle(c) || 'Vehicle not clear';
-      const issue = c.issue_summary || 'Symptom not clear';
-      const status = c.status || 'waiting_on_me';
-      const detailId = `detail-${index}`;
-      const files = Array.isArray(c.file_links) ? c.file_links : [];
-      const imageFiles = files.filter(f => /^image\//.test(f.type || '') || looksLikeImage(f.name || f.path || ''));
-      const otherFiles = files.filter(f => !( /^image\//.test(f.type || '') || looksLikeImage(f.name || f.path || '') ));
-      const hasVoice = !!c.voice_note_url;
-      const priority = isPriority(c);
-      const extended = isExtended(c);
-      const statusKey = String(status || '').toLowerCase();
-      const waitingOnMeVisual = statusKey === 'waiting_on_me' || statusKey === 'paid_pending';
-      const queueType = priority ? 'priority' : (extended ? 'extended' : 'normal');
-      const pos = queueMeta.positions[getCaseKey(c, index)] || (index + 1);
-      const total = queueMeta.total || itemsTotalFallback(queueMeta);
-      const queueLabel = `${priority ? 'Priority' : (extended ? 'Extended' : 'Normal')} · ${pos} of ${total}`;
-      const showQueueLabel = selectedView === 'open';
-      const archived = isArchived(c);
-      const actionLabel = (isClosed(c) || archived) ? 'Reopen case' : 'Close case';
-      const actionStatus = (isClosed(c) || archived) ? 'waiting_on_me' : 'closed';
-      const actionClass = (isClosed(c) || archived) ? 'reopen-case' : 'close-case';
-      const archiveButton = isClosed(c) ? `<button class="archive-btn" data-action-status="archived" data-id="${escapeAttr(c.id)}" data-case-no="${escapeAttr(caseNo)}" type="button">Archive case</button>` : '';
-      const isWaitingOnCustomer = String(status || '').toLowerCase() === 'waiting_on_customer';
-      const waitingActionLabel = isWaitingOnCustomer ? 'Waiting on me' : 'Waiting cust.';
-      const waitingActionStatus = isWaitingOnCustomer ? 'waiting_on_me' : 'waiting_on_customer';
-      const firstVoiceUrl = c.voice_note_url || '';
-      const firstImageUrl = (imageFiles.find(f => f.url) || {}).url || '';
-      const firstFileUrl = (otherFiles.find(f => f.url) || {}).url || '';
-      const attachmentIcons = renderAttachmentIcons({ detailId, firstVoiceUrl, firstImageUrl, firstFileUrl });
-      const replyId = `reply-${escapeAttr(c.id || index)}`;
-      const preview = getLastMessagePreview(c, index);
-      const caseKey = getCaseKey(c, index);
-      return `
-        <section class="case ${priority ? 'priority' : ''} ${extended ? 'extended' : ''} ${waitingOnMeVisual ? 'waiting-me' : ''}" data-thread-id="${escapeAttr(c.id)}" data-case-key="${escapeAttr(caseKey)}" data-detail-id="${detailId}">
-          <div class="case-head">
-            <div class="left-lines">
-              <div class="customer-name">${escapeHtml(name)}</div>
-              <div class="vehicle-line">${escapeHtml(vehicle)}</div>
-              <div class="symptom-line">${escapeHtml(issue)}</div>
-              <div class="meta">${escapeHtml(created)} · <span class="status-label">${escapeHtml(effectiveStatusLabel(status))}</span></div>
-              <div class="last-message-preview" data-last-preview="${escapeAttr(caseKey)}" ${preview ? '' : 'style="display:none"'}>${preview ? escapeHtml(preview) : ''}</div>
-            </div>
-            <div class="right-stack">
-              <div class="case-number">#${escapeHtml(caseNo)}</div>
-              ${showQueueLabel ? `<span class="queue-badge ${queueType}">${escapeHtml(queueLabel)}</span>` : ''}
-              ${attachmentIcons}
-            </div>
-          </div>
-          <div class="details" id="${detailId}">
-            <div class="label">Summary</div>
-            <div class="box"><strong>Issue:</strong> ${escapeHtml(c.issue_summary || '')}\n\n<strong>What has been done:</strong> ${escapeHtml(c.work_done_summary || '')}</div>
-            <div class="label">Original intake</div>
-            <div class="box">${escapeHtml(c.intake_text || '')}</div>
-            <div class="label">Additional details</div>
-            <div class="box">${escapeHtml(c.followup_text || 'None')}</div>
-            ${renderPhone(c)}
-            ${renderFiles(c)}
-            <div class="workflow-actions wid-v58-workflow">
-              <button class="${actionClass}" data-action-status="${actionStatus}" data-id="${escapeAttr(c.id)}" data-case-no="${escapeAttr(caseNo)}">${actionLabel}</button>
-              <button class="waiting-btn" data-action-status="${escapeAttr(waitingActionStatus)}" data-id="${escapeAttr(c.id)}" data-case-no="${escapeAttr(caseNo)}">${escapeHtml(waitingActionLabel)}</button>
-              <button class="reset-btn" data-clear-waiting-workflow="1" data-id="${escapeAttr(c.id)}" data-case-no="${escapeAttr(caseNo)}" type="button" aria-label="Clear active autoclose timer">Clear timer</button>
-              <button class="undo-btn" data-undo-action="1" data-id="${escapeAttr(c.id)}" data-case-no="${escapeAttr(caseNo)}" type="button" aria-label="Undo last timer reset or local message">Undo</button>
-              ${archiveButton}
-            </div>
-            ${renderTextingPanel(c, index, replyId)}
-          </div>
-        </section>`;
+    function normalizeText(value) {
+      let text = String(value || '');
+      const digitMap = { zero:'0', oh:'0', o:'0', one:'1', two:'2', to:'2', too:'2', three:'3', four:'4', for:'4', five:'5', six:'6', seven:'7', eight:'8', ate:'8', nine:'9', ten:'10' };
+      text = text.replace(/,/g, '');
+      text = text.replace(/\b(\d{2,3})\s+thousand\s+miles?\b/gi, (_, n) => `${n}k miles`);
+      text = text.replace(/\bone hundred (?:and )?(\d{1,2}) thousand miles\b/gi, (_, n) => `${100 + Number(n)}k miles`);
+      text = text.replace(/\b([PBCU])\s*0\s+300\b/gi, (_, p) => p.toUpperCase() + '0300');
+      text = text.replace(/\b([PBCU])\s*0\s+([0-9]{3})\b/gi, (_, p, digits) => p.toUpperCase() + '0' + digits);
+      text = text.replace(/\b([PBCU])\s+(zero|oh|o)\s+three[\s-]*hundred\b/gi, (_, p) => p.toUpperCase() + '0300');
+      text = text.replace(/\b([PBCU])\s+(zero|oh|o|one|two|to|too|three|four|for|five|six|seven|eight|ate|nine)\s+(zero|oh|o|one|two|to|too|three|four|for|five|six|seven|eight|ate|nine)\s+(zero|oh|o|one|two|to|too|three|four|for|five|six|seven|eight|ate|nine)\s+(zero|oh|o|one|two|to|too|three|four|for|five|six|seven|eight|ate|nine)\b/gi,
+        (_, p, a, b, c, d) => p.toUpperCase() + (digitMap[a.toLowerCase()] || '') + (digitMap[b.toLowerCase()] || '') + (digitMap[c.toLowerCase()] || '') + (digitMap[d.toLowerCase()] || '')
+      );
+      return text.replace(/\s+/g, ' ').trim();
     }
 
-
-    function renderTextingPanel(c, index, replyId) {
-      const threadId = `thread-${index}`;
-      const key = escapeAttr(c.id || index);
-      return `
-        <div class="texting-shell" data-case-key="${key}">
-          <div class="texting-head">
-            <div class="texting-title">Messages</div>
-            <div class="texting-sub">tap to collapse</div>
-          </div>
-          <div class="thread" id="${threadId}">${renderThreadBubbles(c, index)}</div>
-          <div class="autoclose-thread-note ${getWaitingWorkflow(c.id || index) ? 'active' : ''}" data-autoclose-note="${key}">48hr autoclose active</div>
-          <div class="quick-replies wid-v58-quick" aria-label="reply starters">
-            <button type="button" tabindex="-1" data-insert-reply="${replyId}" data-reply-text="Hello, my name is Bryan, ">Hello..</button>
-            <button type="button" tabindex="-1" data-insert-reply="${replyId}" data-reply-text="I’d check ">I’d check</button>
-            <button type="button" tabindex="-1" data-insert-reply="${replyId}" data-reply-text="I’m not sure ">I’m not sure</button>
-            <button type="button" tabindex="-1" data-insert-reply="${replyId}" data-reply-text="Can you elaborate?">Elaborate?</button>
-            <button type="button" tabindex="-1" data-insert-reply="${replyId}" data-reply-text="What code was it?">Code?</button>
-            <button type="button" tabindex="-1" data-insert-reply="${replyId}" data-reply-text="Does that make sense?">Make sense?</button>
-          </div>
-          <div class="phone-compose">
-            <textarea id="${replyId}" data-reply-draft="${key}" data-thread-target="${threadId}" placeholder="Type message..."></textarea>
-            <div class="phone-buttons">
-              <button class="photo-btn wid-v58-photo" type="button" data-picture-pick="pic-${replyId}" aria-label="Add photo to message">Photo</button>
-              <button type="button" data-clear-reply="${replyId}">Clear</button>
-              <button type="button" class="send" data-local-send="${replyId}" data-case-key="${key}" data-thread-target="${threadId}">Send</button>
-              <input id="pic-${replyId}" data-picture-input="1" data-case-key="${key}" data-thread-target="${threadId}" type="file" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp" multiple style="display:none" />
-            </div>
-          </div>
-        </div>`;
+    function formatPhoneDisplay(value) {
+      const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return `(${digits.slice(0,3)}) ${digits.slice(3)}`;
+      return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
     }
 
-    function renderThreadBubbles(c, index) {
-      const parts = [];
-      const intro = [c.intake_text, c.followup_text].filter(Boolean).join('\n\n');
-      if (intro) {
-        parts.push(`<div class="bubble customer">${escapeHtml(intro)}<span class="bubble-meta">customer</span></div>`);
-      }
-      const local = getLocalThread(c.id || index);
-      local.forEach(m => parts.push(renderMessageBubble(m)));
-      if (!parts.length) parts.push('<div class="bubble system">No message text saved yet.</div>');
-      return parts.join('');
-    }
-
-    function renderMessageBubble(m) {
-      const rawWho = (m && m.who) || 'operator';
-      const who = rawWho === 'system' ? 'system' : (rawWho === 'info' ? 'info' : 'operator');
-      const meta = who === 'system' || who === 'info' ? ((m && m.at) || who) : ('you · ' + ((m && m.at) || ''));
-      const text = escapeHtml((m && m.text) || '');
-      const img = (m && m.imageData) ? `<img class="bubble-image-thumb" src="${escapeAttr(m.imageData)}" alt="${escapeAttr(m.imageName || 'message picture')}" data-expand-image="${escapeAttr(m.imageData)}" />` : '';
-      return `<div class="bubble ${who}">${text}${img}<span class="bubble-meta">${escapeHtml(meta)}</span></div>`;
-    }
-
-    function getLastMessagePreview(c, index) {
-      const caseKey = c.id || index;
-      const wf = getWaitingWorkflow(caseKey);
-      const local = getLocalThread(caseKey);
-      const operatorQuestion = lastOperatorText(caseKey);
-      if (wf && operatorQuestion) {
-        return `Last: ${firstWords(operatorQuestion, 4)} · Autoclose: ${formatAutocloseCountdown(wf.closeAt)}`;
-      }
-      const last = local.length ? local[local.length - 1] : null;
-      const raw = last ? (last.text || (last.imageData ? 'Picture attached' : '')) : (c.last_message || c.last_message_body || c.latest_message || c.operator_reply || '');
-      const text = String(raw || '').replace(/\s+/g, ' ').trim();
+    function compactMileageFromText(text) {
       if (!text) return '';
-      const words = text.split(' ').slice(0, 9).join(' ');
-      return 'Last: ' + words + (text.length > words.length ? '…' : '');
-    }
-
-    function updateLastMessagePreview(caseKey, text) {
-      const clean = String(text || '').replace(/\s+/g, ' ').trim();
-      const wf = getWaitingWorkflow(caseKey);
-      let preview = '';
-      if (wf && clean) {
-        preview = `Last: ${firstWords(clean, 4)} · Autoclose: ${formatAutocloseCountdown(wf.closeAt)}`;
-      } else if (clean) {
-        const words = clean.split(' ').slice(0, 9).join(' ');
-        preview = 'Last: ' + words + (clean.length > words.length ? '…' : '');
-      }
-      document.querySelectorAll(`[data-last-preview="${cssEscape(caseKey)}"]`).forEach(el => {
-        el.textContent = preview;
-        el.style.display = preview ? '' : 'none';
-      });
-    }
-
-    function cssEscape(v) {
-      if (window.CSS && CSS.escape) return CSS.escape(String(v));
-      return String(v).replace(/[^a-zA-Z0-9_-]/g, '\$&');
-    }
-
-    function getLocalThread(caseKey) {
-      try { return JSON.parse(localStorage.getItem('wid_thread_' + caseKey) || '[]') || []; }
-      catch (_) { return []; }
-    }
-
-    function saveLocalThread(caseKey, messages) {
-      localStorage.setItem('wid_thread_' + caseKey, JSON.stringify(messages || []));
-    }
-
-
-    function renderAttachmentIcons({ detailId, firstVoiceUrl, firstImageUrl, firstFileUrl }) {
-      const parts = [];
-      if (firstVoiceUrl) parts.push(`<span class="icon on" title="Open voice note" data-open-attachment="${escapeAttr(firstVoiceUrl)}" data-detail-id="${detailId}">🎙</span>`);
-      if (firstImageUrl) parts.push(`<span class="icon on" title="Open picture" data-open-attachment="${escapeAttr(firstImageUrl)}" data-detail-id="${detailId}">📷</span>`);
-      if (firstFileUrl) parts.push(`<span class="icon on" title="Open uploaded file" data-open-attachment="${escapeAttr(firstFileUrl)}" data-detail-id="${detailId}">📎</span>`);
-      return parts.length ? `<div class="icons" aria-label="attachments">${parts.join('')}</div>` : '';
-    }
-
-
-    function buildQueueMeta(items) {
-      const positions = {};
-      const caseNumbers = {};
-      items.forEach((c, index) => {
-        positions[getCaseKey(c, index)] = index + 1;
-      });
-      const all = Array.isArray(window.__widAllConsults) && window.__widAllConsults.length ? window.__widAllConsults : items;
-      [...all]
-        .sort((a,b) => new Date(a.created_at || a.paid_at || a.updated_at || 0) - new Date(b.created_at || b.paid_at || b.updated_at || 0))
-        .forEach((c, index) => { caseNumbers[getCaseKey(c, index)] = index + 1; });
-      return { total: items.length, positions, caseNumbers };
-    }
-
-    function itemsTotalFallback(queueMeta) {
-      if (!queueMeta || !queueMeta.positions) return 1;
-      return Object.keys(queueMeta.positions).length || 1;
-    }
-
-    function getCaseKey(c, index) {
-      return String(c.id || c.case_number || c.consult_number || c.ticket_number || index);
-    }
-
-    function openThread(id) {
-      if (!id) return;
-      window.location.href = '/thread.html?id=' + encodeURIComponent(id);
-    }
-
-    function formatCaseNumber(c, index, queueMeta) {
-      const raw = c.case_number ?? c.consult_number ?? c.ticket_number ?? c.sequence_number;
-      const n = Number(raw);
-      if (Number.isFinite(n) && n > 0) return String(n).padStart(4, '0').slice(-4);
-      const key = getCaseKey(c, index);
-      const globalN = queueMeta && queueMeta.caseNumbers ? Number(queueMeta.caseNumbers[key]) : NaN;
-      if (Number.isFinite(globalN) && globalN > 0) return String(globalN).padStart(4, '0').slice(-4);
-      return '----';
-    }
-
-    function compactVehicle(c) {
-      return [c.year, c.make, c.model].filter(Boolean).join(' ');
-    }
-
-    function isExtended(c) {
-      const raw = String(c.queue_type || c.consult_type || c.priority || c.product || c.plan || '').toLowerCase();
-      return raw.includes('extended') || raw.includes('3 day') || raw.includes('3-day') || raw.includes('three day');
-    }
-
-    function isPriority(c) {
-      const raw = String(c.queue_type || c.consult_type || c.priority || '').toLowerCase();
-      return raw.includes('priority') || raw.includes('rush') || raw.includes('urgent');
-    }
-
-    function isClosed(c) { return String(c.status || '').toLowerCase() === 'closed'; }
-    function isArchived(c) { return String(c.status || '').toLowerCase() === 'archived'; }
-
-    function effectiveStatusLabel(status) {
-      const map = {
-        unpaid:'Waiting on me',
-        paid_pending:'Waiting on me',
-        waiting_on_me:'Waiting on me',
-        waiting_on_customer:'Waiting cust.',
-        closed:'Closed',
-        archived:'Archived',
-        draft:'Draft'
-      };
-      return map[status] || status || 'Waiting on me';
-    }
-
-
-    function renderPhone(c) {
-      const raw = c.customer_phone || c.phone || c.phone_number || '';
-      const clean = String(raw || '').replace(/[^\d+]/g, '');
-      if (!raw || !clean) return '';
-      return `<div class="label">Contact</div><a class="call-btn" href="tel:${escapeAttr(clean)}">Call ${escapeHtml(raw)}</a>`;
-    }
-
-    function renderVoice(c) {
-      if (!c.voice_note_path) return '<div class="label">Voice note</div><div class="box muted">No voice note saved.</div>';
-      if (!c.voice_note_url) return `<div class="label">Voice note</div><div class="box">Path saved, but no playable URL returned.<span class="pathline">${escapeHtml(c.voice_note_path)}</span></div>`;
-      return `<div class="label">Voice note</div><audio controls src="${escapeAttr(c.voice_note_url)}"></audio><a class="filelink" target="_blank" rel="noopener" href="${escapeAttr(c.voice_note_url)}">Open voice note</a><span class="pathline">${escapeHtml(c.voice_note_path)}</span>`;
-    }
-
-    function renderFiles(c) {
-      const files = (Array.isArray(c.file_links) ? c.file_links : []).filter(f => f && f.url);
-      if (!files.length) return '';
-      return '<div class="label">Uploads</div><div class="uploads-list">' + files.map((f, i) => {
-        const fileName = f.name || f.path || 'upload';
-        const label = looksLikeImage(fileName) || /^image\//.test(f.type || '') ? `Open photo${files.length > 1 ? ' ' + (i + 1) : ''}` : `Open file${files.length > 1 ? ' ' + (i + 1) : ''}`;
-        return `<div class="upload-row"><a target="_blank" rel="noopener" href="${escapeAttr(f.url)}">${label}</a></div>`;
-      }).join('') + '</div>';
-    }
-
-    function looksLikeImage(name) { return /\.(png|jpe?g|gif|webp|heic|heif)$/i.test(String(name || '')); }
-
-    async function ensureNotificationPermission() {
-      if (!('Notification' in window)) return false;
-      if (Notification.permission === 'granted') return true;
-      if (Notification.permission === 'denied') return false;
-      try { return (await Notification.requestPermission()) === 'granted'; }
-      catch (_) { return false; }
-    }
-
-    function notifyOperator(title, body) {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        try { new Notification(title, { body }); return; } catch (_) {}
-      }
-      try { alert(title + '\n\n' + body); } catch (_) {}
-    }
-
-    function getWaitingWorkflow(caseKey) {
-      if (!caseKey) return null;
-      try { return JSON.parse(localStorage.getItem('wid_waiting_workflow_' + String(caseKey)) || 'null'); }
-      catch (_) { return null; }
-    }
-
-    function formatAutocloseCountdown(closeAt) {
-      const end = Number(closeAt || 0);
-      if (!end) return '';
-      const ms = Math.max(0, end - Date.now());
-      const totalMinutes = Math.ceil(ms / 60000);
-      const hours = Math.floor(totalMinutes / 60);
-      const minutes = totalMinutes % 60;
-      if (hours <= 0) return `${minutes}m`;
-      return `${hours}h ${String(minutes).padStart(2, '0')}m`;
-    }
-
-    function getAutocloseCountdown(caseKey) {
-      const wf = getWaitingWorkflow(caseKey);
-      if (!wf || !wf.closeAt) return '';
-      return formatAutocloseCountdown(wf.closeAt);
-    }
-
-    function firstWords(text, count = 4) {
-      return String(text || '').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean).slice(0, count).join(' ');
-    }
-
-    function lastOperatorText(caseKey) {
-      const local = getLocalThread(caseKey);
-      for (let i = local.length - 1; i >= 0; i--) {
-        if (local[i] && local[i].who === 'operator' && local[i].text) return local[i].text;
-      }
+      const lower = text.toLowerCase();
+      const kMatch = lower.match(/\b(\d{2,3})k\b/);
+      if (kMatch) return `${kMatch[1]}k`;
+      const milesMatch = lower.match(/\b(\d{4,6})\s*miles?\b/);
+      if (milesMatch) return `${Math.round(Number(milesMatch[1]) / 1000)}k`;
       return '';
     }
 
-    function updateAutocloseUi(caseKey) {
-      if (!caseKey) return;
-      const wf = getWaitingWorkflow(caseKey);
-      const countdown = wf ? formatAutocloseCountdown(wf.closeAt) : '';
-      document.querySelectorAll(`[data-autoclose-note="${cssEscape(caseKey)}"]`).forEach(el => {
-        el.textContent = '48hr autoclose active';
-        el.classList.toggle('active', !!wf);
-      });
-      document.querySelectorAll(`[data-autoclose-countdown="${cssEscape(caseKey)}"]`).forEach(el => {
-        el.textContent = countdown;
-      });
-      const text = lastOperatorText(caseKey);
-      if (wf && text) updateLastMessagePreview(caseKey, text);
-      else if (!wf) {
-        const local = getLocalThread(caseKey);
-        const last = [...local].reverse().find(m => m && (m.text || m.imageData));
-        updateLastMessagePreview(caseKey, last ? (last.text || 'Picture attached') : '');
+    function inferYear(raw) {
+      const fullYear = raw.match(/\b(?:19|20)\d{2}\b/);
+      if (fullYear) return fullYear[0];
+      const shortYear = raw.match(/(?:^|\s)(\d{2})(?=\s+[a-z])/i);
+      if (!shortYear) return '';
+      const yy = Number(shortYear[1]);
+      return String(yy <= 29 ? 2000 + yy : 1900 + yy);
+    }
+
+    function normalizeMakeDisplay(make) {
+      const m = (make || '').toLowerCase();
+      if (m === 'chevrolet') return 'Chevy';
+      if (m === 'vw') return 'VW';
+      if (m === 'mercedes-benz') return 'Mercedes';
+      return make ? make.charAt(0).toUpperCase() + make.slice(1) : '';
+    }
+
+    function titleWords(s) {
+      return s.split(' ').filter(Boolean).map(w => {
+        if (/^(mr2|[f]\d{3})$/i.test(w)) return w.toUpperCase();
+        if (/^\d\/\d$/.test(w)) return w;
+        if (w === '1ton') return '1ton';
+        return w.charAt(0).toUpperCase() + w.slice(1);
+      }).join(' ');
+    }
+
+    function detectVehicle(raw) {
+      const lower = raw.toLowerCase();
+      const year = inferYear(raw);
+      const mileage = compactMileageFromText(raw);
+
+      let make = '';
+      for (const mk of MAKES.sort((a,b)=>b.length-a.length)) {
+        if (new RegExp(`\\b${mk.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i').test(lower)) { make = mk; break; }
       }
-    }
 
-    function refreshAllAutocloseCountdowns() {
-      document.querySelectorAll('[data-case-key]').forEach(el => updateAutocloseUi(el.dataset.caseKey));
-    }
-
-    function renderWaitingTimerSummary(caseKey) {
-      const wf = getWaitingWorkflow(caseKey);
-      if (!wf || !wf.started) return '';
-      const left = formatAutocloseCountdown(wf.closeAt);
-      return `
-
-<div class="timer-summary">Autoclose: <span class="autoclose-countdown" data-autoclose-countdown="${escapeAttr(caseKey)}">${escapeHtml(left)}</span></div>`;
-    }
-
-    function appendSystemMessage(caseKey, thread, text) {
-      if (!caseKey || !text) return;
-      const now = new Date().toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
-      const local = getLocalThread(caseKey);
-      local.push({ who:'system', text, at:now });
-      saveLocalThread(caseKey, local);
-      if (thread) {
-        thread.insertAdjacentHTML('beforeend', renderMessageBubble({ who:'system', text, at:now }));
-        thread.scrollTop = thread.scrollHeight;
+      let model = '';
+      if (/\bmighty\s+max\b/i.test(lower)) {
+        make = 'mitsubishi';
+        model = 'Mighty Max';
+      } else if (/\bmr2\b/i.test(lower)) {
+        make = make || 'toyota';
+        model = 'MR2';
+      } else if (/\b(?:dodge\s+(?:1\s*ton|one\s*ton|3500)|(?:1\s*ton|one\s*ton|3500)\s+dodge|(?:one\s*ton)\s+dodge)\b/i.test(lower)) {
+        make = 'dodge';
+        model = '3500';
+      } else if (/\b(?:dodge\s+(?:3\/4(?:\s*ton)?|three\s*quarter(?:\s*ton)?|2500)|(?:3\/4(?:\s*ton)?|three\s*quarter(?:\s*ton)?|2500)\s+dodge)\b/i.test(lower)) {
+        make = 'dodge';
+        model = '2500';
+      } else if (/\b(?:dodge\s+(?:1\/2(?:\s*ton)?|half\s*ton|1500)|(?:1\/2(?:\s*ton)?|half\s*ton|1500)\s+dodge)\b/i.test(lower)) {
+        make = 'dodge';
+        model = '1500';
+      } else if (/\b(?:ram\s+(?:1\s*ton|one\s*ton|3500)|(?:1\s*ton|one\s*ton|3500)\s+ram|(?:one\s*ton)\s+ram)\b/i.test(lower)) {
+        make = 'ram';
+        model = '3500';
+      } else if (/\b(?:ram\s+(?:3\/4(?:\s*ton)?|three\s*quarter(?:\s*ton)?|2500)|(?:3\/4(?:\s*ton)?|three\s*quarter(?:\s*ton)?|2500)\s+ram)\b/i.test(lower)) {
+        make = 'ram';
+        model = '2500';
+      } else if (/\b(?:ram\s+(?:1\/2(?:\s*ton)?|half\s*ton|1500)|(?:1\/2(?:\s*ton)?|half\s*ton|1500)\s+ram)\b/i.test(lower)) {
+        make = 'ram';
+        model = '1500';
+      } else if (/\bsilverado\b/i.test(lower) && /\b(3\/4|three\s*quarter|2500|2500hd)\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = 'Silverado 2500HD';
+      } else if (/\bsilverado\b/i.test(lower) && /\b(1\s*ton|one\s*ton|3500)\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = 'Silverado 3500';
+      } else if (/\bsilverado\b/i.test(lower) && /\b(1\/2|half\s*ton|1500)\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = 'Silverado 1500';
+      } else if (/\bsierra\b/i.test(lower) && /\b(3\/4|three\s*quarter|2500|2500hd)\b/i.test(lower)) {
+        make = make || 'gmc';
+        model = 'Sierra 2500HD';
+      } else if (/\bsierra\b/i.test(lower) && /\b(1\s*ton|one\s*ton|3500)\b/i.test(lower)) {
+        make = make || 'gmc';
+        model = 'Sierra 3500';
+      } else if (/\bsierra\b/i.test(lower) && /\b(1\/2|half\s*ton|1500)\b/i.test(lower)) {
+        make = make || 'gmc';
+        model = 'Sierra 1500';
+      } else if (/\b([ck])\s?2500\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = `${lower.match(/\b([ck])\s?2500\b/i)[1].toUpperCase()}2500`;
+      } else if (/\b([ck])\s?1500\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = `${lower.match(/\b([ck])\s?1500\b/i)[1].toUpperCase()}1500`;
+      } else if (/\b([ck])\s?3500\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = `${lower.match(/\b([ck])\s?3500\b/i)[1].toUpperCase()}3500`;
+      } else if (/\bdodge\s+ram\b/i.test(lower)) {
+        make = 'ram';
+        const series = lower.match(/\bdodge\s+ram\s+(1500|2500|3500)\b/i);
+        model = series ? `Ram ${series[1]}` : 'Ram';
+      } else if (/\bram\s+(1500|2500|3500)\b/i.test(lower)) {
+        make = 'ram';
+        model = `Ram ${lower.match(/\bram\s+(1500|2500|3500)\b/i)[1]}`;
+      } else if (/\bsilverado\s+(1500|2500|3500)\b/i.test(lower)) {
+        make = make || 'chevy';
+        model = `Silverado ${lower.match(/\bsilverado\s+(1500|2500|3500)\b/i)[1]}`;
+      } else if (/\bf[- ]?(150|250|350)\b/i.test(lower)) {
+        make = 'ford';
+        model = `F${lower.match(/\bf[- ]?(150|250|350)\b/i)[1]}`;
       }
+
+      if (!model) {
+        for (const cm of COMMON_MODELS.sort((a,b)=>b.length-a.length)) {
+          if (new RegExp(`\\b${cm.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i').test(lower)) {
+            model = titleWords(cm);
+            if (!make && /\b(tahoe|suburban|s10|s-10|silverado)\b/i.test(cm)) make = 'chevy';
+            if (!make && /\b(yukon|sierra)\b/i.test(cm)) make = 'gmc';
+            if (!make && /\b(crv|cr-v)\b/i.test(cm)) make = 'honda';
+            break;
+          }
+        }
+      }
+
+      if (!model && make) {
+        const makePattern = new RegExp(`\\b${make.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b\\s+([a-z0-9/-]+)(?:\\s+([a-z0-9/-]+))?`, 'i');
+        const m = lower.match(makePattern);
+        if (m) {
+          const t1 = m[1] || '';
+          const t2 = m[2] || '';
+          let parts = [];
+          if (t1 && !STOPWORDS.has(t1) && !/^\d+k$/.test(t1)) parts.push(t1);
+          if (t2 && !STOPWORDS.has(t2) && !/^\d+k$/.test(t2) && !/^\d{4,6}$/.test(t2)) parts.push(t2);
+          if (parts.length) model = titleWords(parts.join(' '));
+        }
+      }
+
+      const displayMake = normalizeMakeDisplay(make);
+      let modelForDisplay = model === 'S10' || model === 'S-10' ? 'S10' : model;
+      if (/^(Crv|Cr-v|CRV|CR-V)$/i.test(modelForDisplay || '')) modelForDisplay = 'CRV';
+      const truckish = /^(1500|2500|2500HD|3500|Ram|Silverado|Sierra|S10|F150|F250|F350|C1500|C2500|C3500|K1500|K2500|K3500)/i.test(modelForDisplay || '');
+      const suvNeedsMake = /^(Tahoe|Suburban|Yukon|CRV|Crv|Cr-v|CR-V)$/i.test(modelForDisplay || '');
+      const displayVehicleName = displayMake && modelForDisplay && (truckish || suvNeedsMake)
+        ? `${displayMake} ${modelForDisplay}`
+        : (modelForDisplay || displayMake);
+      let vehicle = [year ? `'${String(year).slice(-2)}` : '', displayVehicleName, mileage].filter(Boolean).join(' ');
+      if (!vehicle && (displayMake || mileage)) vehicle = [year ? `'${String(year).slice(-2)}` : '', displayMake, mileage].filter(Boolean).join(' ');
+      return { year, make: displayMake, model: modelForDisplay, mileage, vehicle: vehicle || 'Vehicle not clear yet' };
     }
 
-    function setLastUndoAction(caseKey, action) {
-      if (!caseKey || !action) return;
-      localStorage.setItem('wid_last_undo_' + String(caseKey), JSON.stringify({ ...action, savedAt:Date.now() }));
+    function buildSummary() {
+      const raw = normalizeText(els.inputText.value);
+      const followup = normalizeText(els.followupText.value);
+      const combined = [raw, followup].filter(Boolean).join(' ');
+      const lower = combined.toLowerCase();
+      const phone = els.phoneConsultOk.checked ? formatPhoneDisplay(els.phoneConsultNumber.value) : '';
+      const email = normalizeText(els.customerEmail ? els.customerEmail.value : '').toLowerCase();
+      const nameOnly = normalizeText((document.activeElement === els.sumNameEdit ? els.sumNameEdit.value : els.customerName.value)) || 'Name needed';
+      const rawCodeMatches = combined.match(/\b[A-Za-z]\d{4,5}\b/g) || [];
+      const codeMatch = rawCodeMatches.filter(v => !/^[CK]\d{4}$/i.test(v));
+      const noLightsMentioned = /no lights? on|no warning lights?|no check engine light|check engine light (?:is )?not on|cel (?:is )?(?:not on|off)/i.test(lower);
+      const rawLightMentioned = /check engine|engine light|cel|warning light|light came on|light is on|light on/i.test(lower);
+      const lightMentioned = rawLightMentioned && !noLightsMentioned;
+      const unknownCodeMentioned = /don\'t know what code|do not know what code|not sure what code|can\'t scan|cannot scan|no scanner|don\'t have a scanner/i.test(lower);
+      const hasCodeInfo = /code|codes/i.test(lower) || rawLightMentioned || noLightsMentioned || (codeMatch && codeMatch.length);
+      const { vehicle, mileage } = detectVehicle(combined);
+
+      const issueHints = [];
+      if (/a\/c| ac |ac compressor|air conditioning/i.test(' ' + lower + ' ') && /noise|click/i.test(lower)) issueHints.push('ac noise / price concern');
+      if (/steering column|column doesn'?t want to turn|doesn'?t want to turn very well|hard to turn|won't turn very well|steering issue/i.test(lower)) issueHints.push('steering column / steering concern');
+      if (/windows? won'?t work|windows? won'?t work normally|power windows?|window issue/i.test(lower)) issueHints.push('window operation concern');
+      if (/shift(?:s|ing)? hard|hard shift|bangs? into gear|slams? into gear|delayed shift|transmission shifts?/i.test(lower)) issueHints.push('hard shift / transmission behavior concern');
+      if (/runs badly|running badly|runs rough|running rough/i.test(lower)) issueHints.push('runs badly / rough at times');
+      if (/sometimes has low power|low power|falls on its face|no power|lack of power|power loss|hesitat|stumble|bog/i.test(lower)) issueHints.push('power loss / hesitation');
+      if (/hard to start|starts? hard|difficult to start|long crank|cranks? (?:a lot|long)|when i start(?:ed)? (?:it|up)|on startup|first start|cold start|start(?:s|ing)? when cold|cold start/i.test(lower)) issueHints.push('startup issue');
+      if (lightMentioned) issueHints.push('check engine light concern');
+      if (/misfire|cylinder miss|missing on one cylinder|p030\d|p0300/i.test(lower)) issueHints.push('misfire concern');
+      if (/rough idle|rough at idle/i.test(lower) && !issueHints.includes('runs badly / rough at times')) issueHints.push('rough running');
+      if (/smoke/i.test(lower)) issueHints.push('smoke concern');
+      if (/noise|knock|tap|rattle|grind/i.test(lower) && !issueHints.includes('ac noise / price concern')) issueHints.push(/bump|bumps|over bumps|rough road|pothole/i.test(lower) ? 'noise over bumps / road-input concern' : 'noise concern');
+      if (/overheat|overheating|hot/i.test(lower)) issueHints.push('overheating concern');
+      if (codeMatch?.length) issueHints.push('codes: ' + [...new Set(codeMatch.map(v => v.toUpperCase()))].join(', '));
+
+      const doneHints = [];
+      if (/spark plugs replaced|plug(?:s)? (?:were )?replaced|had .*spark plugs .*replaced|plugs were done/i.test(lower)) doneHints.push('spark plugs replaced');
+      if (/new water pump|replaced (?:the )?water pump|water pump (?:was )?replaced|water pump replaced recently/i.test(lower)) doneHints.push('water pump replaced');
+      if (/new fuel pump|has (?:a )?new fuel pump|fuel pump (?:was )?replaced|replaced (?:the )?fuel pump|fuel pump replaced recently/i.test(lower)) doneHints.push('fuel pump replaced');
+      if (/new fuel filter|has (?:a )?new fuel filter|fuel filter (?:was )?(?:replaced|changed|done)|replaced (?:the )?fuel filter|changed (?:the )?fuel filter|fuel filter replaced recently/i.test(lower)) doneHints.push('fuel filter replaced');
+      if (/new tires?|has (?:a )?new tires?|tires? (?:were |was )?(?:replaced|changed|done)|replaced (?:the )?tires?|put (?:on )?new tires?/i.test(lower)) doneHints.push('tires replaced');
+      if (/timing chain|chain done|timing set/i.test(lower)) doneHints.push('timing chain done');
+      if (/serpentine belt (?:was )?replaced|belt (?:was )?replaced already/i.test(lower)) doneHints.push('serpentine belt replaced');
+      if (/new transmission|got a new transmission|transmission replaced|transmission was replaced|transmission recently replaced/i.test(lower)) doneHints.push('transmission replaced');
+      if (/new gear\s*box|new gearbox|gear\s*box replaced|gearbox replaced|replaced (?:the )?gear\s*box|replaced (?:the )?gearbox/i.test(lower)) doneHints.push('gearbox replaced');
+      if (/new steering rack|steering rack (?:was )?(?:replaced|installed)|replaced (?:the )?steering rack|rack and pinion (?:was )?(?:replaced|installed)|new rack and pinion/i.test(lower)) doneHints.push('steering rack replaced');
+      if (/transmission filter and fluid were replaced|transmission fluid and filter were replaced|filter and fluid were replaced|transmission filter replaced|transmission fluid replaced|filter (?:has been|was|got) changed|filter (?:has been|was|got) replaced|changed (?:the )?filter|replaced (?:the )?filter/i.test(lower)) doneHints.push('filter changed / replaced');
+      if (/exhaust manifold replaced|manifold replaced/i.test(lower)) doneHints.push('exhaust manifold replaced');
+      if (/engine was pulled out|pulled the engine|engine pulled|aftermarket engine swap|engine swap/i.test(lower)) doneHints.push('engine pulled for swap project');
+      if (/i thought i could do it myself|started looking into wiring|bunch of it done|some of the wiring is done/i.test(lower)) doneHints.push('started wiring / partial wiring work done');
+      if (/powers?, grounds?|key to work properly|turn it on/i.test(lower)) doneHints.push('looking for powers / grounds / key-on issues');
+      if (/someone suggested|was told|they told me|shop says|mechanic says|mechanic tells me/i.test(lower)) doneHints.push('outside opinion mentioned');
+      if (/looked at|looked over|shop looked at it|mechanic looked at it|code check|scanned it|scan(?:ned)?/i.test(lower)) doneHints.push('looked at / code check mentioned');
+      if (/done some checks|did some checks|checked a few things|have checked/i.test(lower)) doneHints.push('basic checks already started');
+      if (/nothing else was done|that was the only thing done|nothing else done|nothing'?s been done yet|nothing has been done yet/i.test(lower)) doneHints.push('nothing else was done');
+
+      const uniqueDone = [...new Set(doneHints)];
+      const issue = issueHints.join(' · ') || 'Issue path still needs review';
+      let done = uniqueDone.length ? uniqueDone.join(' · ') : 'Nothing specific listed yet';
+      const projectWorkMentioned = /engine swap|aftermarket engine|swap project|wiring harness|wire harness|started wiring|partial wiring|wiring work|powers?\s*(?:and|&)\s*grounds?|power\s*\/\s*ground|key[- ]?on power|key to work/i.test(lower);
+      if (done === 'Nothing specific listed yet' && projectWorkMentioned) {
+        done = 'project wiring / swap work already started';
+      }
+      if (done === 'Nothing specific listed yet' && /replaced|new transmission|new gearbox|new gear\s*box|new steering rack|new rack and pinion|new water pump|new fuel pump|new radiator|new engine|new fuel filter|fuel filter|new tires?|tires? (?:were |was )?(?:replaced|changed|done)|serpentine belt/i.test(lower)) {
+        done = 'replacement work mentioned';
+      }
+
+      const concernMentioned = /concern|concerned|worried|not sure|not really clear|decision|spend more money|before i go any farther|estimate|quote|reasonable|looking for advice|advice|insight|way to test|test it|diagnosis|direction/i.test(lower);
+      const projectMode = projectWorkMentioned;
+      const hasTimingDetail = /when|only|idle|freeway|cold|hot|hill|throttle|after|during|while|start|started|week ago|weeks ago|recently|most of the time|comes and goes|sometimes|all the time|always|constant|constantly|over bumps?|bumps?|rough road|pothole|at \d+\s?mph|\d+\s?mph|highway|city|braking|turning|accelerating|decelerating|coasting|park|reverse|drive|gear/i.test(lower) || /does (?:it|this|that) (?:mostly |usually |only )?(?:do it |happen |act up |occur )?(?:when |while |if )?(?:it(?:'s| is)? )?(?:cold|hot)/i.test(lower);
+      const concernClearlyPresent = /need help|help testing|looking for advice|advice|insight|way to test|test (?:the|it)|concern|concerned|worried|not sure|not really clear/i.test(lower);
+      const symptomClearlyPresent = issueHints.length > 0;
+
+      const suggestionBits = [];
+      if (!symptomClearlyPresent && !projectMode) suggestionBits.push("what's going on?");
+      else if (projectMode && !/what'?s not working|not working|won't work|doesn't work|key to work|powers?|grounds?/i.test(lower)) suggestionBits.push("what's not working?");
+      else if (!hasTimingDetail && !/overheat|overheating/i.test(lower) && !/looking for advice|advice|insight|way to test|test it/i.test(lower)) suggestionBits.push('when is it doing it?');
+      else if (lightMentioned && !codeMatch.length && !noLightsMentioned && !unknownCodeMentioned) suggestionBits.push('what code is it?');
+
+      const explicitMileageMentioned = /\b\d{2,3}\s*k\b|\b\d{4,6}\s*miles?\b|\b\d{2,3}k\b/i.test(lower);
+      if (!mileage && !explicitMileageMentioned) suggestionBits.push('mileage');
+      if (done == 'Nothing specific listed yet') suggestionBits.push("what's been done?");
+      if (state.ability === 'I just need advice') suggestionBits.unshift('I just need advice');
+      else if (!concernMentioned && !concernClearlyPresent && /advice|help|second opinion|estimate|shop|diagnosis|insight|test/i.test(lower)) suggestionBits.push('what are you concerned with?');
+
+      const perspectiveLabel = 'DIY angle';
+      const perspectiveValue = state.who === "I'm working on it"
+        ? (state.ability ? `Yes — ${state.ability}` : 'Yes')
+        : 'No';
+
+      return {
+        name: nameOnly,
+        email,
+        phone,
+        vehicle,
+        issue,
+        done,
+        perspectiveLabel,
+        perspectiveValue,
+        suggestions: suggestionBits.length ? [...new Set(suggestionBits)].join(', ') : 'ready'
+      };
     }
 
-    function getLastUndoAction(caseKey) {
-      try { return JSON.parse(localStorage.getItem('wid_last_undo_' + String(caseKey)) || 'null'); }
-      catch (_) { return null; }
+    function updatedVehicleShorthand(summary) {
+      const vehicle = String(summary.vehicle || '').trim();
+      if (!vehicle || vehicle === 'Vehicle not clear yet') return '';
+      // This intentionally uses only the year/model/mileage shorthand, not the issue path.
+      return vehicle;
     }
 
-    function setLastTimerUndo(caseKey, action) {
-      if (!caseKey || !action) return;
-      localStorage.setItem('wid_last_timer_undo_' + String(caseKey), JSON.stringify({ ...action, savedAt:Date.now() }));
+
+    function compactCaseId(value) {
+      const raw = String(value || '').trim();
+      if (!raw) return 'WID-0001';
+      if (/^WID-\d{4,7}$/i.test(raw)) return raw.toUpperCase();
+      const cleaned = raw.replace(/[^a-z0-9]/gi, '').toUpperCase();
+      if (!cleaned) return raw.slice(0, 7).toUpperCase();
+      return cleaned.slice(0, 7);
     }
 
-    function getLastTimerUndo(caseKey) {
-      try { return JSON.parse(localStorage.getItem('wid_last_timer_undo_' + String(caseKey)) || 'null'); }
-      catch (_) { return null; }
+    function renderAbilityOptions() {
+      els.abilityGrid.innerHTML = '';
+      abilityOptions.forEach(option => {
+        const btn = document.createElement('button');
+        btn.className = 'opt' + (state.ability === option ? ' active' : '');
+        btn.textContent = option;
+        btn.onclick = () => {
+          state.ability = option;
+          render();
+          smoothScrollTo(els.followupSection, 'start');
+        };
+        els.abilityGrid.appendChild(btn);
+      });
     }
 
-    function clearWaitingTimerHandles(caseKey) {
-      const store = window.__widWaitingTimers || {};
-      const timers = store[String(caseKey)] || [];
-      timers.forEach(id => clearTimeout(id));
-      store[String(caseKey)] = [];
-      window.__widWaitingTimers = store;
-    }
-
-    function rememberWaitingTimerHandle(caseKey, id) {
-      if (!caseKey || !id) return;
-      const store = window.__widWaitingTimers || {};
-      store[String(caseKey)] = store[String(caseKey)] || [];
-      store[String(caseKey)].push(id);
-      window.__widWaitingTimers = store;
-    }
-
-    function undoTimerReset(caseKey, thread) {
-      const action = getLastTimerUndo(caseKey) || getLastUndoAction(caseKey);
-      if (!action || action.type !== 'reset_timer') return false;
-      const key = 'wid_waiting_workflow_' + String(caseKey);
-      clearWaitingTimerHandles(caseKey);
-      if (action.prevWorkflowRaw) {
-        localStorage.setItem(key, action.prevWorkflowRaw);
-        try {
-          const old = JSON.parse(action.prevWorkflowRaw);
-          scheduleWaitingTimeouts(old.id, caseKey, old.caseNo, thread, old.started, old.halfAt, old.closeAt);
-        } catch (_) {}
+    function render() {
+      const summary = buildSummary();
+      if (els.sumNameEdit && document.activeElement !== els.sumNameEdit) els.sumNameEdit.value = summary.name || els.customerName.value || '';
+      els.sumMeta.textContent = `${compactCaseId(state.caseId)} · ${state.who ? (state.who === "I'm working on it" ? 'DIY' : 'Someone Else') : 'Choose path'} · ${state.followupSaved ? 'updated' : state.summaryConfirmed ? 'confirmed' : 'preview shell'}`;
+      const anchorSummaryLine = [summary.vehicle, summary.issue].filter(Boolean).join(' · ');
+      els.sumSingleLine.textContent = anchorSummaryLine;
+      if (els.updatedSummaryAnchor) {
+        els.updatedSummaryAnchor.textContent = '';
+        els.updatedSummaryAnchor.classList.add('hidden');
+      }
+      if (state.followupSaved) {
+        const vehicleOnly = updatedVehicleShorthand(summary);
+        els.summaryHeading.innerHTML = '<span class="update-attention">UPDATED SUMMARY:</span>' + (vehicleOnly ? ' <span class="updated-vehicle-inline">' + vehicleOnly + '</span>' : '');
       } else {
-        localStorage.removeItem(key);
+        els.summaryHeading.textContent = 'SUMMARY:';
       }
-      removeTimerSystemMessages(caseKey, thread);
-      localStorage.removeItem('wid_last_timer_undo_' + String(caseKey));
-      const last = getLastUndoAction(caseKey);
-      if (last && last.type === 'reset_timer') localStorage.removeItem('wid_last_undo_' + String(caseKey));
-      statusLine.textContent = 'Timer reset undone';
-      return true;
-    }
+      els.summaryHeading.classList.toggle('update-attention', !!state.followupSaved);
+      els.sumRestatement.innerHTML = `
+        <div><strong>Issue:</strong> ${summary.issue}</div>
+        <br>
+        <div><strong>${state.who === "I'm working on it" ? "What I've already done" : 'What they have done'}:</strong> ${summary.done}</div>
+        <br>
+        <div><strong>${summary.perspectiveLabel}:</strong> ${summary.perspectiveValue}</div>
+        <br>
+        <div><strong>Likely need:</strong> ${summary.suggestions}</div>
+      `;
 
-    function isTimerSystemMessage(m) {
-      const text = String((m && m.text) || '');
-      return !!(m && m.who === 'system' && (
-        text.includes('Waiting timer reset') ||
-        text.includes('Waiting on customer started') ||
-        text.includes('Reminder at 24 hours') ||
-        text.includes('auto-close target') ||
-        text.includes('24-hour reminder') ||
-        text.includes('48-hour close point reached') ||
-        text.includes('Auto-close point reached')
-      ));
-    }
+      const showAbility = state.summaryConfirmed && !state.ability;
+      const showFollowup = state.summaryConfirmed && !!state.ability;
+      const hasFollowupText = normalizeText(els.followupText.value).length > 0;
 
-    function removeTimerSystemMessages(caseKey, thread) {
-      const local = getLocalThread(caseKey);
-      let removed = false;
-      for (let i = local.length - 1; i >= 0; i--) {
-        if (isTimerSystemMessage(local[i])) {
-          local.splice(i, 1);
-          removed = true;
-          break;
-        }
+      if (state.followupSaved) {
+        els.summaryBubble.innerHTML = '<span class="review-attention">Review the Updated Summary Above</span>';
+      } else {
+        els.summaryBubble.textContent = state.summaryConfirmed ? 'Add more details below' : 'Close enough to submit?';
       }
-      if (removed) saveLocalThread(caseKey, local);
-      if (thread) {
-        const systemBubbles = Array.from(thread.querySelectorAll('.bubble.system'));
-        const timerBubble = systemBubbles.reverse().find(b => isTimerSystemMessage({ who:'system', text:b.textContent || '' }));
-        if (timerBubble) timerBubble.remove();
-        else removeLastSystemBubble(thread);
+      els.summaryBubble.classList.toggle('attn', !!state.followupSaved);
+      els.summaryBubble.classList.toggle('update-attention', false);
+      els.summaryConfirmBtn.textContent = state.followupSaved ? 'Confirm Update' : (state.summaryConfirmed ? 'Confirmed ✓' : 'Close Enough');
+      els.summaryConfirmBtn.classList.toggle('dark', !state.followupSaved);
+      els.summaryConfirmBtn.classList.toggle('update-attention', false);
+      els.summaryConfirmBtn.classList.toggle('confirm-update-attention', !!state.followupSaved);
+      const saveBtn = document.getElementById('saveFollowupBtn');
+      if (saveBtn) {
+        saveBtn.textContent = state.followupSaved ? 'Details Saved ✓' : 'Save details';
+        saveBtn.classList.toggle('save-details-attention', hasFollowupText && !state.followupSaved);
       }
-    }
 
-    function undoLastOperatorAction(btn) {
-      const card = btn.closest('.case');
-      const shell = card && card.querySelector('.texting-shell');
-      const thread = card && card.querySelector('.thread');
-      const caseKey = shell ? shell.dataset.caseKey : btn.dataset.id;
-      if (!caseKey) return;
-      if (undoTimerReset(caseKey, thread)) return;
-      const local = getLocalThread(caseKey);
-      for (let i = local.length - 1; i >= 0; i--) {
-        if (local[i] && local[i].who === 'operator') {
-          local.splice(i, 1);
-          saveLocalThread(caseKey, local);
-          removeLastOperatorBubble(thread);
-          const last = [...local].reverse().find(m => m && (m.text || m.imageData));
-          updateLastMessagePreview(caseKey, last ? (last.text || 'Picture attached') : '');
-          localStorage.removeItem('wid_last_undo_' + String(caseKey));
-          statusLine.textContent = 'Last operator message undone';
-          return;
-        }
+      els.abilityWrap.classList.toggle('hidden', !showAbility);
+      els.followupSection.classList.toggle('hidden', !showFollowup);
+      if (state.followupSaved) els.followupSection.classList.remove('hidden');
+
+      els.queueBtn.classList.toggle('hidden', hasFollowupText || !showFollowup || state.followupSaved);
+      els.followupSavedNote.classList.toggle('saved', state.followupSaved);
+      if (state.followupSaved) {
+        els.followupSavedNote.innerHTML = '<span class="review-attention">Saved ✓ Review the Updated Summary Above</span>';
+      } else {
+        els.followupSavedNote.textContent = 'Nothing saved yet.';
       }
-      statusLine.textContent = 'Nothing to undo for this case';
+      if (els.followupPromptText) els.followupPromptText.textContent = summary.suggestions;
+      document.getElementById('saveFollowupBtn').classList.toggle('dark', !!state.followupSaved);
+      if (els.phoneConsultOk && els.phoneConsultNumber) els.phoneConsultNumber.classList.toggle('hidden', !els.phoneConsultOk.checked);
+
+      renderAbilityOptions();
     }
 
-    function removeLastOperatorBubble(thread) {
-      if (!thread) return;
-      const bubbles = Array.from(thread.querySelectorAll('.bubble.operator'));
-      const last = bubbles[bubbles.length - 1];
-      if (last) last.remove();
+    function playUiTone(freq, durationMs) {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = new Ctx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.value = 0.03;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        setTimeout(() => { osc.stop(); ctx.close(); }, durationMs);
+      } catch (e) {}
     }
 
-    function removeLastSystemBubble(thread) {
-      if (!thread) return;
-      const bubbles = Array.from(thread.querySelectorAll('.bubble.system'));
-      const last = bubbles[bubbles.length - 1];
-      if (last) last.remove();
+    function goBackOneScreen() {
+      if (state.screen <= 0) return;
+      if (state.screen === 4) {
+        showScreen(3, 'auto');
+        render();
+        const target = state.followupSaved ? els.summaryBubble : (state.ability ? els.followupSection : els.abilityWrap);
+        smoothScrollTo(target || els.summaryBubble, 'start');
+        return;
+      } else if (state.screen === 3) {
+        state.summaryConfirmed = false;
+        showScreen(2, 'auto');
+        const hasInput = normalizeText(els.inputText.value).length > 0 || normalizeText(els.customerName.value).length > 0;
+        setTimeout(() => {
+          if (hasInput && els.ymmPrompt) smoothScrollTo(els.ymmPrompt, 'start');
+          else window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 80);
+      } else if (state.screen === 2) {
+        showScreen(1);
+      } else if (state.screen === 1) {
+        showScreen(0);
+      }
+      syncWhoButtons();
+      render();
     }
 
-    function openMessageImage(src) {
-      if (!src) return;
-      const old = document.querySelector('.message-image-modal');
-      if (old) old.remove();
-      const modal = document.createElement('div');
-      modal.className = 'message-image-modal';
-      modal.innerHTML = `<button class="close-image" type="button">Close</button><img src="${escapeAttr(src)}" alt="message picture" />`;
-      modal.onclick = () => modal.remove();
-      const btn = modal.querySelector('.close-image');
-      if (btn) btn.onclick = (event) => { event.stopPropagation(); modal.remove(); };
-      document.body.appendChild(modal);
+    document.getElementById('continueBtn').onclick = () => showScreen(1);
+
+    document.querySelectorAll('.who-btn').forEach(btn => {
+      btn.onclick = () => {
+        state.who = btn.dataset.who;
+        state.ability = '';
+        state.summaryConfirmed = false;
+        state.followupSaved = false;
+        syncWhoButtons();
+        showScreen(2);
+        render();
+      };
+    });
+
+    document.getElementById('mainClearBtn').onclick = () => {
+      els.inputText.value = '';
+      state.uploadFiles = [];
+      if (els.uploadInput) els.uploadInput.value = '';
+      renderUploadPreview();
+      render();
+    };
+
+
+
+    if (els.phoneConsultOk) els.phoneConsultOk.onchange = () => render();
+    if (els.phoneConsultNumber) {
+      els.phoneConsultNumber.addEventListener('input', () => {
+        els.phoneConsultNumber.value = formatPhoneDisplay(els.phoneConsultNumber.value);
+        render();
+      });
+    }
+    if (els.sumNameEdit) els.sumNameEdit.oninput = () => render();
+    if (els.followupText) els.followupText.oninput = () => {
+      if (state.followupSaved) state.followupSaved = false;
+      render();
+    };
+
+    document.getElementById('toSummaryBtn').onclick = () => {
+      if (!normalizeText(els.customerName.value)) {
+        alert('Please add your name first.');
+        els.customerName.focus();
+        return;
+      }
+      if (!els.customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(els.customerEmail.value || '').trim())) {
+        alert('Please add a valid email for the receipt and case link.');
+        if (els.customerEmail) els.customerEmail.focus();
+        return;
+      }
+      showScreen(3, 'auto');
+      render();
+      smoothScrollTo(els.sumMeta, 'start');
+    };
+
+    document.getElementById('summaryBackBtn').onclick = () => {
+      if (state.followupSaved) {
+        state.followupSaved = false;
+        render();
+        smoothScrollTo(els.followupSection, 'end');
+        return;
+      }
+      state.summaryConfirmed = false;
+      showScreen(2, 'auto');
+      render();
+      const hasInput = normalizeText(els.inputText.value).length > 0 || normalizeText(els.customerName.value).length > 0;
+      if (hasInput && els.ymmPrompt) smoothScrollTo(els.ymmPrompt, 'start');
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    document.getElementById('summaryConfirmBtn').onclick = () => {
+      if (state.followupSaved) {
+        els.summaryConfirmBtn.classList.remove('update-attention');
+        els.summaryConfirmBtn.classList.remove('confirm-update-attention');
+        els.summaryConfirmBtn.classList.add('dark');
+        els.summaryConfirmBtn.textContent = 'Confirmed ✓';
+        setTimeout(() => showScreen(4), 180);
+        return;
+      }
+      state.summaryConfirmed = true;
+      render();
+      const target = !state.ability ? els.abilityWrap : els.followupSection;
+      smoothScrollTo(target, 'start');
+    };
+
+    document.getElementById('followupClearBtn').onclick = () => {
+      els.followupText.value = '';
+      state.followupSaved = false;
+      render();
+    };
+
+    document.getElementById('saveFollowupBtn').onclick = () => {
+      state.followupSaved = true;
+      render();
+      smoothScrollTo(els.sumNameEdit || els.summaryHeading || els.sumMeta, 'start');
+    };
+
+    document.getElementById('detailsBackBtn').onclick = () => {
+      state.followupSaved = false;
+      state.ability = '';
+      render();
+      smoothScrollTo(els.abilityWrap, 'start');
+    };
+
+    document.getElementById('queueBtn').onclick = () => showScreen(4);
+
+
+    function blobToDataUrl(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(reader.error || new Error('Could not read file'));
+        reader.readAsDataURL(blob);
+      });
     }
 
-    function resizeOperatorImageFile(file, maxSide = 900, quality = 0.58) {
+    function resizeImageFile(file, maxSide = 1200, quality = 0.72) {
       return new Promise((resolve) => {
         if (!file || !file.type || !file.type.startsWith('image/')) return resolve(file);
         const img = new Image();
         const objectUrl = URL.createObjectURL(file);
         img.onload = () => {
           try {
-            let width = img.naturalWidth || img.width;
-            let height = img.naturalHeight || img.height;
+            let { width, height } = img;
             const scale = Math.min(1, maxSide / Math.max(width, height));
-            width = Math.max(1, Math.round(width * scale));
-            height = Math.max(1, Math.round(height * scale));
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
             const canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
@@ -2121,8 +1379,8 @@
             canvas.toBlob((blob) => {
               URL.revokeObjectURL(objectUrl);
               if (!blob) return resolve(file);
-              const safeBase = String(file.name || 'picture').replace(/\.[^.]+$/, '') || 'picture';
-              resolve(new File([blob], safeBase + '.jpg', { type:'image/jpeg' }));
+              const safeName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+              resolve(new File([blob], safeName, { type: 'image/jpeg' }));
             }, 'image/jpeg', quality);
           } catch (err) {
             URL.revokeObjectURL(objectUrl);
@@ -2137,280 +1395,368 @@
       });
     }
 
-    function fileToDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ''));
-        reader.onerror = () => reject(reader.error || new Error('Could not read picture'));
-        reader.readAsDataURL(file);
+    function safeUploadName(name, fallback = 'upload') {
+      const base = String(name || fallback).split(/[\\/]/).pop() || fallback;
+      return base.replace(/[^a-zA-Z0-9._ -]/g, '_').slice(0, 96) || fallback;
+    }
+
+    function readableFileSize(size) {
+      const n = Number(size || 0);
+      if (!n) return '0 KB';
+      if (n < 1024 * 1024) return Math.max(1, Math.round(n / 1024)) + ' KB';
+      return (n / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function uploadSignature(file) {
+      return [file.name || 'upload', file.size || 0, file.lastModified || 0, file.type || ''].join('|');
+    }
+
+    function addSelectedUploadFiles(fileList) {
+      const incoming = Array.from(fileList || []);
+      if (!incoming.length) return;
+      const existing = new Set((state.uploadFiles || []).map(uploadSignature));
+      incoming.forEach(file => {
+        const sig = uploadSignature(file);
+        if (!existing.has(sig)) {
+          state.uploadFiles.push(file);
+          existing.add(sig);
+        }
       });
     }
 
-    async function handlePictureInput(input) {
-      const files = Array.from(input.files || []).filter(file => /^image\//.test(file.type || '') || /\.(heic|heif|jpe?g|png|gif|webp)$/i.test(file.name || ''));
-      input.value = '';
+    function removeSelectedUpload(index) {
+      state.uploadFiles.splice(index, 1);
+      renderUploadPreview();
+    }
+
+    function renderUploadPreview() {
+      if (!els.uploadPreview) return;
+      const files = Array.from(state.uploadFiles || []);
       if (!files.length) {
-        statusLine.textContent = 'Only image files can be attached here';
+        els.uploadPreview.innerHTML = '';
+        els.uploadPreview.classList.add('hidden');
+        if (els.uploadBtn) {
+          els.uploadBtn.textContent = 'Optional upload (code scan / photo / video / estimate)';
+          els.uploadBtn.classList.remove('upload-selected');
+        }
         return;
       }
-      const caseKey = input.dataset.caseKey;
-      const thread = document.getElementById(input.dataset.threadTarget);
-      let added = 0;
-      for (const originalFile of files) {
-        try {
-          const file = await resizeOperatorImageFile(originalFile);
-          const dataUrl = await fileToDataUrl(file);
-          if (!dataUrl) throw new Error('Empty picture data');
-          const now = new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
-          const msg = { who:'operator', text:'', imageData:dataUrl, imageName:originalFile.name || file.name || 'picture', at:now };
-          const local = getLocalThread(caseKey);
-          local.push(msg);
-          try {
-            saveLocalThread(caseKey, local);
-          } catch (storeErr) {
-            local.pop();
-            // Full-size iPhone library photos can exceed localStorage even after compression.
-            // Keep the selected photo visible for this open page session instead of failing the whole attach.
-            const sessionUrl = URL.createObjectURL(originalFile);
-            msg.imageData = sessionUrl;
-            msg.text = 'Photo attached locally for this session';
-          }
-          updateLastMessagePreview(caseKey, files.length > 1 ? `${files.length} pictures attached` : 'Picture attached');
-          setLastUndoAction(caseKey, { type:'message', imageName:msg.imageName, at:now });
-          if (thread) {
-            thread.insertAdjacentHTML('beforeend', renderMessageBubble(msg));
-            thread.scrollTop = thread.scrollHeight;
-            const imgs = thread.querySelectorAll('[data-expand-image]');
-            const lastImg = imgs[imgs.length - 1];
-            if (lastImg) lastImg.onclick = (event) => { event.preventDefault(); event.stopPropagation(); openMessageImage(lastImg.dataset.expandImage || lastImg.src); };
-          }
-          added += 1;
-        } catch (err) {
-          console.warn('Operator picture attach failed', err);
-          statusLine.textContent = err.message || 'Could not read one or more pictures';
-        }
-      }
-      if (added) statusLine.textContent = added > 1 ? `${added} pictures added to local message thread` : 'Picture added to local message thread';
-    }
-
-
-    async function handleStatusButton(btn) {
-      if (!btn || btn.dataset.statusBusy === '1') return;
-      const id = btn.dataset.id;
-      const status = btn.dataset.actionStatus;
-      const caseNo = btn.dataset.caseNo ? ('#' + btn.dataset.caseNo) : 'this case';
-      if (!id || !status) return;
-
-      const messages = {
-        closed: `Close ${caseNo}? This will move it to the Closed list.`,
-        archived: `Archive ${caseNo}? This will remove it from Closed and move it to Archived.`,
-        waiting_on_customer: `Mark ${caseNo} as waiting on customer? This starts the 48-hour autoclose countdown.`,
-        waiting_on_me: `Switch ${caseNo} back to waiting on me? This clears any active autoclose countdown.`
-      };
-      const prompt = messages[status] || `Change ${caseNo} to ${effectiveStatusLabel(status)}?`;
-      if (!window.confirm(prompt)) return;
-
-      btn.dataset.statusBusy = '1';
-      btn.disabled = true;
-      try {
-        const card = btn.closest('.case');
-        const shell = card && card.querySelector('.texting-shell');
-        const thread = card && card.querySelector('.thread');
-        const caseKey = shell ? shell.dataset.caseKey : id;
-
-        if (status === 'waiting_on_customer') {
-          startWaitingWorkflowLocalOnly({ id, caseKey, caseNo:btn.dataset.caseNo, thread });
-        } else if (status === 'waiting_on_me') {
-          clearWaitingWorkflow(caseKey);
-        } else if (status === 'closed' || status === 'archived') {
-          clearWaitingWorkflow(caseKey);
-        }
-
-        await updateStatus(id, status);
-      } finally {
-        btn.dataset.statusBusy = '0';
-        btn.disabled = false;
-      }
-    }
-
-    function refreshTimerSummaryInCard(caseKey) {
-      const card = document.querySelector(`[data-case-key="${cssEscape(caseKey)}"]`);
-      if (!card) return;
-      const summaryBox = card.querySelector('.details .box');
-      if (!summaryBox) return;
-      const old = summaryBox.querySelector('.timer-summary');
-      if (old) old.remove();
-      const html = renderWaitingTimerSummary(caseKey);
-      if (html) summaryBox.insertAdjacentHTML('beforeend', html.replace(/^\n\n/, ''));
-    }
-
-    function clearWaitingWorkflow(caseKey) {
-      const key = 'wid_waiting_workflow_' + String(caseKey || '');
-      clearWaitingTimerHandles(caseKey);
-      localStorage.removeItem(key);
-      refreshTimerSummaryInCard(caseKey);
-      updateAutocloseUi(caseKey);
-    }
-
-
-    function startWaitingWorkflowLocalOnly({ id, caseKey, caseNo, thread, reset = false, silent = false }) {
-      if (!caseKey) return;
-      const key = 'wid_waiting_workflow_' + String(caseKey);
-      const prevWorkflowRaw = localStorage.getItem(key);
-      clearWaitingWorkflow(caseKey);
-      const started = Date.now();
-      const halfMs = 24 * 60 * 60 * 1000;
-      const closeMs = 48 * 60 * 60 * 1000;
-      const halfAt = started + halfMs;
-      const closeAt = started + closeMs;
-      const label = caseNo ? '#' + caseNo : 'this case';
-      localStorage.setItem(key, JSON.stringify({ id, caseKey, caseNo, started, halfAt, closeAt, source:'waiting_on_customer_button' }));
-      if (reset) {
-        const undo = { type:'reset_timer', prevWorkflowRaw };
-        setLastTimerUndo(caseKey, undo);
-        if (!silent) setLastUndoAction(caseKey, undo);
-      }
-      refreshTimerSummaryInCard(caseKey);
-      updateAutocloseUi(caseKey);
-      if (!silent) statusLine.textContent = `${reset ? 'Autoclose reset' : 'Autoclose started'} · ${label}`;
-      scheduleWaitingTimeouts(id, caseKey, caseNo, thread, started, halfAt, closeAt);
-    }
-
-    async function scheduleWaitingWorkflow({ id, caseKey, caseNo, thread, reset = false, silent = false }) {
-      // Kept only for older calls. The visible button now clears timers;
-      // changing status to Waiting on customer starts a fresh timer.
-      startWaitingWorkflowLocalOnly({ id, caseKey, caseNo, thread, reset, silent });
-    }
-
-    function scheduleWaitingTimeouts(id, caseKey, caseNo, thread, started, halfAt, closeAt) {
-      if (!caseKey || !started) return;
-      clearWaitingTimerHandles(caseKey);
-      const key = 'wid_waiting_workflow_' + String(caseKey);
-      const label = caseNo ? '#' + caseNo : 'this case';
-      const msUntilHalf = Math.max(0, Number(halfAt || 0) - Date.now());
-      const msUntilClose = Math.max(0, Number(closeAt || 0) - Date.now());
-      const halfTimer = window.setTimeout(() => {
-        const saved = localStorage.getItem(key);
-        if (!saved) return;
-        try { if (JSON.parse(saved).started !== started) return; } catch (_) { return; }
-        appendSystemMessage(caseKey, thread, `24-hour reminder for ${label}: no recorded customer response yet. 48-hour close point is ${new Date(Number(closeAt)).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' })}.`);
-        notifyOperator(`Follow-up reminder: ${label}`, '24 hours have passed without a recorded response.');
-      }, msUntilHalf);
-      const closeTimer = window.setTimeout(() => {
-        const saved = localStorage.getItem(key);
-        if (!saved) return;
-        try { if (JSON.parse(saved).started !== started) return; } catch (_) { return; }
-        appendSystemMessage(caseKey, thread, `48-hour close point reached for ${label}: no recorded customer response. Closing now while this page is open.`);
-        notifyOperator(`Auto-close point: ${label}`, '48 hours passed. The page will try to close the case now.');
-        if (id) updateStatus(id, 'closed');
-      }, msUntilClose);
-      rememberWaitingTimerHandle(caseKey, halfTimer);
-      rememberWaitingTimerHandle(caseKey, closeTimer);
-    }
-
-
-    function closedArchiveDate(c) {
-      const raw = c.closed_at || c.updated_at || c.created_at || '';
-      const t = raw ? new Date(raw).getTime() : 0;
-      return Number.isFinite(t) ? t : 0;
-    }
-
-    function closedOverOneWeek(c) {
-      if (!isClosed(c)) return false;
-      const t = closedArchiveDate(c);
-      if (!t) return false;
-      return Date.now() - t >= 7 * 24 * 60 * 60 * 1000;
-    }
-
-    async function updateStatusQuiet(id, status) {
-      const res = await fetch('/.netlify/functions/update-consult-status', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', ...pinHeader() },
-        body: JSON.stringify({ id, status })
+      els.uploadPreview.classList.remove('hidden');
+      els.uploadPreview.innerHTML = files.map((file, index) => {
+        const isImage = /^image\//.test(file.type || '');
+        const thumb = isImage ? `<img alt="selected upload ${index + 1}" data-upload-preview-img="${index}" />` : `<div style="width:44px;height:44px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;background:var(--soft);font-weight:700;color:var(--accent-dark);">FILE</div>`;
+        return `<div class="upload-preview-row">${thumb}<div style="min-width:0;flex:1;"><div class="upload-preview-name">${escapeHtml(safeUploadName(file.name, 'upload'))}</div><div>${escapeHtml(file.type || 'file')} · ${escapeHtml(readableFileSize(file.size))}</div></div><button class="btn small" type="button" data-remove-upload="${index}" style="width:auto;padding:6px 8px;">Remove</button></div>`;
+      }).join('');
+      files.forEach((file, index) => {
+        if (!/^image\//.test(file.type || '')) return;
+        const img = els.uploadPreview.querySelector(`[data-upload-preview-img="${index}"]`);
+        if (!img) return;
+        const url = URL.createObjectURL(file);
+        img.onload = () => URL.revokeObjectURL(url);
+        img.src = url;
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Archive failed');
-      return data;
+      els.uploadPreview.querySelectorAll('[data-remove-upload]').forEach(btn => {
+        btn.onclick = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          removeSelectedUpload(Number(btn.dataset.removeUpload));
+        };
+      });
+      if (els.uploadBtn) {
+        els.uploadBtn.textContent = files.length === 1 ? safeUploadName(files[0].name, 'upload') : `${files.length} files selected`;
+        els.uploadBtn.classList.add('upload-selected');
+      }
     }
 
-    async function archiveOldClosedCases(options = {}) {
-      const manual = options.manual !== false;
-      const items = Array.isArray(window.__widAllConsults) ? window.__widAllConsults : [];
-      const due = items.filter(c => c && c.id && closedOverOneWeek(c));
-      if (!due.length) {
-        if (manual) statusLine.textContent = 'No closed cases older than 1 week to archive';
-        return false;
-      }
-      if (manual && !window.confirm(`Archive ${due.length} closed case(s) older than 1 week?`)) return false;
-      window.__widAutoArchiveRunning = true;
-      statusLine.textContent = `Archiving ${due.length} old closed case(s)...`;
-      try {
-        for (const c of due) {
-          clearWaitingWorkflow(getCaseKey(c, 0));
-          await updateStatusQuiet(c.id, 'archived');
+    async function selectedUploadsForSubmit() {
+      const uploads = [];
+      const filesToSubmit = Array.from(state.uploadFiles || []);
+      if (filesToSubmit.length) {
+        let index = 0;
+        for (const file of filesToSubmit) {
+          const prepared = await resizeImageFile(file);
+          index += 1;
+          uploads.push({
+            name: safeUploadName(prepared.name || file.name || `upload-${index}`),
+            original_name: safeUploadName(file.name || `upload-${index}`),
+            type: prepared.type || file.type || 'application/octet-stream',
+            size: prepared.size || file.size || 0,
+            client_index: index,
+            dataUrl: await blobToDataUrl(prepared)
+          });
         }
-        statusLine.textContent = `Archived ${due.length} old closed case(s)`;
-        if (!options.skipReload) await loadConsults();
-        return true;
-      } catch (err) {
-        list.innerHTML = `<div class="error">${escapeHtml(err.message || String(err))}</div>`;
-        statusLine.textContent = 'Archive failed';
-        return false;
-      } finally {
-        window.__widAutoArchiveRunning = false;
       }
+      return uploads;
     }
 
-    async function updateStatus(id, status) {
-      statusLine.textContent = 'Updating...';
-      const buttons = Array.from(document.querySelectorAll('[data-action-status]'));
-      buttons.forEach(btn => btn.disabled = true);
-      const wasFocused = document.body.classList.contains('focus-mode');
-      if (wasFocused) exitFocusMode({ restoreScroll:false });
+    async function voiceNoteForSubmit() {
+      if (!state.audioBlob) return null;
+      return {
+        name: 'voice-note.webm',
+        original_name: 'voice-note.webm',
+        type: state.audioBlob.type || 'audio/webm',
+        size: state.audioBlob.size || 0,
+        dataUrl: await blobToDataUrl(state.audioBlob)
+      };
+    }
+
+    async function postPaidConsultPayload(payload) {
+      const response = await fetch('/.netlify/functions/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const rawText = await response.text();
+      let result = {};
+      try { result = rawText ? JSON.parse(rawText) : {}; } catch (e) { result = { raw: rawText }; }
+      if (!response.ok || !result.ok) {
+        const detailText = result.details ? ' — ' + JSON.stringify(result.details) : (result.raw ? ' — ' + String(result.raw).slice(0, 500) : '');
+        throw new Error((result.error || ('Payment setup failed with HTTP ' + response.status)) + detailText);
+      }
+      return result;
+    }
+
+    async function startPaidConsultCheckout() {
+      if (!els.paySubmitBtn) return;
+      const originalText = els.paySubmitBtn.textContent;
+      els.paySubmitBtn.disabled = true;
+      els.paySubmitBtn.textContent = 'Preparing checkout...';
+
       try {
-        const res = await fetch('/.netlify/functions/update-consult-status', {
-          method: 'POST', headers: { 'Content-Type':'application/json', ...pinHeader() }, body: JSON.stringify({ id, status })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.ok) throw new Error(data.error || 'Update failed');
-        await loadConsults();
-        window.scrollTo({ top:0, behavior:'smooth' });
+        const summary = buildSummary();
+        if (!summary.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(summary.email)) {
+          alert('Please add a valid email for the receipt and case link.');
+          if (els.customerEmail) els.customerEmail.focus();
+          els.paySubmitBtn.textContent = originalText;
+          els.paySubmitBtn.disabled = false;
+          return;
+        }
+
+        const basePayload = {
+          customer_name: summary.name || '',
+          customer_email: summary.email || '',
+          phone_ok: !!(els.phoneConsultOk && els.phoneConsultOk.checked),
+          customer_phone: summary.phone || '',
+          vehicle_summary: summary.vehicle || '',
+          issue_summary: summary.issue || '',
+          work_done_summary: summary.done || '',
+          diy_status: state.who === "I'm working on it" ? 'yes' : (state.who === 'Someone else is working on it' ? 'no' : ''),
+          ability_level: state.ability || '',
+          intake_text: normalizeText(els.inputText.value),
+          followup_text: normalizeText(els.followupText.value),
+          queue_type: state.queue || 'guided',
+          payment_status: 'unpaid',
+          status: 'unpaid',
+          client_upload_payload_version: 'customer-v20-paid'
+        };
+
+        els.paySubmitBtn.textContent = 'Preparing files...';
+        const voice_note = await voiceNoteForSubmit();
+        const uploads = await selectedUploadsForSubmit();
+        const payloadWithFiles = { ...basePayload, voice_note, uploads, upload_count: uploads.length, has_voice_note: !!voice_note };
+
+        els.paySubmitBtn.textContent = 'Opening payment...';
+        const result = await postPaidConsultPayload(payloadWithFiles);
+        state.caseId = result.consult_id || result.consult?.id || state.caseId;
+
+        if (result.checkout_url) {
+          window.location.assign(result.checkout_url);
+          return;
+        }
+        if (result.thread_url) {
+          window.location.assign(result.thread_url);
+          return;
+        }
+        throw new Error('Payment setup returned no checkout link.');
       } catch (err) {
-        list.innerHTML = `<div class="error">${escapeHtml(err.message || String(err))}</div>`;
-        statusLine.textContent = 'Update failed';
-      } finally {
-        buttons.forEach(btn => btn.disabled = false);
+        console.error(err);
+        alert('Could not start payment yet: ' + (err.message || err));
+        els.paySubmitBtn.textContent = originalText;
+        els.paySubmitBtn.disabled = false;
       }
     }
 
-    function pinHeader() { const pin = pinInput.value || ''; return pin ? { 'x-operator-pin': pin } : {}; }
-    function escapeHtml(v) { return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
-    function escapeAttr(v) { return escapeHtml(v); }
+    if (els.paySubmitBtn) els.paySubmitBtn.onclick = startPaidConsultCheckout;
+
+    document.querySelectorAll('[data-back]').forEach(btn => {
+      btn.onclick = () => {
+        const target = Number(btn.dataset.back);
+        if (target === 3) {
+          showScreen(3, 'auto');
+          render();
+          const dest = state.followupSaved ? els.summaryBubble : (state.ability ? els.followupSection : els.abilityWrap);
+          smoothScrollTo(dest || els.summaryBubble, 'start');
+          return;
+        }
+        showScreen(target, 'auto');
+        if (target === 1) syncWhoButtons();
+        render();
+        if (target === 2) {
+          const hasInput = normalizeText(els.inputText.value).length > 0 || normalizeText(els.customerName.value).length > 0;
+          setTimeout(() => {
+            if (hasInput && els.ymmPrompt) smoothScrollTo(els.ymmPrompt, 'start');
+            else window.scrollTo({ top: 0, behavior: 'smooth' });
+          }, 80);
+        }
+      };
+    });
+
+    document.querySelectorAll('.queue-btn').forEach(btn => {
+      btn.onclick = () => {
+        state.queue = btn.dataset.queue;
+        document.querySelectorAll('.queue-btn').forEach(other => other.classList.toggle('active', other === btn));
+      };
+    });
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    document.addEventListener('touchstart', (e) => {
+      if (!e.touches || !e.touches.length) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+      if (!e.changedTouches || !e.changedTouches.length) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      const mostlyHorizontal = Math.abs(dx) > Math.abs(dy) * 1.5;
+      if (!mostlyHorizontal) return;
+      if (dx > 70) goBackOneScreen();
+      else if (dx < -70) {
+        if (state.screen === 0) showScreen(1);
+        else if (state.screen === 1 && state.who) showScreen(2);
+        else if (state.screen === 2 && normalizeText(els.customerName.value)) {
+          showScreen(3, 'auto');
+          render();
+          smoothScrollTo(els.sumMeta, 'start');
+        } else if (state.screen === 3) {
+          // Do not allow swipe-forward from page 3.
+        }
+      }
+    }, { passive: true });
+
+    if (els.uploadBtn && els.uploadInput) {
+      els.uploadBtn.onclick = () => {
+        // Resetting the value lets iOS/Safari fire onchange even when the same photo is picked again.
+        els.uploadInput.value = '';
+        els.uploadInput.click();
+      };
+      els.uploadInput.onchange = () => {
+        addSelectedUploadFiles(els.uploadInput.files);
+        els.uploadInput.value = '';
+        renderUploadPreview();
+      };
+    }
 
 
-    function scrubBrokenWaitingWorkflows() {
-      const now = Date.now();
-      const prefix = 'wid_waiting_workflow_';
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const key = localStorage.key(i);
-        if (!key || !key.startsWith(prefix)) continue;
+    if (els.recordAudioBtn && els.stopAudioBtn && els.audioStatus) {
+      els.recordAudioBtn.onclick = async () => {
         try {
-          const wf = JSON.parse(localStorage.getItem(key) || 'null');
-          const closeAt = Number(wf && wf.closeAt);
-          const started = Number(wf && wf.started);
-          if (!wf || !closeAt || !started || closeAt < now - 6 * 60 * 60 * 1000) {
-            localStorage.removeItem(key);
-          }
-        } catch (_) {
-          localStorage.removeItem(key);
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '';
+          const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+          state.audioChunks = [];
+          state.mediaRecorder = recorder;
+
+          recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) state.audioChunks.push(e.data);
+          };
+
+          recorder.onstop = () => {
+            const blob = new Blob(state.audioChunks, { type: recorder.mimeType || 'audio/webm' });
+            state.audioBlob = blob;
+            if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
+            state.audioUrl = URL.createObjectURL(blob);
+            els.audioPlayback.src = state.audioUrl;
+            els.audioPlayback.classList.remove('hidden');
+            els.audioStatus.textContent = 'Voice note saved in this session. You can play it back below.';
+            els.recordAudioBtn.disabled = false;
+            els.stopAudioBtn.disabled = false;
+            els.recordAudioBtn.classList.add('dark');
+            els.stopAudioBtn.classList.remove('dark');
+            els.recordAudioBtn.textContent = 'Record voice note';
+            els.stopAudioBtn.textContent = 'Clear saved recording';
+            stream.getTracks().forEach(track => track.stop());
+          };
+
+          recorder.start();
+          els.audioStatus.textContent = 'Recording voice note...';
+          els.recordAudioBtn.disabled = true;
+          els.stopAudioBtn.disabled = false;
+          els.recordAudioBtn.classList.remove('dark');
+          els.stopAudioBtn.classList.add('dark');
+          els.stopAudioBtn.textContent = 'Stop recording';
+          els.recordAudioBtn.textContent = 'Recording...';
+        } catch (err) {
+          els.audioStatus.textContent = 'Microphone unavailable for voice note recording.';
+          els.recordAudioBtn.disabled = false;
+          els.stopAudioBtn.disabled = true;
+          els.recordAudioBtn.classList.add('dark');
+          els.stopAudioBtn.classList.remove('dark');
+          els.stopAudioBtn.textContent = 'Stop recording';
+          els.recordAudioBtn.textContent = 'Record voice note';
         }
-      }
+      };
+
+      els.stopAudioBtn.onclick = () => {
+        if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
+          state.mediaRecorder.stop();
+          return;
+        }
+        if (state.audioUrl) {
+          URL.revokeObjectURL(state.audioUrl);
+          state.audioUrl = '';
+          state.audioChunks = [];
+          state.audioBlob = null;
+          els.audioPlayback.removeAttribute('src');
+          els.audioPlayback.classList.add('hidden');
+          els.audioStatus.textContent = 'Voice note cleared.';
+          els.recordAudioBtn.disabled = false;
+          els.stopAudioBtn.disabled = true;
+          els.recordAudioBtn.classList.add('dark');
+          els.stopAudioBtn.classList.remove('dark');
+          els.recordAudioBtn.textContent = 'Record voice note';
+          els.stopAudioBtn.textContent = 'Stop recording';
+        }
+      };
     }
 
-    installViewportSizing();
-    scrubBrokenWaitingWorkflows();
-    syncAutoArchiveButton();
-    loadConsults();
+
+
+    function hidePrototypeChromeImmediately() {
+      document.querySelectorAll('.sticky, .header, .chips, .screen-tab, .dev-nav, .prototype-nav, [data-dev-nav="true"]').forEach(el => {
+        el.classList.add('hidden');
+        el.style.display = 'none';
+        el.style.visibility = 'hidden';
+        el.style.height = '0';
+        el.style.overflow = 'hidden';
+        el.style.pointerEvents = 'none';
+      });
+    }
+
+    function nudgeSafariChrome() {
+      // Normal Safari will still show the address bar until the user scrolls/interacts.
+      // This tiny nudge helps collapse it when the browser allows it, without changing app state.
+      setTimeout(() => {
+        try {
+          if (!window.navigator.standalone && window.scrollY === 0) window.scrollTo(0, 1);
+        } catch (e) {}
+      }, 350);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      hidePrototypeChromeImmediately();
+      nudgeSafariChrome();
+    });
+    window.addEventListener('load', () => {
+      hidePrototypeChromeImmediately();
+      nudgeSafariChrome();
+    });
+
+    syncWhoButtons();
+    render();
   </script>
 </body>
 </html>
