@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -748,6 +749,7 @@
 
     <script>
 
+    const WID_CUSTOMER_VERSION = 'v84-index-only-render-fix';
     const WID_BLUE_BAR = '#244fbe';
     function widLockBlueBrowserBars() {
       document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
@@ -863,6 +865,18 @@
         (_, p, a, b, c, d) => p.toUpperCase() + (digitMap[a.toLowerCase()] || '') + (digitMap[b.toLowerCase()] || '') + (digitMap[c.toLowerCase()] || '') + (digitMap[d.toLowerCase()] || '')
       );
       return text.replace(/\s+/g, ' ').trim();
+    }
+
+
+    // v84: shared HTML escaping helper. v83 used this helper in the summary heading and upload preview,
+    // but the helper was missing, which stopped render() and made phone reveal / summary confirm appear broken.
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     function formatPhoneDisplay(value) {
@@ -1298,7 +1312,10 @@
 
 
 
-    if (els.phoneConsultOk) els.phoneConsultOk.onchange = () => render();
+    if (els.phoneConsultOk) els.phoneConsultOk.onchange = () => {
+      if (els.phoneConsultNumber) els.phoneConsultNumber.classList.toggle('hidden', !els.phoneConsultOk.checked);
+      render();
+    };
     if (els.phoneConsultNumber) {
       els.phoneConsultNumber.addEventListener('input', () => {
         els.phoneConsultNumber.value = formatPhoneDisplay(els.phoneConsultNumber.value);
