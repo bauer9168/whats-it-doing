@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#244fbe" />
-  <title>What's it Doing? — Customer Shell V17 Blue Border Safe</title>
+  <title>What's it Doing? — Customer Shell V22 Upload Summary Safe</title>
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -1147,21 +1147,27 @@
       });
     }
 
+    function currentSummaryStatusLabel() {
+      if (state.followupSaved) return 'updated summary';
+      if (state.summaryConfirmed) return 'summary confirmed';
+      return 'review summary';
+    }
+
     function render() {
       const summary = buildSummary();
       if (els.sumNameEdit && document.activeElement !== els.sumNameEdit) els.sumNameEdit.value = summary.name || els.customerName.value || '';
-      els.sumMeta.textContent = `${compactCaseId(state.caseId)} · ${state.who ? (state.who === "I'm working on it" ? 'DIY' : 'Someone Else') : 'Choose path'} · ${state.followupSaved ? 'updated' : state.summaryConfirmed ? 'confirmed' : 'preview shell'}`;
+      els.sumMeta.textContent = `${compactCaseId(state.caseId)} · ${state.who ? (state.who === "I'm working on it" ? 'DIY' : 'Someone Else') : 'Choose path'} · ${currentSummaryStatusLabel()}`;
       const anchorSummaryLine = [summary.vehicle, summary.issue].filter(Boolean).join(' · ');
       els.sumSingleLine.textContent = anchorSummaryLine;
       if (els.updatedSummaryAnchor) {
         els.updatedSummaryAnchor.textContent = '';
         els.updatedSummaryAnchor.classList.add('hidden');
       }
+      const vehicleOnly = updatedVehicleShorthand(summary);
       if (state.followupSaved) {
-        const vehicleOnly = updatedVehicleShorthand(summary);
-        els.summaryHeading.innerHTML = '<span class="update-attention">UPDATED SUMMARY:</span>' + (vehicleOnly ? ' <span class="updated-vehicle-inline">' + vehicleOnly + '</span>' : '');
+        els.summaryHeading.innerHTML = '<span class="update-attention">UPDATED SUMMARY:</span>' + (vehicleOnly ? ' <span class="updated-vehicle-inline">' + escapeHtml(vehicleOnly) + '</span>' : '');
       } else {
-        els.summaryHeading.textContent = 'SUMMARY:';
+        els.summaryHeading.innerHTML = 'SUMMARY:' + (vehicleOnly ? ' <span class="updated-vehicle-inline">' + escapeHtml(vehicleOnly) + '</span>' : '');
       }
       els.summaryHeading.classList.toggle('update-attention', !!state.followupSaved);
       els.sumRestatement.innerHTML = `
@@ -1422,7 +1428,10 @@
 
     function addSelectedUploadFiles(fileList) {
       const incoming = Array.from(fileList || []);
-      if (!incoming.length) return;
+      if (!incoming.length) {
+        renderUploadPreview();
+        return;
+      }
       const existing = new Set((state.uploadFiles || []).map(uploadSignature));
       incoming.forEach(file => {
         const sig = uploadSignature(file);
@@ -1431,6 +1440,7 @@
           existing.add(sig);
         }
       });
+      renderUploadPreview();
     }
 
     function removeSelectedUpload(index) {
@@ -1451,7 +1461,9 @@
         return;
       }
       els.uploadPreview.classList.remove('hidden');
-      els.uploadPreview.innerHTML = files.map((file, index) => {
+      els.uploadPreview.style.display = 'grid';
+      els.uploadPreview.setAttribute('aria-live', 'polite');
+      els.uploadPreview.innerHTML = '<div class="saved-note saved" style="margin:0 0 2px;">Selected for upload: ' + files.length + '</div>' + files.map((file, index) => {
         const isImage = /^image\//.test(file.type || '');
         const thumb = isImage ? `<img alt="selected upload ${index + 1}" data-upload-preview-img="${index}" />` : `<div style="width:44px;height:44px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;background:var(--soft);font-weight:700;color:var(--accent-dark);">FILE</div>`;
         return `<div class="upload-preview-row">${thumb}<div style="min-width:0;flex:1;"><div class="upload-preview-name">${escapeHtml(safeUploadName(file.name, 'upload'))}</div><div>${escapeHtml(file.type || 'file')} · ${escapeHtml(readableFileSize(file.size))}</div></div><button class="btn small" type="button" data-remove-upload="${index}" style="width:auto;padding:6px 8px;">Remove</button></div>`;
@@ -1472,9 +1484,16 @@
         };
       });
       if (els.uploadBtn) {
-        els.uploadBtn.textContent = files.length === 1 ? safeUploadName(files[0].name, 'upload') : `${files.length} files selected`;
+        els.uploadBtn.textContent = files.length === 1 ? ('Selected: ' + safeUploadName(files[0].name, 'upload')) : `Selected: ${files.length} files`;
         els.uploadBtn.classList.add('upload-selected');
       }
+    }
+
+    function handleUploadSelection(event) {
+      const input = event && event.target ? event.target : els.uploadInput;
+      addSelectedUploadFiles(input && input.files);
+      if (els.uploadInput) els.uploadInput.value = '';
+      setTimeout(renderUploadPreview, 60);
     }
 
     async function selectedUploadsForSubmit() {
@@ -1669,11 +1688,8 @@
         els.uploadInput.value = '';
         els.uploadInput.click();
       };
-      els.uploadInput.onchange = () => {
-        addSelectedUploadFiles(els.uploadInput.files);
-        els.uploadInput.value = '';
-        renderUploadPreview();
-      };
+      els.uploadInput.onchange = handleUploadSelection;
+      els.uploadInput.addEventListener('input', handleUploadSelection);
     }
 
 
