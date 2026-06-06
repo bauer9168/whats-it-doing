@@ -1,0 +1,89 @@
+What's it Doing? — v83 Deploy-Ready Status
+Base used: v81 deploy-ready package, with current uploaded customer index v21-safe as index.html and current uploaded operator.html.
+
+Purpose of this pass
+- Regroup on the known-safe v21 customer face instead of the broken v22 attempt.
+- Keep the current operator file as the operator side.
+- Apply the requested customer-facing summary cleanup without changing the larger flow.
+- Remove the main page pull-down-to-refresh behavior as much as browser rules allow.
+- Avoid the Supabase storage/bucket path that was throwing bucket-not-found style errors.
+- Return to a deploy package that includes this plain-text status tracker.
+
+Customer index changes
+- Used wid-customer-index-v21-safe(1).html as the deployment index.html base.
+- Added the vehicle shorthand immediately after SUMMARY: on the first summary review screen.
+  Example intent: SUMMARY: '06 Civic 189k
+- Kept the existing UPDATED SUMMARY: vehicle shorthand behavior after additional details are saved.
+- Removed/blanked the top test/prototype summary chrome so the customer does not see the old case/status line or preview-shell wording.
+- Added CSS hiding for the old meta-line and summary-inline rows.
+- Added Rodgers Services LLC in small footer text on the initial page.
+- Rodgers Services LLC links to a Google search for Rodgers Auto Repair Rochester WA rather than a direct call link.
+- Added overscroll-behavior rules plus a small touch guard to reduce/stop pull-down refresh from wiping a partly written intake.
+
+Upload / voice handling
+- The v21 customer file had moved toward sending full uploads/voice blobs in the checkout payload.
+- v83 changes checkout submit back to counts-only for now:
+  - upload_count
+  - has_voice_note
+- Full file/blob upload storage is intentionally not being sent through create-checkout-session in this pass.
+- This is meant to avoid the broken storage bucket path until Supabase storage is wired deliberately.
+- Customer can still select uploads locally before checkout, but the current submit stores only metadata flags/counts.
+
+Supabase / bucket error response
+- Current v83 Netlify functions do not call Supabase Storage buckets.
+- The checkout function inserts text case data into the consults table and then opens Stripe Checkout.
+- If a live deploy still reports bucket not found after this package is deployed, the live site is likely still using an older create-consult/upload-storage function or an old deployed customer file.
+- The included SQL schema was hardened with add-column statements for fields used by the current functions, including last_workflow_status, last_message fields, upload_count, and has_voice_note.
+- Run/refresh the included supabase_thread_schema.sql in Supabase SQL editor before testing if the database was created from an older partial version.
+
+Operator side
+- Used the current uploaded operator(1).html as operator.html.
+- Kept the existing operator flow and current layout rather than attempting new UI changes in this pass.
+- Included the v81 Netlify operator functions:
+  - list-consults.js
+  - update-consult-status.js
+  - post-operator-message.js
+- update-consult-status.js expects the last_workflow_status column if using waiting_on_me / waiting_on_customer; schema now includes it.
+
+Files included at deploy root
+- index.html
+- customer-thread.html
+- operator.html
+- netlify.toml
+- package.json
+- supabase_thread_schema.sql
+- wid_v83_regroup_status.txt
+- README_DEPLOY_STEPS.txt
+- netlify/functions/_wid-shared.js
+- netlify/functions/create-checkout-session.js
+- netlify/functions/get-customer-thread.js
+- netlify/functions/post-customer-message.js
+- netlify/functions/stripe-webhook.js
+- netlify/functions/list-consults.js
+- netlify/functions/update-consult-status.js
+- netlify/functions/post-operator-message.js
+
+Required Netlify environment variables
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
+- SUPABASE_URL
+- SUPABASE_SERVICE_ROLE_KEY
+
+Recommended Netlify environment variable
+- OPERATOR_PIN
+
+Optional email thread-link variables
+- RESEND_API_KEY
+- FROM_EMAIL
+
+Validation performed
+- index.html inline JavaScript passed node --check.
+- customer-thread.html inline JavaScript passed node --check.
+- operator.html inline JavaScript passed node --check.
+- All Netlify function JavaScript files passed node --check.
+
+Next likely step
+- Deploy this package as the full site folder/zip.
+- Re-run supabase_thread_schema.sql.
+- Test one paid checkout with no uploads first.
+- Then test with selected photo/voice; it should not attempt full storage upload yet and should only send count/flag metadata.

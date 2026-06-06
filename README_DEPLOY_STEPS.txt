@@ -1,4 +1,4 @@
-WID v81 deploy steps
+WID v83 deploy steps
 
 1. Upload this entire folder/zip to Netlify as the site deploy.
 2. Keep these root files exactly named:
