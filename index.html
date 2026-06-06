@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#244fbe" />
-  <title>What's it Doing? — Customer Shell V17 Blue Border Safe</title>
+  <title>What's it Doing? — Customer v23 safe</title>
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -572,6 +572,22 @@
         border-inline-width:2px !important;
       }
     }
+
+
+    /* v23 customer fixes: suppress browser pull-to-refresh, hide prototype summary chrome, and add credibility footer. */
+    html, body, .app { overscroll-behavior-y: none !important; }
+    .summary-inline, .meta-line { display:none !important; }
+    .credibility-footer {
+      margin-top:auto;
+      padding-top:26px;
+      font-size:11px;
+      line-height:1.25;
+      color:var(--muted);
+      opacity:.78;
+    }
+    .credibility-footer a { color:var(--muted); text-decoration:none; font-weight:700; }
+    .credibility-footer a:active { color:var(--accent-dark); }
+
 </style>
 </head>
 <body>
@@ -584,6 +600,9 @@
           <div class="hero-lead">I explain what it means, or what I'd do next.</div>
           <div class="hero-actions">
             <button class="btn dark" id="continueBtn" style="max-width: 210px;">Continue</button>
+          </div>
+          <div class="credibility-footer">
+            <a href="https://www.google.com/search?q=Rodgers+Auto+Repair+Rochester+WA" target="_blank" rel="noopener noreferrer">Rodgers Services LLC</a>
           </div>
         </div>
       </div>
@@ -1150,18 +1169,19 @@
     function render() {
       const summary = buildSummary();
       if (els.sumNameEdit && document.activeElement !== els.sumNameEdit) els.sumNameEdit.value = summary.name || els.customerName.value || '';
-      els.sumMeta.textContent = `${compactCaseId(state.caseId)} · ${state.who ? (state.who === "I'm working on it" ? 'DIY' : 'Someone Else') : 'Choose path'} · ${state.followupSaved ? 'updated' : state.summaryConfirmed ? 'confirmed' : 'preview shell'}`;
-      const anchorSummaryLine = [summary.vehicle, summary.issue].filter(Boolean).join(' · ');
-      els.sumSingleLine.textContent = anchorSummaryLine;
+      // v23: the old top summary chrome was useful for testing, but it looked like a customer-facing shell label.
+      // Keep these nodes blank/hidden instead of showing case/status text such as "preview shell".
+      els.sumMeta.textContent = '';
+      els.sumSingleLine.textContent = '';
       if (els.updatedSummaryAnchor) {
         els.updatedSummaryAnchor.textContent = '';
         els.updatedSummaryAnchor.classList.add('hidden');
       }
+      const vehicleOnly = updatedVehicleShorthand(summary);
       if (state.followupSaved) {
-        const vehicleOnly = updatedVehicleShorthand(summary);
-        els.summaryHeading.innerHTML = '<span class="update-attention">UPDATED SUMMARY:</span>' + (vehicleOnly ? ' <span class="updated-vehicle-inline">' + vehicleOnly + '</span>' : '');
+        els.summaryHeading.innerHTML = '<span class="update-attention">UPDATED SUMMARY:</span>' + (vehicleOnly ? ' <span class="updated-vehicle-inline">' + escapeHtml(vehicleOnly) + '</span>' : '');
       } else {
-        els.summaryHeading.textContent = 'SUMMARY:';
+        els.summaryHeading.innerHTML = 'SUMMARY:' + (vehicleOnly ? ' <span class="updated-vehicle-inline">' + escapeHtml(vehicleOnly) + '</span>' : '');
       }
       els.summaryHeading.classList.toggle('update-attention', !!state.followupSaved);
       els.sumRestatement.innerHTML = `
@@ -1557,19 +1577,15 @@
           queue_type: state.queue || 'guided',
           payment_status: 'unpaid',
           status: 'unpaid',
-          client_upload_payload_version: 'customer-v20-paid'
+          client_upload_payload_version: 'customer-v23-counts-only'
         };
 
-        // v82: upload/voice selections are now included in the checkout request.
-        // Images are resized first to keep the request smaller and more reliable on mobile.
-        const uploads = await selectedUploadsForSubmit();
-        const voice_note = await voiceNoteForSubmit();
+        // v23: do not send full upload/voice blobs through checkout yet.
+        // This keeps Stripe/Supabase submit small and avoids the broken storage/bucket path until upload storage is wired separately.
         const payloadForCheckout = {
           ...basePayload,
-          upload_count: uploads.length,
-          has_voice_note: !!voice_note,
-          uploads,
-          voice_note
+          upload_count: Array.from(state.uploadFiles || []).length,
+          has_voice_note: !!state.audioBlob
         };
 
         els.paySubmitBtn.textContent = 'Opening payment...';
@@ -1782,6 +1798,21 @@
     });
 
     syncWhoButtons();
+
+
+    // v23: extra mobile guard against pull-to-refresh clearing a partly written intake.
+    // It only blocks downward rubber-band pulls while already at the very top; normal page scrolling still works.
+    let widTouchStartY = 0;
+    window.addEventListener('touchstart', event => {
+      if (event.touches && event.touches.length) widTouchStartY = event.touches[0].clientY;
+    }, { passive:true });
+    window.addEventListener('touchmove', event => {
+      if (!event.touches || !event.touches.length) return;
+      const currentY = event.touches[0].clientY;
+      const pullingDownAtTop = window.scrollY <= 0 && currentY > widTouchStartY + 6;
+      if (pullingDownAtTop) event.preventDefault();
+    }, { passive:false });
+
     render();
   </script>
 </body>
