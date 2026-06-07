@@ -46,6 +46,23 @@ alter table if exists consults add column if not exists ability_level text;
 alter table if exists consults add column if not exists file_links jsonb default '[]'::jsonb;
 alter table if exists consults add column if not exists voice_note_url text;
 
+
+-- v83 hardening: if a prior/partial consults table already existed, make sure every field used by the current Netlify functions exists.
+alter table if exists consults add column if not exists customer_name text;
+alter table if exists consults add column if not exists vehicle_summary text;
+alter table if exists consults add column if not exists issue_summary text;
+alter table if exists consults add column if not exists work_done_summary text;
+alter table if exists consults add column if not exists intake_text text;
+alter table if exists consults add column if not exists followup_text text;
+alter table if exists consults add column if not exists status text default 'unpaid';
+alter table if exists consults add column if not exists created_at timestamptz not null default now();
+alter table if exists consults add column if not exists updated_at timestamptz not null default now();
+alter table if exists consults add column if not exists last_workflow_status text;
+alter table if exists consults add column if not exists last_message text;
+alter table if exists consults add column if not exists last_message_at timestamptz;
+alter table if exists consults add column if not exists upload_count integer default 0;
+alter table if exists consults add column if not exists has_voice_note boolean default false;
+
 create table if not exists consult_messages (
   id uuid primary key default gen_random_uuid(),
   consult_id uuid not null,
