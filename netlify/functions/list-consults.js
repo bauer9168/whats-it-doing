@@ -68,4 +68,3 @@ exports.handler = async (event) => {
     return json(err.statusCode || 500, { ok: false, error: err.message || String(err), details: err.details || undefined });
   }
 };
- 
