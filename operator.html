@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#244fbe" />
   <meta name="msapplication-navbutton-color" content="#244fbe" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>What's it Doing? — Operator v77-safe</title>
+  <title>What's it Doing? — Operator v85 display patch</title>
   <style>
     :root {
       --bg:#f7faff;
@@ -785,6 +785,33 @@
     @supports (height: 100svh) {
       body.focus-mode .case.focused,
       .texting-shell.message-zoom { max-height:calc(100svh - max(10px, env(safe-area-inset-top, 0px)) - max(10px, env(safe-area-inset-bottom, 0px))) !important; }
+    }
+
+
+    /* v85 operator display patch
+       Remove the keyboard-sized blue obstruction in expanded case view without changing queue logic. */
+    body.focus-mode.keyboard-active .case.focused.keyboard-space {
+      padding-bottom:calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    body.focus-mode .case.focused {
+      min-height:100dvh !important;
+      background:linear-gradient(180deg,#f7faff,#eef4ff) !important;
+    }
+    body.focus-mode::after {
+      height:env(safe-area-inset-bottom, 0px) !important;
+      min-height:0 !important;
+    }
+    body.focus-mode::before {
+      height:env(safe-area-inset-top, 0px) !important;
+      min-height:0 !important;
+    }
+    .texting-shell.message-zoom {
+      bottom:env(safe-area-inset-bottom, 0px) !important;
+      height:auto !important;
+      max-height:calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+    }
+    .texting-shell.message-zoom .thread {
+      min-height:0 !important;
     }
 
   </style>
