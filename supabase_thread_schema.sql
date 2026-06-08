@@ -74,3 +74,10 @@ create table if not exists consult_messages (
 create index if not exists consult_messages_consult_created_idx on consult_messages (consult_id, created_at);
 create index if not exists consults_status_updated_idx on consults (status, updated_at desc);
 create index if not exists consults_checkout_session_idx on consults (stripe_checkout_session_id);
+
+-- v87 persistent thread attachments for operator/customer message images.
+alter table if exists consult_messages add column if not exists image_data text;
+alter table if exists consult_messages add column if not exists image_name text;
+alter table if exists consult_messages add column if not exists attachment_type text;
+alter table if exists consult_messages add column if not exists attachment_name text;
+alter table if exists consult_messages add column if not exists attachment_url text;
