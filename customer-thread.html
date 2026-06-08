@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +7,7 @@
   <meta name="apple-mobile-web-app-title" content="WID Thread" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#244fbe" />
-  <title>What's it Doing? — Customer Thread v85</title>
+  <title>What's it Doing? — Customer Thread v88 desktop/status/upload controls</title>
   <style>
     :root{--blue:#244fbe;--blue2:#173a93;--bg:#f7faff;--bg2:#e8eef8;--text:#111114;--muted:#5f6470;--border:#d4dce8;--card:#fff;--soft:#f1f5f9;--warn:#7c4a03;--warnbg:#fff7ed;}
     *{box-sizing:border-box}
@@ -17,6 +16,29 @@
     .app{width:min(900px,100vw);margin:0 auto;min-height:100dvh;background:linear-gradient(180deg,var(--bg),var(--bg2));padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(12px + env(safe-area-inset-bottom,0px));border-left:6px solid var(--blue);border-right:6px solid var(--blue)}
     .top{background:linear-gradient(180deg,var(--blue),var(--blue2));color:white;border-radius:18px;padding:12px 13px;margin-bottom:9px;box-shadow:0 8px 22px rgba(23,58,146,.20)}
     h1{margin:0;font-size:24px;line-height:1.05;letter-spacing:-.035em}.sub{font-size:13px;opacity:.88;margin-top:4px;line-height:1.3}.card{background:rgba(255,255,255,.88);border:1px solid var(--border);border-radius:18px;padding:11px;margin:9px 0}.case-head{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}.ref{font-size:13px;color:rgba(255,255,255,.9);font-weight:900;text-align:right;white-space:nowrap}.summary{font-size:14px;line-height:1.34;color:#1f2937}.vehicle{font-size:18px;font-weight:950;line-height:1.16;letter-spacing:-.02em}.issue{margin-top:3px;color:#303744;font-size:14px;line-height:1.28}.status-pill{display:inline-flex;align-items:center;margin-top:7px;border:1px solid rgba(36,79,190,.24);border-radius:999px;padding:5px 8px;background:#fff;color:var(--blue2);font-size:12px;font-weight:900}.note{font-size:12px;line-height:1.28;color:var(--muted);background:#fff;border:1px dashed var(--border);border-radius:14px;padding:8px 9px}.thread-card{display:flex;flex-direction:column;min-height:calc(100dvh - 245px)}.thread{display:grid;gap:8px;margin-top:8px;overflow:auto;padding-bottom:7px;flex:1 1 auto;min-height:190px;max-height:60dvh}.bubble{max-width:88%;padding:10px 12px;border-radius:18px;font-size:15px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere}.customer{margin-left:auto;background:linear-gradient(180deg,var(--blue),var(--blue2));color:white;border-bottom-right-radius:6px}.operator{background:var(--soft);border:1px solid #dbe3ef;border-bottom-left-radius:6px}.system{margin:0 auto;max-width:96%;background:white;border:1px dashed var(--border);color:var(--muted);font-size:12px;text-align:center}.info{margin:0 auto;max-width:96%;background:#fff;border:1px solid #e6ebf3;color:#7a8493;font-size:11px;text-align:center;padding:7px 9px;border-radius:14px}.meta{display:block;margin-top:4px;font-size:10px;opacity:.72;font-weight:750}.reply-area{margin-top:8px}.reply-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch}textarea{width:100%;min-height:118px;border:1px solid var(--border);border-radius:16px;padding:11px 12px;font:inherit;font-size:16px;resize:vertical;background:white}button{border:1px solid var(--border);border-radius:14px;padding:11px 12px;font:inherit;font-weight:850;background:white}button.dark{background:linear-gradient(180deg,var(--blue),var(--blue2));color:#fff;border-color:var(--blue2)}.error{background:#fff1f2;border-color:#fecdd3;color:#9f1239}.muted{color:var(--muted)}.wait-note{display:none;margin-top:7px;border:1px solid #fed7aa;background:var(--warnbg);color:var(--warn);border-radius:13px;padding:7px 9px;font-size:11px;line-height:1.24;font-weight:800}.wait-note.active{display:block}.intake-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:950;opacity:.7;margin-bottom:4px}.mini-link{font-size:11px;color:var(--muted);line-height:1.25;margin-top:6px;word-break:break-word}.attachment-note{font-size:11px;color:var(--muted);line-height:1.25;margin-top:6px}.bubble-image-thumb{display:block;width:100%;max-width:240px;max-height:180px;object-fit:cover;border-radius:13px;margin-top:7px;border:1px solid var(--border);background:#fff;cursor:zoom-in}.image-modal{position:fixed;inset:0;z-index:90;background:rgba(15,23,42,.92);display:flex;align-items:center;justify-content:center;padding:14px}.image-modal img{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;background:#fff}.image-modal button{position:fixed;top:10px;right:10px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:9px 12px;font-size:13px;font-weight:900}
+
+    /* v88 desktop/status/thread clarity patch */
+    :root{--yellow:#fff7d4;--yellow-border:#e0cf73;--yellow-text:#7c4a03;--red:#b91c1c;--red-bg:#fff1f2;--greyline:#cbd5e1;}
+    .case-status-banner{width:100%;margin:0 0 8px;border:1px solid var(--yellow-border);background:linear-gradient(180deg,#fff7d4,#fffaf0);border-radius:15px;padding:9px 11px;font-size:15px;line-height:1.25;color:#222;text-align:left;}
+    .case-status-banner strong{font-weight:950;}
+    .case-status-banner .status-text{font-weight:950;}
+    .case-status-banner.status-waiting{background:linear-gradient(180deg,#fff1f2,#fff7f8);border-color:#fecdd3;color:var(--red);}
+    .case-status-banner.status-review,.case-status-banner.status-submitted{background:linear-gradient(180deg,#fff7d4,#fffaf0);border-color:var(--yellow-border);color:var(--yellow-text);}
+    .case-status-banner.status-closed{background:#f8fafc;border-color:var(--greyline);color:#475569;}
+    .case-summary-block{background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,247,212,.36));border:1px solid rgba(224,207,115,.55);border-radius:16px;padding:10px 11px;}
+    .thread-card{border-color:rgba(148,163,184,.65);background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(255,247,212,.28));}
+    .thread-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:950;margin:0 0 6px 3px;}
+    .thread{border:1px solid rgba(148,163,184,.72);border-radius:16px;background:linear-gradient(180deg,#fff,#f8fafc);padding:9px;scrollbar-width:thin;}
+    .reply-tools{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:8px 0;}
+    .reply-tools button{padding:8px 9px;font-size:13px;border-radius:13px;background:linear-gradient(180deg,#fff,#fff7d4);border-color:rgba(224,207,115,.72);color:#4b5563;}
+    .selected-note{font-size:11px;color:var(--muted);line-height:1.25;margin-top:3px;min-height:14px;}
+    @media (hover:hover) and (pointer:fine){
+      button,.bubble-image-thumb{cursor:pointer;}
+      .thread{max-height:58vh;}
+      textarea{min-height:100px;}
+      .app{width:min(900px,100vw);}
+    }
+
     @media (max-width:560px){.app{border-left-width:2px;border-right-width:2px}.top{margin-bottom:7px}.card{margin:7px 0}.thread-card{min-height:calc(100dvh - 225px)}.thread{max-height:62dvh}.bubble{max-width:94%}}
   </style>
 </head>
@@ -26,20 +48,27 @@
       <div class="case-head"><div><h1>What's it Doing?</h1><div class="sub">Your consult thread</div></div><div class="ref" id="topRef"></div></div>
     </div>
     <div id="caseCard" class="card"><strong>Loading your consult...</strong><div class="sub muted">This link is tied to the completed checkout session.</div></div>
-    <div class="note">Not live chat. Replies are during business hours. Add updates, test results, photos described in text, or questions here.</div>
+    <div class="note">Not live chat. Replies are during business hours.</div>
     <div class="card thread-card">
+      <div class="thread-label">Thread</div>
       <div id="thread" class="thread"><div class="bubble system">Messages will show here after payment is verified.</div></div>
       <div id="waitNote" class="wait-note">Please reply within 48 hours so I can keep the consult open.</div>
       <div class="reply-area">
-        <div class="reply-row"><textarea id="messageBox" placeholder="Reply here with updates, test results, or questions."></textarea><button id="sendBtn" class="dark" type="button">Send</button></div>
-        <div class="attachment-note">Photo/file upload from this page is next; for now, describe the image or reply with the result shown.</div>
+        <div class="reply-tools">
+          <button id="pickFileBtn" type="button">Photo / file</button>
+          <button id="recordBtn" type="button">Voice note</button>
+        </div>
+        <input id="fileInput" type="file" accept="image/*,.heic,.heif,video/*,.pdf,.txt,.csv,.jpg,.jpeg,.png,.webp" multiple style="display:none" />
+        <div id="selectedNote" class="selected-note"></div>
+        <audio id="audioPlayback" controls style="display:none;width:100%;margin:6px 0 0;"></audio>
+        <div class="reply-row"><textarea id="messageBox" placeholder="Reply here with updates, test results, photos/files, or questions."></textarea><button id="sendBtn" class="dark" type="button">Send</button></div>
       </div>
     </div>
   </div>
 <script>
   const qs = new URLSearchParams(location.search);
   const sessionId = qs.get('session_id') || qs.get('session') || '';
-  const els = { caseCard:document.getElementById('caseCard'), thread:document.getElementById('thread'), box:document.getElementById('messageBox'), send:document.getElementById('sendBtn'), topRef:document.getElementById('topRef'), waitNote:document.getElementById('waitNote') };
+  const els = { caseCard:document.getElementById('caseCard'), thread:document.getElementById('thread'), box:document.getElementById('messageBox'), send:document.getElementById('sendBtn'), topRef:document.getElementById('topRef'), waitNote:document.getElementById('waitNote'), pickFile:document.getElementById('pickFileBtn'), fileInput:document.getElementById('fileInput'), selectedNote:document.getElementById('selectedNote'), record:document.getElementById('recordBtn'), audio:document.getElementById('audioPlayback') };
   function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function attr(s){return esc(s).replace(/`/g,'&#96;');}
   function clean(s){return String(s||'').replace(/\s+/g,' ').trim();}
@@ -55,6 +84,14 @@
     if (s.includes('waiting_on_customer') || s.includes('waiting-customer')) return 'Waiting on your reply';
     if (s.includes('waiting_on_me') || s.includes('open') || s.includes('paid') || s.includes('new')) return 'In review';
     return 'Submitted';
+  }
+  function statusClass(label){
+    const s=String(label||'').toLowerCase();
+    if(s.includes('waiting')) return 'status-waiting';
+    if(s.includes('review')) return 'status-review';
+    if(s.includes('submitted')) return 'status-submitted';
+    if(s.includes('closed')) return 'status-closed';
+    return 'status-submitted';
   }
   function fmtTime(value){
     if (!value) return '';
@@ -104,7 +141,7 @@
       els.waitNote.classList.toggle('active', status === 'Waiting on your reply');
       const directUrl = location.origin + location.pathname + '?session_id=' + encodeURIComponent(sessionId);
       els.caseCard.classList.remove('error');
-      els.caseCard.innerHTML=`<div class="vehicle">${esc(vehicleLine(c))}</div>${issueLine(c)?`<div class="issue">${esc(issueLine(c))}</div>`:''}<div class="status-pill">${esc(status)}</div><div class="mini-link">Consult ${esc(ref || '')}${ref?' · ':''}Save this page/link for your thread.</div>`;
+      els.caseCard.innerHTML=`<div class="case-status-banner ${statusClass(status)}"><strong>Status:</strong> <span class="status-text">${esc(status)}</span></div><div class="case-summary-block"><div class="vehicle">${esc(vehicleLine(c))}</div>${issueLine(c)?`<div class="issue">${esc(issueLine(c))}</div>`:''}<div class="mini-link">Consult ${esc(ref || '')}${ref?' · ':''}Save this page/link for your thread.</div></div>`;
       const messages=Array.isArray(data.messages)?data.messages:[];
       const all=[...intakeBubbles(c), ...messages.map(renderBubble)];
       els.thread.innerHTML=all.length?all.join(''):'<div class="bubble system">Payment received. Your consult thread is open.</div>';
@@ -112,13 +149,57 @@
       els.thread.scrollTop=els.thread.scrollHeight;
     }catch(err){els.caseCard.classList.add('error');els.caseCard.innerHTML='<strong>Thread could not load.</strong><div class="sub">'+esc(err.message||err)+'</div>';}
   }
+
+  let selectedFiles=[];
+  let mediaRecorder=null;
+  let audioChunks=[];
+  let audioBlob=null;
+  function updateSelectedNote(){
+    const parts=[];
+    if(selectedFiles.length) parts.push(selectedFiles.map(f=>f.name).join(', '));
+    if(audioBlob) parts.push('voice note ready');
+    els.selectedNote.textContent=parts.join(' · ');
+  }
+  if(els.pickFile && els.fileInput){
+    els.pickFile.onclick=()=>{ els.fileInput.value=''; els.fileInput.click(); };
+    els.fileInput.onchange=()=>{ selectedFiles=Array.from(els.fileInput.files||[]); updateSelectedNote(); };
+  }
+  if(els.record){
+    els.record.onclick=async()=>{
+      if(mediaRecorder && mediaRecorder.state==='recording'){
+        mediaRecorder.stop();
+        els.record.textContent='Voice note';
+        return;
+      }
+      try{
+        const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+        audioChunks=[];
+        mediaRecorder=new MediaRecorder(stream);
+        mediaRecorder.ondataavailable=e=>{ if(e.data&&e.data.size) audioChunks.push(e.data); };
+        mediaRecorder.onstop=()=>{
+          audioBlob=new Blob(audioChunks,{type:'audio/webm'});
+          stream.getTracks().forEach(t=>t.stop());
+          if(els.audio){ els.audio.src=URL.createObjectURL(audioBlob); els.audio.style.display='block'; }
+          updateSelectedNote();
+        };
+        mediaRecorder.start();
+        els.record.textContent='Stop recording';
+      }catch(err){ alert('Microphone could not start: '+(err.message||err)); }
+    };
+  }
+
   async function sendMessage(){
-    const text=(els.box.value||'').trim(); if(!text) return;
+    let text=(els.box.value||'').trim();
+    const attachNotes=[];
+    if(selectedFiles.length) attachNotes.push('Selected file(s): '+selectedFiles.map(f=>f.name).join(', '));
+    if(audioBlob) attachNotes.push('Voice note recorded on customer thread page');
+    if(attachNotes.length) text=[text, attachNotes.join('\n')].filter(Boolean).join('\n\n');
+    if(!text) return;
     els.send.disabled=true; const original=els.send.textContent; els.send.textContent='Sending...';
     try{
       const res=await fetch('/.netlify/functions/post-customer-message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,text})});
       const data=await res.json().catch(()=>({})); if(!res.ok||!data.ok) throw new Error(data.error||'Could not send message');
-      els.box.value=''; await loadThread();
+      els.box.value=''; selectedFiles=[]; audioBlob=null; if(els.fileInput) els.fileInput.value=''; if(els.audio){els.audio.removeAttribute('src'); els.audio.style.display='none';} updateSelectedNote(); await loadThread();
     }catch(err){alert('Could not send yet: '+(err.message||err));}
     finally{els.send.disabled=false;els.send.textContent=original;}
   }
@@ -128,4 +209,3 @@
 </script>
 </body>
 </html>
- 
