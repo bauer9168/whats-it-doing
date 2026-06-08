@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#244fbe" />
   <meta name="msapplication-navbutton-color" content="#244fbe" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>What's it Doing? — Operator v85 display patch v86</title>
+  <title>What's it Doing? — Operator v88 desktop click patch</title>
   <style>
     :root {
       --bg:#f7faff;
@@ -911,6 +911,44 @@
       background:#fff !important;
     }
 
+
+    /* v88 desktop click/viewport patch */
+    @media (hover:hover) and (pointer:fine) {
+      body.focus-mode {
+        position:fixed !important;
+        inset:0 !important;
+        overflow:hidden !important;
+        background:#244fbe !important;
+      }
+      body.focus-mode .app {
+        width:min(100vw, 900px) !important;
+        height:100vh !important;
+        max-height:100vh !important;
+        margin-inline:auto !important;
+        padding:8px 8px 8px !important;
+        overflow:hidden !important;
+        background:linear-gradient(180deg,var(--bg),var(--bg2)) !important;
+      }
+      body.focus-mode .case.focused {
+        top:8px !important;
+        bottom:8px !important;
+        height:calc(100vh - 16px) !important;
+        max-height:calc(100vh - 16px) !important;
+        min-height:0 !important;
+        border:3px solid #244fbe !important;
+        border-radius:0 !important;
+        padding:12px 10px 34px !important;
+        overflow-y:auto !important;
+        background:linear-gradient(180deg,#f7faff 0%,#eef4ff 70%,#fff7d4 100%) !important;
+      }
+      body.focus-mode .case.focused .details { padding-bottom:48px !important; }
+      body.focus-mode .case.focused .texting-shell { margin-bottom:18px !important; }
+      .case:hover { background:linear-gradient(90deg,rgba(255,247,212,.50),transparent 80%) !important; }
+      .case.focused:hover { background:linear-gradient(180deg,#f7faff 0%,#eef4ff 70%,#fff7d4 100%) !important; }
+      .texting-head,.bubble,.case-number,.status-label,.vehicle-line,.symptom-line { cursor:pointer; }
+      .desktop-hint { display:block; }
+    }
+
   </style>
 </head>
 <body>
@@ -1341,6 +1379,12 @@
     if (autoArchiveToggleBtn) autoArchiveToggleBtn.onclick = toggleAutoArchiveClosed;
     document.getElementById('statusFilter').onchange = () => { syncArchiveControlsVisibility(); loadConsults(); };
     pinInput.oninput = () => localStorage.setItem('wid_operator_pin', pinInput.value || '');
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && document.body.classList.contains('focus-mode')) {
+        event.preventDefault();
+        exitFocusMode();
+      }
+    });
 
     function syncArchiveControlsVisibility() {
       if (!autoArchiveToggleBtn) return;
@@ -1465,7 +1509,15 @@
       list.innerHTML = items.map((item, index) => renderCase(item, index, queueMeta, selectedView)).join('');
       document.querySelectorAll('.case').forEach(card => {
         card.onclick = (event) => {
-          if (event.target.closest('button,a,audio,textarea,.icon,.bubble,.texting-shell')) return;
+          if (event.target.closest('button,audio,textarea,input,select,.icon,.bubble,.texting-shell')) return;
+          const anchor = event.target.closest('a');
+          if (anchor) return;
+          event.preventDefault();
+          if (isDesktopMouseEvent(event)) {
+            if (document.body.classList.contains('focus-mode') && card.classList.contains('focused')) return;
+            focusCase(card);
+            return;
+          }
           registerCaseTap(card, event);
         };
         card.ondblclick = (event) => {
@@ -1600,6 +1652,10 @@
     let tapTimer = null;
     let lastTappedCase = null;
     let lockedScrollY = 0;
+
+    function isDesktopMouseEvent(event) {
+      return event && (event.pointerType === 'mouse' || event.detail >= 0) && window.matchMedia && window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+    }
 
     function registerCaseTap(card, event) {
       const now = Date.now();
