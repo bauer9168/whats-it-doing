@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#244fbe" />
   <meta name="msapplication-navbutton-color" content="#244fbe" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>What's it Doing? — Operator v85 display patch</title>
+  <title>What's it Doing? — Operator v85 display patch v86</title>
   <style>
     :root {
       --bg:#f7faff;
@@ -814,6 +814,104 @@
       min-height:0 !important;
     }
 
+
+    /* v86 operator CSS-only repair
+       Tighten expanded case viewport, remove remaining bottom obstruction, restore blue native chrome after exit, and add a light yellow/grey accent. */
+    :root { --wid-yellow:#fff7d4; --wid-yellow-border:#e0cf73; --wid-yellow-text:#7c4a03; }
+    html { background:#244fbe !important; }
+    body {
+      background:#244fbe !important;
+      min-height:100dvh !important;
+      overflow-x:hidden !important;
+    }
+    body:not(.focus-mode) .app {
+      background:linear-gradient(180deg,var(--bg),var(--bg2)) !important;
+      min-height:calc(100dvh + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    body:not(.focus-mode)::after {
+      display:block !important;
+      height:max(12px, env(safe-area-inset-bottom, 0px)) !important;
+      background:#244fbe !important;
+    }
+    .top,
+    .texting-head {
+      background:linear-gradient(180deg,rgba(255,247,212,.54),rgba(255,255,255,.64)) !important;
+    }
+    .queue-tile {
+      background:linear-gradient(180deg,rgba(255,247,212,.72),rgba(255,255,255,.70)) !important;
+      border-color:rgba(224,207,115,.72) !important;
+    }
+    .texting-shell,
+    .box,
+    textarea.replybox,
+    .phone-compose textarea {
+      border-color:rgba(224,207,115,.62) !important;
+    }
+    .case.waiting-me {
+      background:linear-gradient(90deg, rgba(255,241,242,.84), rgba(255,247,212,.28) 74%, transparent) !important;
+    }
+    body.focus-mode::before,
+    body.focus-mode::after {
+      display:none !important;
+      height:0 !important;
+      min-height:0 !important;
+      max-height:0 !important;
+    }
+    body.focus-mode {
+      position:fixed !important;
+      inset:0 !important;
+      width:100% !important;
+      height:100dvh !important;
+      max-height:100dvh !important;
+      overflow:hidden !important;
+      background:#244fbe !important;
+    }
+    body.focus-mode .app {
+      height:100dvh !important;
+      min-height:0 !important;
+      max-height:100dvh !important;
+      padding-top:0 !important;
+      padding-bottom:0 !important;
+      overflow:hidden !important;
+      background:#244fbe !important;
+    }
+    body.focus-mode .case.focused {
+      top:0 !important;
+      bottom:0 !important;
+      left:50% !important;
+      right:auto !important;
+      width:min(100vw, 900px) !important;
+      max-width:900px !important;
+      height:100dvh !important;
+      min-height:0 !important;
+      max-height:100dvh !important;
+      transform:translateX(-50%) !important;
+      overflow-y:auto !important;
+      overflow-x:hidden !important;
+      padding-top:calc(10px + env(safe-area-inset-top, 0px)) !important;
+      padding-bottom:calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+      border-top:0 !important;
+      border-bottom:0 !important;
+      background:linear-gradient(180deg,#f7faff 0%,#eef4ff 72%,#fff7d4 100%) !important;
+    }
+    body.focus-mode.keyboard-active .case.focused.keyboard-space {
+      padding-bottom:calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    body.focus-mode .case.focused .details {
+      padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    body.focus-mode .case.focused .workflow-actions {
+      margin-bottom:12px !important;
+    }
+    .texting-shell.message-zoom {
+      top:0 !important;
+      bottom:0 !important;
+      height:100dvh !important;
+      max-height:100dvh !important;
+      padding-bottom:env(safe-area-inset-bottom, 0px) !important;
+      background:#fff !important;
+    }
+
   </style>
 </head>
 <body>
@@ -1215,11 +1313,13 @@
         statusLine.textContent = 'Message kept locally; server save failed: ' + (err.message || err);
       }
 
-      const local = getLocalThread(caseKey);
-      local.push({ who:'operator', text, at:now, server:savedServerSide });
-      saveLocalThread(caseKey, local);
+      if (!savedServerSide) {
+        const local = getLocalThread(caseKey);
+        local.push({ who:'operator', text, at:now, server:false });
+        saveLocalThread(caseKey, local);
+      }
       updateLastMessagePreview(caseKey, text);
-      if (thread) thread.insertAdjacentHTML('beforeend', renderMessageBubble({ who:'operator', text, at:now }));
+      if (thread) thread.insertAdjacentHTML('beforeend', renderMessageBubble({ who:'operator', text, at:now, server:savedServerSide }));
       setLastUndoAction(caseKey, { type:'message', text, at:now });
 
       try { await navigator.clipboard.writeText(text); } catch (_) {}
@@ -1765,7 +1865,9 @@
       const at = (m && (m.at || m.created_at)) || '';
       const meta = who === 'system' || who === 'info' ? (at || who) : (who === 'customer' ? ('customer · ' + at) : ('you · ' + at));
       const text = escapeHtml((m && (m.text || m.body)) || '');
-      const img = (m && m.imageData) ? `<img class="bubble-image-thumb" src="${escapeAttr(m.imageData)}" alt="${escapeAttr(m.imageName || 'message picture')}" data-expand-image="${escapeAttr(m.imageData)}" />` : '';
+      const imageSrc = m && (m.imageData || m.image_data || m.image_url || m.attachment_url || '');
+      const imageName = m && (m.imageName || m.image_name || m.attachment_name || 'message picture');
+      const img = imageSrc ? `<img class="bubble-image-thumb" src="${escapeAttr(imageSrc)}" alt="${escapeAttr(imageName)}" data-expand-image="${escapeAttr(imageSrc)}" />` : '';
       return `<div class="bubble ${who}">${text}${img}<span class="bubble-meta">${escapeHtml(meta)}</span></div>`;
     }
 
@@ -2216,17 +2318,32 @@
           if (!dataUrl) throw new Error('Empty picture data');
           const now = new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
           const msg = { who:'operator', text:'', imageData:dataUrl, imageName:originalFile.name || file.name || 'picture', at:now };
-          const local = getLocalThread(caseKey);
-          local.push(msg);
+          let savedServerSide = false;
           try {
-            saveLocalThread(caseKey, local);
-          } catch (storeErr) {
-            local.pop();
-            // Full-size iPhone library photos can exceed localStorage even after compression.
-            // Keep the selected photo visible for this open page session instead of failing the whole attach.
-            const sessionUrl = URL.createObjectURL(originalFile);
-            msg.imageData = sessionUrl;
-            msg.text = 'Photo attached locally for this session';
+            const res = await fetch('/.netlify/functions/post-operator-message', {
+              method:'POST',
+              headers:{ 'Content-Type':'application/json', ...pinHeader() },
+              body:JSON.stringify({ id:caseKey, text:'', imageData:dataUrl, imageName:msg.imageName })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.ok) throw new Error(data.error || 'Could not save operator picture');
+            savedServerSide = true;
+          } catch (serverErr) {
+            statusLine.textContent = 'Picture kept locally; server save failed: ' + (serverErr.message || serverErr);
+          }
+          if (!savedServerSide) {
+            const local = getLocalThread(caseKey);
+            local.push(msg);
+            try {
+              saveLocalThread(caseKey, local);
+            } catch (storeErr) {
+              local.pop();
+              // Full-size iPhone library photos can exceed localStorage even after compression.
+              // Keep the selected photo visible for this open page session instead of failing the whole attach.
+              const sessionUrl = URL.createObjectURL(originalFile);
+              msg.imageData = sessionUrl;
+              msg.text = 'Photo attached locally for this session';
+            }
           }
           updateLastMessagePreview(caseKey, files.length > 1 ? `${files.length} pictures attached` : 'Picture attached');
           setLastUndoAction(caseKey, { type:'message', imageName:msg.imageName, at:now });
@@ -2243,7 +2360,7 @@
           statusLine.textContent = err.message || 'Could not read one or more pictures';
         }
       }
-      if (added) statusLine.textContent = added > 1 ? `${added} pictures added to local message thread` : 'Picture added to local message thread';
+      if (added) statusLine.textContent = added > 1 ? `${added} pictures added to message thread` : 'Picture added to message thread';
     }
 
 
@@ -2467,4 +2584,3 @@
   </script>
 </body>
 </html>
- 
