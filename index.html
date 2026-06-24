@@ -771,7 +771,7 @@
   </div>
 
     <script>
-    const WID_INDEX_VERSION = "v90";
+    const WID_INDEX_VERSION = "v91";
 
     const WID_CUSTOMER_VERSION = 'v84-index-only-render-fix';
     const WID_BLUE_BAR = '#244fbe';
@@ -1079,7 +1079,19 @@
       const rawCodeMatches = combined.match(/\b[A-Za-z]\d{4,5}\b/g) || [];
       const codeMatch = rawCodeMatches.filter(v => !/^[CK]\d{4}$/i.test(v));
       const noLightsMentioned = /no lights? on|no warning lights?|no check engine light|check engine light (?:is )?not on|cel (?:is )?(?:not on|off)/i.test(lower);
-      const rawLightMentioned = /check engine|engine light|cel|warning light|light came on|light is on|light on/i.test(lower);
+      const checkEngineMentioned = /check engine|engine light|\bcel\b|\bmil\b|service engine soon/i.test(lower) && !noLightsMentioned;
+      const specificLightHints = [];
+      if (/air\s*bag|airbag|\bsrs\b|supplemental restraint|restraint light/i.test(lower)) specificLightHints.push('airbag / SRS light concern');
+      if (/seat\s*belt|seatbelt|belt buckle|buckle/i.test(lower)) specificLightHints.push(/light/i.test(lower) ? 'seatbelt light / buckle concern' : 'seatbelt / buckle concern');
+      if (/\babs\b|anti[- ]?lock/i.test(lower)) specificLightHints.push('ABS light concern');
+      if (/traction|stability|\besc\b|\bvsc\b|\btrac\b/i.test(lower)) specificLightHints.push('traction / stability light concern');
+      if (/brake light|brake warning|red brake/i.test(lower)) specificLightHints.push('brake warning light concern');
+      if (/oil light|oil pressure/i.test(lower)) specificLightHints.push('oil pressure light concern');
+      if (/battery light|charging light|alternator light/i.test(lower)) specificLightHints.push('battery / charging light concern');
+      if (/tpms|tire pressure light/i.test(lower)) specificLightHints.push('tire pressure light concern');
+      if (checkEngineMentioned) specificLightHints.push('check engine light concern');
+      const genericLightMentioned = /warning light|light came on|light is on|light on|dash light|dashboard light/i.test(lower) && !noLightsMentioned;
+      const rawLightMentioned = checkEngineMentioned || genericLightMentioned || specificLightHints.length > 0;
       const lightMentioned = rawLightMentioned && !noLightsMentioned;
       const unknownCodeMentioned = /don\'t know what code|do not know what code|not sure what code|can\'t scan|cannot scan|no scanner|don\'t have a scanner/i.test(lower);
       const hasCodeInfo = /code|codes/i.test(lower) || rawLightMentioned || noLightsMentioned || (codeMatch && codeMatch.length);
@@ -1093,15 +1105,39 @@
       if (/runs badly|running badly|runs rough|running rough/i.test(lower)) issueHints.push('runs badly / rough at times');
       if (/sometimes has low power|low power|falls on its face|no power|lack of power|power loss|hesitat|stumble|bog/i.test(lower)) issueHints.push('power loss / hesitation');
       if (/hard to start|starts? hard|difficult to start|long crank|cranks? (?:a lot|long)|when i start(?:ed)? (?:it|up)|on startup|first start|cold start|start(?:s|ing)? when cold|cold start/i.test(lower)) issueHints.push('startup issue');
-      if (lightMentioned) issueHints.push('check engine light concern');
+      if (specificLightHints.length > 1) issueHints.push('multiple warning light concerns: ' + [...new Set(specificLightHints)].join(' / '));
+      else if (specificLightHints.length === 1) issueHints.push(specificLightHints[0]);
+      else if (genericLightMentioned && lightMentioned) issueHints.push('warning light concern');
       if (/misfire|cylinder miss|missing on one cylinder|p030\d|p0300/i.test(lower)) issueHints.push('misfire concern');
       if (/rough idle|rough at idle/i.test(lower) && !issueHints.includes('runs badly / rough at times')) issueHints.push('rough running');
       if (/smoke/i.test(lower)) issueHints.push('smoke concern');
       if (/noise|knock|tap|rattle|grind/i.test(lower) && !issueHints.includes('ac noise / price concern')) issueHints.push(/bump|bumps|over bumps|rough road|pothole/i.test(lower) ? 'noise over bumps / road-input concern' : 'noise concern');
       if (/overheat|overheating|hot/i.test(lower)) issueHints.push('overheating concern');
       if (codeMatch?.length) issueHints.push('codes: ' + [...new Set(codeMatch.map(v => v.toUpperCase()))].join(', '));
+      const categoryHits = [];
+      if (specificLightHints.length || genericLightMentioned || checkEngineMentioned) categoryHits.push('warning lights');
+      if (/runs badly|running badly|runs rough|running rough|misfire|p030\d|rough idle|hesitat|stumble|bog|low power|no power/i.test(lower)) categoryHits.push('running/driveability');
+      if (/shift|transmission|gear\s*box|gearbox/i.test(lower)) categoryHits.push('transmission');
+      if (/steering|suspension|brake|noise|knock|tap|rattle|grind|bump|bumps/i.test(lower)) categoryHits.push('mechanical/noise');
+      if ([...new Set(categoryHits)].length > 1) issueHints.unshift('multiple concerns - clarification likely needed');
 
       const doneHints = [];
+      function addDoneHint(label) {
+        const cleaned = normalizeText(label).replace(/^(?:a|an|the)\s+/i, '').replace(/[.,;:!?]+$/g, '');
+        if (!cleaned || cleaned.length < 3) return;
+        doneHints.push(cleaned + (/(replaced|changed|installed|done)$/i.test(cleaned) ? '' : ' mentioned as new / replaced'));
+      }
+      const newPartMatches = combined.match(/\b(?:has|have|had|got|installed|put in|put on)\s+(?:a\s+|an\s+|the\s+)?new\s+([a-z0-9][a-z0-9\s\-\/]{1,42}?)(?=\s*(?:,|\.|;|\band\b|\bbut\b|\bneed\b|\bnow\b|\bwith\b|$))/gi) || [];
+      newPartMatches.forEach(m => {
+        const part = m.replace(/^\b(?:has|have|had|got|installed|put in|put on)\s+(?:a\s+|an\s+|the\s+)?new\s+/i, '');
+        addDoneHint(part);
+      });
+      const replacedPartMatches = combined.match(/\b(?:replaced|changed|installed)\s+(?:a\s+|an\s+|the\s+)?([a-z0-9][a-z0-9\s\-\/]{1,42}?)(?=\s*(?:,|\.|;|\band\b|\bbut\b|\bneed\b|\bnow\b|\bwith\b|$))/gi) || [];
+      replacedPartMatches.forEach(m => {
+        const part = m.replace(/^\b(?:replaced|changed|installed)\s+(?:a\s+|an\s+|the\s+)?/i, '');
+        addDoneHint(part + ' replaced');
+      });
+      if (/new buckle|has (?:a )?new buckle|belt buckle (?:was )?(?:replaced|changed|installed)|replaced (?:the )?(?:seat\s*belt\s*)?buckle/i.test(lower)) doneHints.push('seatbelt buckle replaced');
       if (/(?:new|replaced|changed|did|done|installed|has|have|had)\s+(?:the\s+)?(?:spark\s+)?plugs?\b|spark plugs? (?:were )?(?:replaced|changed|done|installed)|plugs were done/i.test(lower)) doneHints.push('spark plugs replaced');
       if (/(?:new|replaced|changed|installed|has|have|had)\s+(?:the\s+)?(?:ignition\s+)?coils?\b|coils? (?:were )?(?:replaced|changed|done|installed)/i.test(lower)) doneHints.push('ignition coils replaced');
       if (/(?:new|replaced|changed|installed|has|have|had)\s+(?:a\s+|the\s+)?turbo(?:charger)?\b|turbo(?:charger)? (?:was )?(?:replaced|changed|done|installed)/i.test(lower)) doneHints.push('turbo replaced');
@@ -1142,6 +1178,7 @@
       const symptomClearlyPresent = issueHints.length > 0;
 
       const suggestionBits = [];
+      if ([...new Set(categoryHits)].length > 1) suggestionBits.push('clarify which concern is the priority');
       if (!symptomClearlyPresent && !projectMode) suggestionBits.push("what's going on?");
       else if (projectMode && !/what'?s not working|not working|won't work|doesn't work|key to work|powers?|grounds?/i.test(lower)) suggestionBits.push("what's not working?");
       else if (!hasTimingDetail && !/overheat|overheating/i.test(lower) && !/looking for advice|advice|insight|way to test|test it/i.test(lower)) suggestionBits.push('when is it doing it?');
