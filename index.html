@@ -8,9 +8,9 @@
   <meta name="apple-mobile-web-app-title" content="What's it Doing?" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#8f949d" />
-  <meta name="msapplication-navbutton-color" content="#8f949d" />
-  <title>What's it Doing? — Customer v92 styling polish</title>
+  <meta name="theme-color" content="#b7bcc4" />
+  <meta name="msapplication-navbutton-color" content="#b7bcc4" />
+  <title>What's it Doing? — Customer v93 banner refinement</title>
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -148,7 +148,7 @@
 
     .brand-banner {
       width: min(100%, 520px);
-      background: linear-gradient(180deg, #9aa0aa, #888f99);
+      background: linear-gradient(180deg, #c5cad2, #afb5bf);
       border: 1px solid rgba(36,79,190,.28);
       border-radius: 22px;
       box-shadow: 0 10px 26px rgba(15, 23, 42, 0.10), inset 0 0 0 2px rgba(255,255,255,.20);
@@ -158,16 +158,16 @@
 
     .brand-banner .hero-title,
     .brand-banner h2 {
-      color: #d6b548;
+      color: #111114;
       margin: 0;
       white-space: normal;
-      text-shadow: 0 1px 0 rgba(0,0,0,.08);
+      text-shadow: 0 1px 0 rgba(255,255,255,.22);
     }
 
     .brand-banner .hero-sub,
     .brand-banner .input-hero-sub {
-      color: #173a93;
-      margin: 8px 0 0;
+      color: #9a7a12;
+      margin: 14px 0 0;
       font-weight: 700;
     }
 
@@ -198,6 +198,12 @@
       min-width: 60px;
       font-weight: 800;
       color: #173a93;
+    }
+
+
+    .section-break {
+      display:block;
+      height: 8px;
     }
 
     .bottom-choice {
@@ -682,7 +688,7 @@
         <div class="big-center">
           <div class="brand-banner hero-banner">
             <div class="hero-title">What's it Doing?</div>
-            <div class="hero-sub">an Automotive Repair Consultation Service</div>
+            <div class="hero-sub"><span class="section-break"></span>an Automotive Repair Consultation Service</div>
           </div>
           <div class="hero-lead">I explain what it means, or what I'd do next.</div>
           <div class="hero-actions">
@@ -709,7 +715,7 @@
       <div class="card screen" data-screen="2">
         <div class="brand-banner input-brand-banner">
           <h2>What's it Doing?</h2>
-          <div class="hero-sub input-hero-sub" style="font-size:15px; text-align:left;">an Automotive Repair Consultation Service</div>
+          <div class="hero-sub input-hero-sub" style="font-size:15px; text-align:left;"><span class="section-break"></span>an Automotive Repair Consultation Service</div>
         </div>
         <p class="section-sub" id="ymmPrompt" style="margin-bottom:6px;">Please state Year, Model, and Miles - What's going on?</p>
         <textarea id="inputText" class="input-accent" placeholder="Pretend I'm standing in front of you and tell me what it's doing, what's been done recently, and/or what you're concerned with."></textarea>
@@ -834,7 +840,7 @@
     const WID_INDEX_VERSION = "v91";
 
     const WID_CUSTOMER_VERSION = 'v84-index-only-render-fix';
-    const WID_BLUE_BAR = '#8f949d';
+    const WID_BLUE_BAR = '#b7bcc4';
     function widLockBlueBrowserBars() {
       document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
       document.documentElement.style.backgroundColor = WID_BLUE_BAR;
