@@ -22,8 +22,12 @@ async function sendLinkEmail({ to, name, threadUrl, publicId }) {
     body: JSON.stringify({
       from: process.env.FROM_EMAIL,
       to,
-      subject: `Your What's it Doing? consult link${publicId ? ' — ' + publicId : ''}`,
-      html: `<p>Hi ${String(name || '').replace(/[<>]/g, '') || 'there'},</p><p>Your payment was received and your consult thread is open:</p><p><a href="${threadUrl}">${threadUrl}</a></p><p>Reply in that thread with updates or requested test results.</p>`
+      subject: `What's it Doing? consult link${publicId ? ' — ' + publicId : ''}`,
+      html: `<p>Payment received. Save this link for your consult thread:</p><p><a href="${threadUrl}">${threadUrl}</a></p><p>I’ll be in touch shortly.</p>`,
+      text: `Payment received. Save this link for your consult thread:
+${threadUrl}
+
+I’ll be in touch shortly.`
     })
   });
   const data = await res.json().catch(() => ({}));
