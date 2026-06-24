@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,8 +8,9 @@
   <meta name="apple-mobile-web-app-title" content="What's it Doing?" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#244fbe" />
-  <title>What's it Doing? — Customer v90 DNS copy tweaks</title>
+  <meta name="theme-color" content="#8f949d" />
+  <meta name="msapplication-navbutton-color" content="#8f949d" />
+  <title>What's it Doing? — Customer v92 styling polish</title>
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -142,6 +142,62 @@
       width: 100%;
       display: flex;
       justify-content: center;
+    }
+
+
+
+    .brand-banner {
+      width: min(100%, 520px);
+      background: linear-gradient(180deg, #9aa0aa, #888f99);
+      border: 1px solid rgba(36,79,190,.28);
+      border-radius: 22px;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.10), inset 0 0 0 2px rgba(255,255,255,.20);
+      padding: 18px 18px 16px;
+      margin-top: 40px;
+    }
+
+    .brand-banner .hero-title,
+    .brand-banner h2 {
+      color: #d6b548;
+      margin: 0;
+      white-space: normal;
+      text-shadow: 0 1px 0 rgba(0,0,0,.08);
+    }
+
+    .brand-banner .hero-sub,
+    .brand-banner .input-hero-sub {
+      color: #173a93;
+      margin: 8px 0 0;
+      font-weight: 700;
+    }
+
+    .hero-banner {
+      margin-bottom: 18px;
+    }
+
+    .input-brand-banner {
+      margin-top: 0;
+      margin-bottom: 12px;
+      width: 100%;
+      max-width: 100%;
+      padding: 16px 16px 14px;
+    }
+
+    .compact-examples {
+      background: linear-gradient(180deg, rgba(214,181,72,.16), rgba(255,255,255,.86));
+      border-color: rgba(36,79,190,.22) !important;
+      margin-top: 14px;
+    }
+
+    .example-row + .example-row {
+      margin-top: 8px;
+    }
+
+    .example-tag {
+      display: inline-block;
+      min-width: 60px;
+      font-weight: 800;
+      color: #173a93;
     }
 
     .bottom-choice {
@@ -624,8 +680,10 @@
     <div class="page-wrap">
       <div class="card screen active" data-screen="0">
         <div class="big-center">
-          <div class="hero-title">What's it Doing?</div>
-          <div class="hero-sub">an Automotive Repair Consultation Service</div>
+          <div class="brand-banner hero-banner">
+            <div class="hero-title">What's it Doing?</div>
+            <div class="hero-sub">an Automotive Repair Consultation Service</div>
+          </div>
           <div class="hero-lead">I explain what it means, or what I'd do next.</div>
           <div class="hero-actions">
             <button class="btn dark" id="continueBtn" style="max-width: 210px;">Continue</button>
@@ -649,8 +707,10 @@
       </div>
 
       <div class="card screen" data-screen="2">
-        <h2>What's it Doing?</h2>
-        <div class="hero-sub" style="font-size:15px; margin:0 0 10px; text-align:left;">an Automotive Repair Consultation Service</div>
+        <div class="brand-banner input-brand-banner">
+          <h2>What's it Doing?</h2>
+          <div class="hero-sub input-hero-sub" style="font-size:15px; text-align:left;">an Automotive Repair Consultation Service</div>
+        </div>
         <p class="section-sub" id="ymmPrompt" style="margin-bottom:6px;">Please state Year, Model, and Miles - What's going on?</p>
         <textarea id="inputText" class="input-accent" placeholder="Pretend I'm standing in front of you and tell me what it's doing, what's been done recently, and/or what you're concerned with."></textarea>
         <div class="tap-note">Prefer talking? Use the microphone on your phone keyboard in this box, then review the text before continuing.</div>
@@ -684,9 +744,9 @@
           <button class="btn dark" id="toSummaryBtn">Continue</button>
         </div>
         <div class="example-box compact-examples">
-          <strong>Examples:</strong><br>
-          2011 Civic, 142k miles — rough cold start, P0300, plugs already done, not sure what to check next.<br>
-          2016 Explorer, 122k miles — intermittent jerk/shake, shop says transmission, want second opinion.
+          <strong>Examples:</strong>
+          <div class="example-row"><span class="example-tag">DIY:</span> 2011 Civic, 142k miles — rough cold start, P0300, plugs already done, not sure what to check next.</div>
+          <div class="example-row"><span class="example-tag">Advice:</span> 2016 Explorer, 122k miles — intermittent jerk/shake, shop says transmission, want second opinion.</div>
         </div>
       </div>
 
@@ -774,7 +834,7 @@
     const WID_INDEX_VERSION = "v91";
 
     const WID_CUSTOMER_VERSION = 'v84-index-only-render-fix';
-    const WID_BLUE_BAR = '#244fbe';
+    const WID_BLUE_BAR = '#8f949d';
     function widLockBlueBrowserBars() {
       document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
       document.documentElement.style.backgroundColor = WID_BLUE_BAR;
