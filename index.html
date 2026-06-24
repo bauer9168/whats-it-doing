@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#d3d7dd" />
   <meta name="msapplication-navbutton-color" content="#d3d7dd" />
-  <title>What's it Doing? — Customer v96 full-bleed repair-note font</title>
+  <title>What's it Doing? — Customer v98 advice example notes wording</title>
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -42,7 +42,7 @@
     html, body {
       margin: 0;
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: "Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif;
       min-height: 100%;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
@@ -249,17 +249,23 @@
 
     h2 {
       margin: 0 0 8px;
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: "Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif;
       font-size: 33px;
       font-weight: 800;
-      letter-spacing: -0.045em;
+      letter-spacing: -0.035em;
       line-height: 1.02;
     }
 
-    .btn, .opt {
+    .screen[data-screen="1"] h2 {
       font-family: Georgia, "Times New Roman", serif;
-      font-weight: 700;
-      letter-spacing: -0.018em;
+      font-weight: 800;
+      letter-spacing: -0.045em;
+    }
+
+    .btn, .opt {
+      font-family: "Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif;
+      font-weight: 800;
+      letter-spacing: -0.025em;
     }
 
     .section-sub {
@@ -272,6 +278,7 @@
     .grid { display: grid; gap: 10px; }
 
     .btn, .opt, .input, textarea {
+      font-family: "Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif;
       width: 100%;
       border-radius: var(--radius-lg);
       border: 1px solid #cfd3da;
@@ -820,12 +827,12 @@
           <button class="btn small" id="mainClearBtn" type="button">Clear / start over</button>
         </div>
         <div class="soft" style="margin-top:10px;">
-          <div style="font-size:16px; font-weight:700; margin-bottom:8px;">Optional voice note</div>
+          <div style="font-size:16px; font-weight:700; margin-bottom:8px;">Optional audio note</div>
           <div style="font-size:13px; color: var(--muted); line-height:1.35; margin-bottom:10px;">
             Do you have a noise that might help, or want me to hear it the way you would explain it?
           </div>
           <div class="btn-row">
-            <button class="btn dark voice-btn" type="button" id="recordAudioBtn">Record voice note</button>
+            <button class="btn dark voice-btn" type="button" id="recordAudioBtn">Record audio</button>
             <button class="btn voice-btn" type="button" id="stopAudioBtn" disabled>Stop recording</button>
           </div>
           <div id="audioStatus" class="saved-note" style="margin-top:8px;">Optional. Up to about 2 minutes works best.</div>
@@ -846,8 +853,8 @@
         </div>
         <div class="example-box compact-examples">
           <strong>Examples:</strong>
-          <div class="example-row"><span class="example-tag">DIY:</span>2011 Civic, 142k miles — rough cold start, P0300, plugs already done, not sure what to check next.</div>
-          <div class="example-row"><span class="example-tag">Advice:</span>2016 Explorer, 122k miles — intermittent jerk/shake, shop says transmission, want second opinion.</div>
+          <div class="example-row"><span class="example-tag">DIY:</span> 2011 Civic, 142k miles — rough cold start, P0300, plugs already done, not sure what to check next.</div>
+          <div class="example-row"><span class="example-tag">Advice:</span> 2016 Explorer, 122k miles — intermittent jerk/shake, shop says transmission, want second opinion. I have the codes and shop notes available.</div>
         </div>
       </div>
 
@@ -932,9 +939,9 @@
   </div>
 
     <script>
-    const WID_INDEX_VERSION = "v96";
+    const WID_INDEX_VERSION = "v98";
 
-    const WID_CUSTOMER_VERSION = 'v96-full-bleed-repair-note-font';
+    const WID_CUSTOMER_VERSION = 'v98-advice-example-notes-wording';
     const WID_BLUE_BAR = '#d3d7dd';
     function widLockBlueBrowserBars() {
       document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
@@ -2022,18 +2029,18 @@
             state.audioUrl = URL.createObjectURL(blob);
             els.audioPlayback.src = state.audioUrl;
             els.audioPlayback.classList.remove('hidden');
-            els.audioStatus.textContent = 'Voice note ready. You can play it back below.';
+            els.audioStatus.textContent = 'Audio note ready. You can play it back below.';
             els.recordAudioBtn.disabled = false;
             els.stopAudioBtn.disabled = false;
             els.recordAudioBtn.classList.add('dark');
             els.stopAudioBtn.classList.remove('dark');
-            els.recordAudioBtn.textContent = 'Record voice note';
+            els.recordAudioBtn.textContent = 'Record audio';
             els.stopAudioBtn.textContent = 'Clear saved recording';
             stream.getTracks().forEach(track => track.stop());
           };
 
           recorder.start();
-          els.audioStatus.textContent = 'Recording voice note...';
+          els.audioStatus.textContent = 'Recording audio...';
           els.recordAudioBtn.disabled = true;
           els.stopAudioBtn.disabled = false;
           els.recordAudioBtn.classList.remove('dark');
@@ -2041,13 +2048,13 @@
           els.stopAudioBtn.textContent = 'Stop recording';
           els.recordAudioBtn.textContent = 'Recording...';
         } catch (err) {
-          els.audioStatus.textContent = 'Microphone unavailable for voice note recording.';
+          els.audioStatus.textContent = 'Microphone unavailable for audio recording.';
           els.recordAudioBtn.disabled = false;
           els.stopAudioBtn.disabled = true;
           els.recordAudioBtn.classList.add('dark');
           els.stopAudioBtn.classList.remove('dark');
           els.stopAudioBtn.textContent = 'Stop recording';
-          els.recordAudioBtn.textContent = 'Record voice note';
+          els.recordAudioBtn.textContent = 'Record audio';
         }
       };
 
@@ -2063,12 +2070,12 @@
           state.audioBlob = null;
           els.audioPlayback.removeAttribute('src');
           els.audioPlayback.classList.add('hidden');
-          els.audioStatus.textContent = 'Voice note cleared.';
+          els.audioStatus.textContent = 'Audio note cleared.';
           els.recordAudioBtn.disabled = false;
           els.stopAudioBtn.disabled = true;
           els.recordAudioBtn.classList.add('dark');
           els.stopAudioBtn.classList.remove('dark');
-          els.recordAudioBtn.textContent = 'Record voice note';
+          els.recordAudioBtn.textContent = 'Record audio';
           els.stopAudioBtn.textContent = 'Stop recording';
         }
       };
