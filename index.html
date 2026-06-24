@@ -1,4 +1,6 @@
 
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#d3d7dd" />
   <meta name="msapplication-navbutton-color" content="#d3d7dd" />
-  <title>What's it Doing? — Customer v94 full-width banner</title>
+  <title>What's it Doing? — Customer v95 repair-note voice helper</title>
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -170,6 +172,18 @@
       margin: 0;
       white-space: normal;
       text-shadow: 0 1px 0 rgba(255,255,255,.22);
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 800;
+      letter-spacing: -0.045em;
+      line-height: .98;
+    }
+
+    .brand-banner .hero-title {
+      font-size: clamp(42px, 11vw, 58px);
+    }
+
+    .brand-banner h2 {
+      font-size: clamp(34px, 9vw, 46px);
     }
 
     .brand-banner .hero-sub,
@@ -206,9 +220,14 @@
       margin-top: 8px;
     }
 
+    .example-row {
+      line-height: 1.35;
+    }
+
     .example-tag {
-      display: inline-block;
-      min-width: 60px;
+      display: inline;
+      min-width: 0;
+      margin-right: 4px;
       font-weight: 800;
       color: #173a93;
     }
@@ -515,6 +534,56 @@
       text-underline-offset: 3px;
     }
 
+    .input-helper-wrap {
+      width: 100%;
+      margin-top: 0;
+    }
+
+    .input-helper-wrap textarea {
+      display: block;
+      border-radius: 18px 18px 0 0;
+      margin-bottom: 0;
+    }
+
+    .input-bottom-helper {
+      border: 1px solid rgba(36,79,190,.52);
+      border-top: 0;
+      border-radius: 0 0 16px 16px;
+      background: rgba(255,255,255,.9);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .input-bottom-helper span {
+      flex: 1 1 auto;
+      text-align: left;
+    }
+
+    .dictate-btn {
+      flex: 0 0 auto;
+      width: auto;
+      border-radius: 999px;
+      border: 1px solid rgba(23,58,147,.28);
+      background: #edf0f3;
+      color: #173a93;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 7px 10px;
+      white-space: nowrap;
+    }
+
+    .dictate-btn.listening {
+      background: linear-gradient(180deg, #244fbe, #173a93 58%, #122f77);
+      color: #fff;
+      border-color: #173a93;
+    }
+
     .tap-note {
       font-size: 13px;
       color: var(--muted);
@@ -726,8 +795,13 @@
           <div class="hero-sub input-hero-sub" style="font-size:15px; text-align:left;">an Automotive Repair Consultation Service</div>
         </div>
         <p class="section-sub" id="ymmPrompt" style="margin-bottom:6px;">Please state Year, Model, and Miles - What's going on?</p>
-        <textarea id="inputText" class="input-accent" placeholder="Pretend I'm standing in front of you and tell me what it's doing, what's been done recently, and/or what you're concerned with."></textarea>
-        <div class="tap-note">Prefer talking? Use the microphone on your phone keyboard in this box, then review the text before continuing.</div>
+        <div class="input-helper-wrap">
+          <textarea id="inputText" class="input-accent" placeholder=""></textarea>
+          <div class="input-bottom-helper">
+            <span>Pretend I'm standing in front of you. Tell me what it's doing, what's been done recently, and what you're worried about.</span>
+            <button class="dictate-btn" type="button" id="mainDictateBtn">🎙 Prefer talking?</button>
+          </div>
+        </div>
         <div class="utility-row-main" style="grid-template-columns: 1fr;">
           <button class="btn small" id="mainClearBtn" type="button">Clear / start over</button>
         </div>
@@ -740,13 +814,12 @@
             <button class="btn dark voice-btn" type="button" id="recordAudioBtn">Record voice note</button>
             <button class="btn voice-btn" type="button" id="stopAudioBtn" disabled>Stop recording</button>
           </div>
-          <div id="audioStatus" class="saved-note" style="margin-top:8px;">Optional. Up to about 2 minutes works best. This saves a voice note in the current session.</div>
+          <div id="audioStatus" class="saved-note" style="margin-top:8px;">Optional. Up to about 2 minutes works best.</div>
           <audio id="audioPlayback" class="hidden" controls style="width:100%; margin-top:10px;"></audio>
         </div>
                 <button class="btn" type="button" id="uploadBtn" style="margin-top:10px; text-align:left;">Optional upload (code scan / photo / video / estimate)</button>
         <input type="file" id="uploadInput" class="hidden" accept="image/*,.heic,.heif,video/*,.pdf,.txt,.csv,.jpg,.jpeg,.png,.webp,.heic,.heif" multiple="multiple" />
         <div id="uploadPreview" class="upload-preview hidden"></div>
-        <div id="uploadHint" class="saved-note" style="margin-top:6px;">Photos can be added more than once; each selection is kept for submit. On iPhone, tap Select in the photo picker to choose more than one.</div>
         <input class="input input-accent" id="customerName" placeholder="Your name" style="margin-top:10px;" />
         <input class="input input-accent" id="customerEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email for receipt and case link" style="margin-top:10px;" />
         <div class="soft" style="margin-top:10px;">
@@ -759,8 +832,8 @@
         </div>
         <div class="example-box compact-examples">
           <strong>Examples:</strong>
-          <div class="example-row"><span class="example-tag">DIY:</span> 2011 Civic, 142k miles — rough cold start, P0300, plugs already done, not sure what to check next.</div>
-          <div class="example-row"><span class="example-tag">Advice:</span> 2016 Explorer, 122k miles — intermittent jerk/shake, shop says transmission, want second opinion.</div>
+          <div class="example-row"><span class="example-tag">DIY:</span>2011 Civic, 142k miles — rough cold start, P0300, plugs already done, not sure what to check next.</div>
+          <div class="example-row"><span class="example-tag">Advice:</span>2016 Explorer, 122k miles — intermittent jerk/shake, shop says transmission, want second opinion.</div>
         </div>
       </div>
 
@@ -845,9 +918,9 @@
   </div>
 
     <script>
-    const WID_INDEX_VERSION = "v91";
+    const WID_INDEX_VERSION = "v95";
 
-    const WID_CUSTOMER_VERSION = 'v84-index-only-render-fix';
+    const WID_CUSTOMER_VERSION = 'v95-repair-note-voice-helper';
     const WID_BLUE_BAR = '#d3d7dd';
     function widLockBlueBrowserBars() {
       document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
@@ -898,6 +971,7 @@
     const els = {
       screens: [...document.querySelectorAll('.screen')],
       inputText: document.getElementById('inputText'),
+      mainDictateBtn: document.getElementById('mainDictateBtn'),
       customerName: document.getElementById('customerName'),
       customerEmail: document.getElementById('customerEmail'),
       phoneConsultOk: document.getElementById('phoneConsultOk'),
@@ -937,6 +1011,9 @@
       state.screen = index;
       els.screens.forEach((screen, i) => screen.classList.toggle('active', i === index));
       window.scrollTo({ top: 0, behavior });
+      if (index === 2 && els.inputText) {
+        setTimeout(() => els.inputText.focus(), 160);
+      }
     }
 
     function smoothScrollTo(el, block = 'start') {
@@ -1830,6 +1907,73 @@
       }
     }, { passive: true });
 
+
+    function setupMainDictation() {
+      if (!els.inputText || !els.mainDictateBtn) return;
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        els.mainDictateBtn.textContent = '🎙 Use keyboard mic';
+        els.mainDictateBtn.onclick = () => {
+          els.inputText.focus();
+        };
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = true;
+      recognition.continuous = false;
+
+      let baseText = '';
+
+      els.mainDictateBtn.onclick = () => {
+        els.inputText.focus();
+        baseText = normalizeText(els.inputText.value);
+        baseText = baseText ? baseText + ' ' : '';
+        els.mainDictateBtn.classList.add('listening');
+        els.mainDictateBtn.textContent = 'Listening...';
+        try {
+          recognition.start();
+        } catch (_) {
+          els.mainDictateBtn.classList.remove('listening');
+          els.mainDictateBtn.textContent = '🎙 Prefer talking?';
+        }
+      };
+
+      recognition.onresult = (event) => {
+        let finalText = '';
+        let interimText = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) finalText += transcript + ' ';
+          else interimText += transcript;
+        }
+
+        const nextText = normalizeText(baseText + finalText + interimText);
+        els.inputText.value = nextText;
+        els.inputText.dispatchEvent(new Event('input', { bubbles:true }));
+
+        if (finalText) baseText = normalizeText(baseText + finalText) + ' ';
+      };
+
+      recognition.onerror = () => {
+        els.mainDictateBtn.classList.remove('listening');
+        els.mainDictateBtn.textContent = '🎙 Prefer talking?';
+        els.inputText.focus();
+      };
+
+      recognition.onend = () => {
+        els.mainDictateBtn.classList.remove('listening');
+        els.mainDictateBtn.textContent = '🎙 Prefer talking?';
+        els.inputText.focus();
+      };
+    }
+
+    setupMainDictation();
+
     if (els.uploadBtn && els.uploadInput) {
       els.uploadBtn.onclick = () => {
         // Resetting the value lets iOS/Safari fire onchange even when the same photo is picked again.
@@ -1864,7 +2008,7 @@
             state.audioUrl = URL.createObjectURL(blob);
             els.audioPlayback.src = state.audioUrl;
             els.audioPlayback.classList.remove('hidden');
-            els.audioStatus.textContent = 'Voice note saved in this session. You can play it back below.';
+            els.audioStatus.textContent = 'Voice note ready. You can play it back below.';
             els.recordAudioBtn.disabled = false;
             els.stopAudioBtn.disabled = false;
             els.recordAudioBtn.classList.add('dark');
