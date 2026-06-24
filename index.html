@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#244fbe" />
-  <title>What's it Doing? — Customer v89 desktop scroll/examples</title>
+  <title>What's it Doing? — Customer v90 DNS copy tweaks</title>
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -625,7 +625,7 @@
       <div class="card screen active" data-screen="0">
         <div class="big-center">
           <div class="hero-title">What's it Doing?</div>
-          <div class="hero-sub">an Automotive Consultation Service</div>
+          <div class="hero-sub">an Automotive Repair Consultation Service</div>
           <div class="hero-lead">I explain what it means, or what I'd do next.</div>
           <div class="hero-actions">
             <button class="btn dark" id="continueBtn" style="max-width: 210px;">Continue</button>
@@ -650,7 +650,8 @@
 
       <div class="card screen" data-screen="2">
         <h2>What's it Doing?</h2>
-        <p class="section-sub" id="ymmPrompt" style="margin-bottom:6px;">Year model mileage / miles - what's going on?</p>
+        <div class="hero-sub" style="font-size:15px; margin:0 0 10px; text-align:left;">an Automotive Repair Consultation Service</div>
+        <p class="section-sub" id="ymmPrompt" style="margin-bottom:6px;">Please state Year, Model, and Miles - What's going on?</p>
         <textarea id="inputText" class="input-accent" placeholder="Pretend I'm standing in front of you and tell me what it's doing, what's been done recently, and/or what you're concerned with."></textarea>
         <div class="tap-note">Prefer talking? Use the microphone on your phone keyboard in this box, then review the text before continuing.</div>
         <div class="utility-row-main" style="grid-template-columns: 1fr;">
@@ -684,7 +685,7 @@
         </div>
         <div class="example-box compact-examples">
           <strong>Examples:</strong><br>
-          2011 Civic, 142k miles — rough cold start, P0300, plugs already done.<br>
+          2011 Civic, 142k miles — rough cold start, P0300, plugs already done, not sure what to check next.<br>
           2016 Explorer, 122k miles — intermittent jerk/shake, shop says transmission, want second opinion.
         </div>
       </div>
@@ -770,6 +771,7 @@
   </div>
 
     <script>
+    const WID_INDEX_VERSION = "v90";
 
     const WID_CUSTOMER_VERSION = 'v84-index-only-render-fix';
     const WID_BLUE_BAR = '#244fbe';
