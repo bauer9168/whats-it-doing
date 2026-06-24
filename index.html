@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#d3d7dd" />
   <meta name="msapplication-navbutton-color" content="#d3d7dd" />
-  <title>What's it Doing? — Customer v98 advice example notes wording</title>
+  <title>What's it Doing? — Customer v99 who banner resend MX note</title>
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -214,6 +214,31 @@
       width: calc(100% + 32px);
       max-width: none;
       padding: 16px 16px 14px;
+    }
+
+    .who-brand-banner {
+      margin-bottom: 0;
+    }
+
+    .who-question-wrap {
+      margin-top: 48px;
+      margin-bottom: 36px;
+      text-align: center;
+    }
+
+    .who-choice-grid {
+      margin: 150px 0 0 0;
+    }
+
+    @media (max-width: 430px) {
+      .who-question-wrap {
+        margin-top: 42px;
+        margin-bottom: 32px;
+      }
+
+      .who-choice-grid {
+        margin-top: 132px;
+      }
     }
 
     .compact-examples {
@@ -800,10 +825,14 @@
 
       <div class="card screen" data-screen="1">
         <div class="bottom-choice">
-          <div style="margin-top: 60px; margin-bottom: 40px; text-align: center;">
+          <div class="brand-banner full-width-banner input-brand-banner who-brand-banner">
+            <h2>What's it Doing?</h2>
+            <div class="hero-sub input-hero-sub" style="font-size:15px; text-align:left;">an Automotive Repair Consultation Service</div>
+          </div>
+          <div class="who-question-wrap">
             <h2>Who's working on it?</h2>
           </div>
-          <div class="grid" style="margin: 180px 0 0 0;">
+          <div class="grid who-choice-grid">
             <button class="btn who-btn" data-who="I'm working on it">I am</button>
             <button class="btn who-btn" data-who="Someone else is working on it">Someone else is</button>
           </div>
@@ -939,9 +968,9 @@
   </div>
 
     <script>
-    const WID_INDEX_VERSION = "v98";
+    const WID_INDEX_VERSION = "v99";
 
-    const WID_CUSTOMER_VERSION = 'v98-advice-example-notes-wording';
+    const WID_CUSTOMER_VERSION = 'v99-who-banner-resend-mx-note';
     const WID_BLUE_BAR = '#d3d7dd';
     function widLockBlueBrowserBars() {
       document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
