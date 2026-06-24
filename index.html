@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#d3d7dd" />
   <meta name="msapplication-navbutton-color" content="#d3d7dd" />
-  <title>What's it Doing? — Customer v95 repair-note voice helper</title>
+  <title>What's it Doing? — Customer v96 full-bleed repair-note font</title>
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -166,24 +166,30 @@
       border-radius: 0;
     }
 
+    .big-center .full-width-banner {
+      width: calc(100% + 68px);
+      margin-left: -34px;
+      margin-right: -34px;
+    }
+
     .brand-banner .hero-title,
     .brand-banner h2 {
       color: #111114;
       margin: 0;
-      white-space: normal;
+      white-space: nowrap;
       text-shadow: 0 1px 0 rgba(255,255,255,.22);
       font-family: Georgia, "Times New Roman", serif;
       font-weight: 800;
-      letter-spacing: -0.045em;
-      line-height: .98;
+      letter-spacing: -0.052em;
+      line-height: .96;
     }
 
     .brand-banner .hero-title {
-      font-size: clamp(42px, 11vw, 58px);
+      font-size: clamp(34px, 10vw, 54px);
     }
 
     .brand-banner h2 {
-      font-size: clamp(34px, 9vw, 46px);
+      font-size: clamp(32px, 9vw, 46px);
     }
 
     .brand-banner .hero-sub,
@@ -243,9 +249,17 @@
 
     h2 {
       margin: 0 0 8px;
+      font-family: Georgia, "Times New Roman", serif;
       font-size: 33px;
+      font-weight: 800;
+      letter-spacing: -0.045em;
+      line-height: 1.02;
+    }
+
+    .btn, .opt {
+      font-family: Georgia, "Times New Roman", serif;
       font-weight: 700;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.018em;
     }
 
     .section-sub {
@@ -918,9 +932,9 @@
   </div>
 
     <script>
-    const WID_INDEX_VERSION = "v95";
+    const WID_INDEX_VERSION = "v96";
 
-    const WID_CUSTOMER_VERSION = 'v95-repair-note-voice-helper';
+    const WID_CUSTOMER_VERSION = 'v96-full-bleed-repair-note-font';
     const WID_BLUE_BAR = '#d3d7dd';
     function widLockBlueBrowserBars() {
       document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
