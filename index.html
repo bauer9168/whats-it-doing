@@ -216,14 +216,21 @@
       padding: 16px 16px 14px;
     }
 
-    .who-brand-banner {
-      margin-bottom: 0;
+    .who-question-banner {
+      margin-top: 28px;
+      margin-bottom: 36px;
+      width: calc(100% + 32px);
+      max-width: none;
+      margin-left: -16px;
+      margin-right: -16px;
+      padding: 20px 16px 18px;
+      text-align: center;
     }
 
-    .who-question-wrap {
-      margin-top: 48px;
-      margin-bottom: 36px;
-      text-align: center;
+    .who-question-banner h2 {
+      margin: 0;
+      font-size: clamp(32px, 8vw, 46px);
+      white-space: nowrap;
     }
 
     .who-choice-grid {
@@ -231,8 +238,8 @@
     }
 
     @media (max-width: 430px) {
-      .who-question-wrap {
-        margin-top: 42px;
+      .who-question-banner {
+        margin-top: 22px;
         margin-bottom: 32px;
       }
 
@@ -825,11 +832,7 @@
 
       <div class="card screen" data-screen="1">
         <div class="bottom-choice">
-          <div class="brand-banner full-width-banner input-brand-banner who-brand-banner">
-            <h2>What's it Doing?</h2>
-            <div class="hero-sub input-hero-sub" style="font-size:15px; text-align:left;">an Automotive Repair Consultation Service</div>
-          </div>
-          <div class="who-question-wrap">
+          <div class="brand-banner full-width-banner who-question-banner">
             <h2>Who's working on it?</h2>
           </div>
           <div class="grid who-choice-grid">
@@ -968,9 +971,9 @@
   </div>
 
     <script>
-    const WID_INDEX_VERSION = "v99";
+    const WID_INDEX_VERSION = "v100";
 
-    const WID_CUSTOMER_VERSION = 'v99-who-banner-resend-mx-note';
+    const WID_CUSTOMER_VERSION = 'v100-who-question-banner';
     const WID_BLUE_BAR = '#d3d7dd';
     function widLockBlueBrowserBars() {
       document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
