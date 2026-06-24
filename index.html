@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#244fbe" />
-  <title>What's it Doing? — Customer v23 safe</title>
+  <title>What's it Doing? — Customer v89 desktop scroll/examples</title>
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -588,6 +588,35 @@
     .credibility-footer a { color:var(--muted); text-decoration:none; font-weight:700; }
     .credibility-footer a:active { color:var(--accent-dark); }
 
+
+
+    /* v89 desktop scroll + examples layout */
+    html, body {
+      height:auto !important;
+      min-height:100% !important;
+      overflow-y:auto !important;
+    }
+    .app {
+      height:auto !important;
+      min-height:100dvh !important;
+      overflow-x:hidden !important;
+      overflow-y:visible !important;
+    }
+    .page-wrap { min-height:100dvh !important; }
+    @media (pointer:fine) {
+      body { overscroll-behavior-y:auto !important; }
+      html, body, .app { overscroll-behavior-y:auto !important; }
+      .screen.active { min-height:100dvh; }
+      #inputText { min-height:220px; }
+    }
+    .example-box.compact-examples {
+      margin-top:14px;
+      margin-bottom:0;
+      font-size:14px;
+      line-height:1.35;
+      background:linear-gradient(180deg,#fffdf2,#f8fafc);
+    }
+
 </style>
 </head>
 <body>
@@ -621,19 +650,7 @@
 
       <div class="card screen" data-screen="2">
         <h2>What's it Doing?</h2>
-        <div class="example-box">
-          <strong>Examples of helpful descriptions</strong><br><br>
-          <strong>If you're working on it:</strong><br>
-          2011 Civic, 142k - check engine light is on and it runs rough sometimes when I first start it.<br>
-          Once it warms up it usually smooths out.<br>
-          I already did plugs and looked over a few obvious things.<br>
-          Part store says the code is P0300, and I’m not sure what to check next.<br><br>
-          <strong>If someone else is working on it:</strong><br>
-          2016 Explorer, 122k — it jerks or shakes sometimes when driving. One shop mentioned one possibility, now another is leaning toward the transmission, but the problem comes and goes and the estimate is getting bigger.<br>
-          I have the estimate and notes from the conversations if that helps.<br>
-          Looking for a second opinion before I go any farther with it.
-        </div>
-        <p class="section-sub" id="ymmPrompt" style="margin-bottom:6px;">Year model mileage - what's going on?</p>
+        <p class="section-sub" id="ymmPrompt" style="margin-bottom:6px;">Year model mileage / miles - what's going on?</p>
         <textarea id="inputText" class="input-accent" placeholder="Pretend I'm standing in front of you and tell me what it's doing, what's been done recently, and/or what you're concerned with."></textarea>
         <div class="tap-note">Prefer talking? Use the microphone on your phone keyboard in this box, then review the text before continuing.</div>
         <div class="utility-row-main" style="grid-template-columns: 1fr;">
@@ -664,6 +681,11 @@
         <div class="btn-row" style="margin-top:18px;">
           <button class="btn" data-back="1">Back</button>
           <button class="btn dark" id="toSummaryBtn">Continue</button>
+        </div>
+        <div class="example-box compact-examples">
+          <strong>Examples:</strong><br>
+          2011 Civic, 142k miles — rough cold start, P0300, plugs already done.<br>
+          2016 Explorer, 122k miles — intermittent jerk/shake, shop says transmission, want second opinion.
         </div>
       </div>
 
