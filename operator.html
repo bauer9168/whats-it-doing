@@ -1923,10 +1923,21 @@
       const at = (m && (m.at || m.created_at)) || '';
       const meta = who === 'system' || who === 'info' ? (at || who) : (who === 'customer' ? ('customer · ' + at) : ('you · ' + at));
       const text = escapeHtml((m && (m.text || m.body)) || '');
-      const imageSrc = m && (m.imageData || m.image_data || m.image_url || m.attachment_url || '');
-      const imageName = m && (m.imageName || m.image_name || m.attachment_name || 'message picture');
-      const img = imageSrc ? `<img class="bubble-image-thumb" src="${escapeAttr(imageSrc)}" alt="${escapeAttr(imageName)}" data-expand-image="${escapeAttr(imageSrc)}" />` : '';
-      return `<div class="bubble ${who}">${text}${img}<span class="bubble-meta">${escapeHtml(meta)}</span></div>`;
+      const attachmentType = String((m && (m.attachment_type || m.attachmentType)) || '').toLowerCase();
+      const directImage = m && (m.imageData || m.image_data || m.image_url || '');
+      const attachmentUrl = m && (m.attachment_url || m.attachmentUrl || '');
+      const attachmentName = m && (m.imageName || m.image_name || m.attachment_name || m.attachmentName || 'attachment');
+      let attachmentHtml = '';
+      if (directImage) {
+        attachmentHtml = `<img class="bubble-image-thumb" src="${escapeAttr(directImage)}" alt="${escapeAttr(attachmentName)}" data-expand-image="${escapeAttr(directImage)}" />`;
+      } else if (attachmentUrl && attachmentType === 'image') {
+        attachmentHtml = `<img class="bubble-image-thumb" src="${escapeAttr(attachmentUrl)}" alt="${escapeAttr(attachmentName)}" data-expand-image="${escapeAttr(attachmentUrl)}" />`;
+      } else if (attachmentUrl && attachmentType === 'audio') {
+        attachmentHtml = `<audio controls src="${escapeAttr(attachmentUrl)}" style="width:100%;margin-top:7px;"></audio>`;
+      } else if (attachmentUrl) {
+        attachmentHtml = `<a href="${escapeAttr(attachmentUrl)}" target="_blank" rel="noopener" style="display:block;margin-top:7px;font-weight:850;color:inherit;">Open ${escapeHtml(attachmentName)}</a>`;
+      }
+      return `<div class="bubble ${who}">${text}${attachmentHtml}<span class="bubble-meta">${escapeHtml(meta)}</span></div>`;
     }
 
     function getLastMessagePreview(c, index) {
