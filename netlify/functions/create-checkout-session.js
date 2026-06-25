@@ -1,192 +1,208 @@
-const { json, originFromEvent, safeString, casePublicId, priceForQueue, supabaseRequest, requireEnv } = require('./_wid-shared');
+const Stripe = require("stripe");
+const { createClient } = require("@supabase/supabase-js");
 
-function safeFileName(name, fallback = 'upload') {
-  const base = String(name || fallback).split(/[\\/]/).pop() || fallback;
-  return base.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 90) || fallback;
+const responseHeaders = {
+  "Content-Type": "application/json",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS"
+};
+
+function sendJson(statusCode, payload) {
+  return { statusCode, headers: responseHeaders, body: JSON.stringify(payload) };
 }
 
-function parseDataUrl(dataUrl) {
-  const value = String(dataUrl || '');
-  const match = value.match(/^data:([^;,]+)?(;base64)?,(.*)$/s);
-  if (!match) return null;
-  const contentType = match[1] || 'application/octet-stream';
-  const isBase64 = !!match[2];
-  const raw = match[3] || '';
-  const buffer = isBase64 ? Buffer.from(raw, 'base64') : Buffer.from(decodeURIComponent(raw), 'utf8');
-  return { contentType, buffer };
+function siteOrigin(event) {
+  const envSite = String(process.env.SITE_URL || process.env.URL || "").replace(/\/$/, "");
+  if (envSite) return envSite;
+  const host = event.headers["x-forwarded-host"] || event.headers.host || "whatsitdoing.app";
+  const proto = event.headers["x-forwarded-proto"] || "https";
+  return proto + "://" + host;
 }
 
-function publicStorageUrl(bucket, path) {
-  const url = requireEnv('SUPABASE_URL').replace(/\/$/, '');
-  return `${url}/storage/v1/object/public/${encodeURIComponent(bucket)}/${path.split('/').map(encodeURIComponent).join('/')}`;
+function amountForQueue(queueType) {
+  const q = String(queueType || "guided").toLowerCase();
+  if (q.includes("priority")) return Number(process.env.CONSULT_PRIORITY_AMOUNT_CENTS || 7900);
+  if (q.includes("extended")) return Number(process.env.CONSULT_EXTENDED_AMOUNT_CENTS || 9900);
+  return Number(process.env.CONSULT_NORMAL_AMOUNT_CENTS || 4900);
 }
 
-async function uploadStorageObject(bucket, path, contentType, buffer) {
-  const url = requireEnv('SUPABASE_URL').replace(/\/$/, '');
-  const key = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-  const response = await fetch(`${url}/storage/v1/object/${encodeURIComponent(bucket)}/${path.split('/').map(encodeURIComponent).join('/')}`, {
-    method: 'POST',
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      'Content-Type': contentType || 'application/octet-stream',
-      'x-upsert': 'false'
-    },
-    body: buffer
-  });
-  const text = await response.text();
-  let details = text;
-  try { details = text ? JSON.parse(text) : null; } catch (_) {}
-  if (!response.ok) {
-    const err = new Error(`Supabase storage ${response.status}`);
-    err.details = details;
-    throw err;
-  }
-  return { path, url: publicStorageUrl(bucket, path) };
+function labelForQueue(queueType) {
+  const q = String(queueType || "guided").toLowerCase();
+  if (q.includes("priority")) return "Priority diagnostic consult";
+  if (q.includes("extended")) return "Extended diagnostic consult";
+  return "Diagnostic consult";
 }
 
-async function saveUploads({ publicId, uploads = [], voiceNote = null }) {
-  const bucket = process.env.SUPABASE_UPLOAD_BUCKET || 'consult-uploads';
-  const fileLinks = [];
-  let voice = { path: '', url: '' };
-  const basePath = safeFileName(publicId || casePublicId(), 'case');
+function normalizeUpload(item, fallbackIndex) {
+  if (!item || typeof item !== "object") return null;
+  const name = String(item.name || item.original_name || `upload-${fallbackIndex}`).slice(0, 128);
+  const type = String(item.type || item.mime_type || "application/octet-stream").slice(0, 128);
+  const dataUrl = String(item.dataUrl || item.data_url || item.url || "");
+  const size = Number(item.size || 0);
+  const skipped = !!item.skipped_inline;
+  const note = String(item.note || "").slice(0, 300);
+  return { name, original_name: String(item.original_name || name).slice(0, 128), type, dataUrl, size, skipped_inline: skipped, note };
+}
 
-  const limitedUploads = Array.isArray(uploads) ? uploads.slice(0, 8) : [];
-  let i = 0;
-  for (const item of limitedUploads) {
-    i += 1;
-    const parsed = parseDataUrl(item && item.dataUrl);
-    if (!parsed || !parsed.buffer.length) continue;
-    if (parsed.buffer.length > 8 * 1024 * 1024) throw new Error('One upload is too large after resizing. Please use a smaller photo/file.');
-    const name = safeFileName((item && (item.name || item.original_name)) || `upload-${i}`);
-    const path = `${basePath}/${Date.now()}-${i}-${name}`;
-    const saved = await uploadStorageObject(bucket, path, item.type || parsed.contentType, parsed.buffer);
-    fileLinks.push({
-      name,
-      path: saved.path,
-      url: saved.url,
-      type: item.type || parsed.contentType,
-      size: item.size || parsed.buffer.length
+function attachmentTypeFor(upload) {
+  const nameType = ((upload && upload.name) || "") + " " + ((upload && upload.type) || "");
+  if (/image\//i.test(nameType) || /\.(jpg|jpeg|png|webp|gif|heic|heif)$/i.test(nameType)) return "image";
+  if (/audio\//i.test(nameType) || /\.(webm|mp3|m4a|wav|ogg)$/i.test(nameType)) return "audio";
+  if (/pdf|text|csv/i.test(nameType)) return "file";
+  return "file";
+}
+
+async function insertInitialMessages(supabase, consult, payload) {
+  const rows = [];
+  const intakeText = String(payload.intake_text || "").trim();
+  const followupText = String(payload.followup_text || "").trim();
+
+  if (intakeText || followupText) {
+    rows.push({
+      consult_id: consult.id,
+      who: "customer",
+      text: [intakeText && `Original description:\n${intakeText}`, followupText && `Additional details:\n${followupText}`].filter(Boolean).join("\n\n")
     });
   }
 
-  if (voiceNote && voiceNote.dataUrl) {
-    const parsed = parseDataUrl(voiceNote.dataUrl);
-    if (parsed && parsed.buffer.length) {
-      if (parsed.buffer.length > 12 * 1024 * 1024) throw new Error('Voice note is too large. Please keep it shorter.');
-      const name = safeFileName(voiceNote.name || 'voice-note.webm');
-      const path = `${basePath}/${Date.now()}-voice-${name}`;
-      voice = await uploadStorageObject(bucket, path, voiceNote.type || parsed.contentType || 'audio/webm', parsed.buffer);
+  const uploads = Array.isArray(payload.uploads) ? payload.uploads.map(normalizeUpload).filter(Boolean) : [];
+  for (let i = 0; i < uploads.length; i++) {
+    const upload = normalizeUpload(uploads[i], i + 1);
+    if (!upload) continue;
+    const attachmentType = attachmentTypeFor(upload);
+    if (upload.dataUrl) {
+      const row = {
+        consult_id: consult.id,
+        who: "customer",
+        text: attachmentType === "image" ? "Original submission photo" : attachmentType === "audio" ? "Original submission audio note" : "Original submission file",
+        attachment_type: attachmentType,
+        attachment_name: upload.original_name || upload.name
+      };
+      if (attachmentType === "image") {
+        row.image_data = upload.dataUrl;
+        row.image_name = upload.original_name || upload.name;
+      } else {
+        row.attachment_url = upload.dataUrl;
+      }
+      rows.push(row);
+    } else if (upload.skipped_inline) {
+      rows.push({
+        consult_id: consult.id,
+        who: "customer",
+        text: `Original submission file selected: ${upload.original_name || upload.name}${upload.note ? "\n" + upload.note : ""}`,
+        attachment_type: "file",
+        attachment_name: upload.original_name || upload.name
+      });
     }
   }
 
-  return { fileLinks, voicePath: voice.path, voiceUrl: voice.url };
+  const voice = payload.voice_note && typeof payload.voice_note === "object" ? payload.voice_note : null;
+  const voiceDataUrl = voice ? String(voice.dataUrl || voice.data_url || "") : "";
+  if (voiceDataUrl) {
+    rows.push({
+      consult_id: consult.id,
+      who: "customer",
+      text: "Original submission audio note",
+      attachment_type: "audio",
+      attachment_name: String(voice.original_name || voice.name || "customer-audio-note.webm").slice(0, 128),
+      attachment_url: voiceDataUrl
+    });
+  }
+
+  if (!rows.length) return;
+  const { error } = await supabase.from("consult_messages").insert(rows);
+  if (error) console.error("Initial consult_messages insert failed:", error);
 }
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') return json(405, { ok: false, error: 'Method not allowed' });
+exports.handler = async function (event) {
+  if (event.httpMethod === "OPTIONS") return sendJson(200, { ok: true });
+  if (event.httpMethod !== "POST") return sendJson(405, { ok: false, error: "Method not allowed" });
 
   try {
-    const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY || '';
-    if (!stripeKey) {
-      const err = new Error('Missing environment variable: STRIPE_SECRET_KEY. Netlify Functions cannot see it yet. Confirm the variable is scoped to Functions/Runtime and trigger a fresh deploy.');
-      err.statusCode = 500;
-      throw err;
-    }
-    const origin = originFromEvent(event);
-    const body = JSON.parse(event.body || '{}');
-    const price = priceForQueue(body.queue_type);
-    const publicId = casePublicId();
+    if (!process.env.STRIPE_SECRET_KEY) return sendJson(500, { ok: false, error: "Missing STRIPE_SECRET_KEY" });
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return sendJson(500, { ok: false, error: "Missing Supabase config" });
 
-    const saved = await saveUploads({ publicId, uploads: body.uploads, voiceNote: body.voice_note });
+    const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const payload = JSON.parse(event.body || "{}");
+
+    const uploads = Array.isArray(payload.uploads) ? payload.uploads.map(normalizeUpload).filter(Boolean) : [];
+    const voice = payload.voice_note && typeof payload.voice_note === "object" ? payload.voice_note : null;
+    const fileLinks = uploads.map(u => ({
+      name: u.original_name || u.name,
+      type: u.type,
+      size: u.size,
+      inline: !!u.dataUrl,
+      skipped_inline: !!u.skipped_inline
+    }));
 
     const consultPayload = {
-      public_id: publicId,
-      customer_name: safeString(body.customer_name, 160),
-      customer_email: safeString(body.customer_email, 320).toLowerCase(),
-      customer_phone: safeString(body.customer_phone, 60),
-      phone_ok: !!body.phone_ok,
-      vehicle_summary: safeString(body.vehicle_summary, 500),
-      issue_summary: safeString(body.issue_summary, 700),
-      work_done_summary: safeString(body.work_done_summary, 700),
-      diy_status: safeString(body.diy_status, 60),
-      ability_level: safeString(body.ability_level, 120),
-      intake_text: safeString(body.intake_text, 6000),
-      followup_text: safeString(body.followup_text, 6000),
-      queue_type: safeString(body.queue_type || 'guided', 60),
-      status: 'unpaid',
-      payment_status: 'unpaid',
-      stripe_checkout_session_id: null,
-      file_links: saved.fileLinks,
-      voice_note_path: saved.voicePath || null,
-      voice_note_url: saved.voiceUrl || null,
-      created_at: new Date().toISOString(),
+      customer_name: payload.customer_name || null,
+      customer_email: payload.customer_email || null,
+      phone_ok: !!payload.phone_ok,
+      customer_phone: payload.customer_phone || null,
+      vehicle_summary: payload.vehicle_summary || null,
+      issue_summary: payload.issue_summary || null,
+      work_done_summary: payload.work_done_summary || null,
+      diy_status: payload.diy_status || null,
+      ability_level: payload.ability_level || null,
+      intake_text: payload.intake_text || null,
+      followup_text: payload.followup_text || null,
+      queue_type: payload.queue_type || "guided",
+      payment_status: "unpaid",
+      status: "unpaid",
+      upload_count: Number(payload.upload_count || uploads.length || 0),
+      has_voice_note: !!(payload.has_voice_note || voice),
+      file_links: fileLinks,
+      voice_note_url: voice && voice.dataUrl ? String(voice.dataUrl) : null,
       updated_at: new Date().toISOString()
     };
 
-    let inserted;
-    try {
-      inserted = await supabaseRequest('consults', {
-        method: 'POST',
-        body: JSON.stringify(consultPayload)
-      });
-    } catch (insertErr) {
-      const details = JSON.stringify(insertErr.details || '').toLowerCase();
-      if (!/updated_at|created_at|file_links|voice_note|column|schema/.test(details)) throw insertErr;
-      const fallbackPayload = { ...consultPayload };
-      delete fallbackPayload.updated_at;
-      delete fallbackPayload.created_at;
-      // If an older consults table is still deployed, do one fallback insert with older optional columns removed.
-      if (/file_links/.test(details)) delete fallbackPayload.file_links;
-      if (/voice_note/.test(details)) { delete fallbackPayload.voice_note_path; delete fallbackPayload.voice_note_url; }
-      inserted = await supabaseRequest('consults', {
-        method: 'POST',
-        body: JSON.stringify(fallbackPayload)
-      });
+    const { data: consult, error: consultError } = await supabase
+      .from("consults")
+      .insert(consultPayload)
+      .select("id, public_id, customer_email, vehicle_summary, issue_summary, queue_type")
+      .single();
+
+    if (consultError) {
+      console.error("Consult insert failed:", consultError);
+      return sendJson(500, { ok: false, error: "Could not create consult", details: consultError });
     }
-    const consult = Array.isArray(inserted) ? inserted[0] : inserted;
-    const consultId = consult && (consult.id || consult.public_id || publicId);
 
-    const params = new URLSearchParams();
-    params.set('mode', 'payment');
-    params.set('success_url', `${origin}/customer-thread.html?session_id={CHECKOUT_SESSION_ID}`);
-    params.set('cancel_url', `${origin}/?payment=cancelled&case=${encodeURIComponent(String(consultId))}`);
-    params.set('client_reference_id', String(consultId));
-    params.set('customer_email', consultPayload.customer_email);
-    params.set('metadata[consult_id]', String(consultId));
-    params.set('metadata[public_id]', publicId);
-    params.set('metadata[queue_type]', consultPayload.queue_type);
-    params.set('line_items[0][quantity]', '1');
-    params.set('line_items[0][price_data][currency]', 'usd');
-    params.set('line_items[0][price_data][unit_amount]', String(price.amount));
-    params.set('line_items[0][price_data][product_data][name]', price.label);
-    params.set('line_items[0][price_data][product_data][description]', `${consultPayload.vehicle_summary || 'Vehicle consult'} — ${consultPayload.issue_summary || 'diagnostic review'}`.slice(0, 900));
-    params.set('payment_intent_data[metadata][consult_id]', String(consultId));
-    params.set('payment_intent_data[metadata][public_id]', publicId);
+    await insertInitialMessages(supabase, consult, payload);
 
-    const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${stripeKey}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: params.toString()
+    const origin = siteOrigin(event);
+    const successUrl = `${origin}/thread.html?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${origin}/?checkout=cancelled&consult_id=${encodeURIComponent(consult.id)}`;
+    const amount = amountForQueue(payload.queue_type);
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: payload.customer_email || undefined,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: { consult_id: consult.id, public_id: consult.public_id || "", queue_type: payload.queue_type || "guided" },
+      payment_intent_data: { metadata: { consult_id: consult.id, public_id: consult.public_id || "" } },
+      line_items: [{
+        quantity: 1,
+        price_data: {
+          currency: String(process.env.CONSULT_CURRENCY || "usd").toLowerCase(),
+          unit_amount: amount,
+          product_data: { name: labelForQueue(payload.queue_type) }
+        }
+      }]
     });
-    const session = await stripeRes.json();
-    if (!stripeRes.ok) throw new Error(session.error?.message || 'Stripe checkout session failed');
 
-    try {
-      await supabaseRequest(`consults?id=eq.${encodeURIComponent(String(consultId))}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ stripe_checkout_session_id: session.id, updated_at: new Date().toISOString() })
-      });
-    } catch (patchErr) {
-      console.warn('Could not attach checkout session to consult; webhook/session metadata still contains consult_id.', patchErr);
-    }
+    const { error: updateError } = await supabase
+      .from("consults")
+      .update({ stripe_checkout_session_id: session.id, stripe_session_id: session.id, updated_at: new Date().toISOString() })
+      .eq("id", consult.id);
+    if (updateError) console.error("Could not save checkout session id:", updateError);
 
-    return json(200, { ok: true, consult_id: consultId, public_id: publicId, checkout_url: session.url, file_links: saved.fileLinks, voice_note_url: saved.voiceUrl });
+    return sendJson(200, { ok: true, checkout_url: session.url, session_id: session.id, consult_id: consult.id, consult });
   } catch (err) {
-    console.error(err);
-    return json(500, { ok: false, error: err.message || String(err), details: err.details || undefined });
+    console.error("create-checkout-session fatal:", err);
+    return sendJson(500, { ok: false, error: err && err.message ? err.message : "Could not create checkout session" });
   }
 };
