@@ -1,98 +1,114 @@
 const { createClient } = require("@supabase/supabase-js");
 
-const headers = {
+const responseHeaders = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
   "Access-Control-Allow-Methods": "POST, OPTIONS"
 };
 
-function json(statusCode, body) {
+function sendJson(statusCode, payload) {
   return {
     statusCode,
-    headers,
-    body: JSON.stringify(body)
+    headers: responseHeaders,
+    body: JSON.stringify(payload)
   };
 }
 
-exports.handler = async function handler(event) {
+exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
-    return json(200, { ok: true });
+    return sendJson(200, { ok: true });
   }
 
   if (event.httpMethod !== "POST") {
-    return json(405, { ok: false, error: "Method not allowed" });
+    return sendJson(405, { ok: false, error: "Method not allowed" });
   }
 
   try {
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !serviceKey) {
-      console.error("Missing Supabase environment variables");
-      return json(500, { ok: false, error: "Server is missing Supabase config" });
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("Missing Supabase env vars");
+      return sendJson(500, { ok: false, error: "Server missing Supabase config" });
     }
 
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
 
-    const payload = JSON.parse(event.body || "{}");
+    let payload = {};
+    try {
+      payload = JSON.parse(event.body || "{}");
+    } catch (parseError) {
+      return sendJson(400, { ok: false, error: "Invalid JSON body" });
+    }
+
     const sessionId = String(payload.session_id || payload.session || "").trim();
     const messageText = String(payload.text || payload.message || payload.body || "").trim();
+    const imageData = String(payload.imageData || payload.image_data || "").trim();
+    const imageName = String(payload.imageName || payload.image_name || payload.attachment_name || "").trim();
 
     if (!sessionId) {
-      return json(400, { ok: false, error: "Missing session_id" });
+      return sendJson(400, { ok: false, error: "Missing session_id" });
     }
 
-    if (!messageText) {
-      return json(400, { ok: false, error: "Missing message text" });
+    if (!messageText && !imageData) {
+      return sendJson(400, { ok: false, error: "Missing message text" });
     }
 
-    // Support both old and new Stripe session column names.
-    const { data: consults, error: lookupError } = await supabase
+    const { data: consultRows, error: lookupError } = await supabase
       .from("consults")
       .select("id, public_id, status, payment_status, stripe_session_id, stripe_checkout_session_id")
-      .or(`stripe_checkout_session_id.eq.${sessionId},stripe_session_id.eq.${sessionId}`)
+      .or("stripe_checkout_session_id.eq." + sessionId + ",stripe_session_id.eq." + sessionId)
       .limit(1);
 
     if (lookupError) {
       console.error("Consult lookup failed:", lookupError);
-      return json(500, { ok: false, error: "Could not find consult" });
+      return sendJson(500, { ok: false, error: "Could not find consult" });
     }
 
-    const consult = Array.isArray(consults) ? consults[0] : null;
+    const consult = Array.isArray(consultRows) ? consultRows[0] : null;
 
     if (!consult) {
       console.error("No consult found for session_id:", sessionId);
-      return json(404, { ok: false, error: "Consult not found for this session" });
+      return sendJson(404, { ok: false, error: "Consult not found for this session" });
     }
 
     const status = String(consult.status || "").toLowerCase();
 
-    if (status.includes("closed") || status.includes("archiv")) {
-      return json(403, { ok: false, error: "This consult is closed" });
+    if (status.indexOf("closed") !== -1 || status.indexOf("archiv") !== -1) {
+      return sendJson(403, { ok: false, error: "This consult is closed" });
     }
 
-    // Your actual table schema is consult_id / who / text.
+    const insertPayload = {
+      consult_id: consult.id,
+      who: "customer",
+      text: messageText || ""
+    };
+
+    if (imageData) {
+      insertPayload.image_data = imageData;
+      insertPayload.image_name = imageName || "customer-photo.jpg";
+      insertPayload.attachment_type = "image";
+      insertPayload.attachment_name = imageName || "customer-photo.jpg";
+    }
+
     const { data: insertedMessage, error: insertError } = await supabase
       .from("consult_messages")
-      .insert({
-        consult_id: consult.id,
-        who: "customer",
-        text: messageText
-      })
-      .select("id, consult_id, who, text, created_at")
+      .insert(insertPayload)
+      .select("id, consult_id, who, text, image_data, image_name, attachment_type, attachment_name, created_at")
       .single();
 
     if (insertError) {
       console.error("consult_messages insert failed:", insertError);
-      return json(500, { ok: false, error: "Could not send message" });
+      return sendJson(500, { ok: false, error: "Could not send message" });
     }
 
-    // Keep consult row summary/status updated for operator lists.
+    const lastMessage = messageText || (imageData ? "Picture attached" : "Customer message");
+
     const { error: updateError } = await supabase
       .from("consults")
       .update({
-        last_message: messageText,
+        last_message: lastMessage,
         last_message_at: new Date().toISOString(),
         status: "waiting_on_me",
         updated_at: new Date().toISOString()
@@ -100,19 +116,18 @@ exports.handler = async function handler(event) {
       .eq("id", consult.id);
 
     if (updateError) {
-      // Do not fail the send if only the summary update fails.
       console.error("consults summary update failed:", updateError);
     }
 
-    return json(200, {
+    return sendJson(200, {
       ok: true,
       message: insertedMessage
     });
   } catch (err) {
-    console.error("post-customer-message fatal error:", err);
-    return json(500, {
+    console.error("post-customer-message fatal:", err);
+    return sendJson(500, {
       ok: false,
-      error: err.message || "Could not send message"
+      error: err && err.message ? err.message : "Could not send message"
     });
   }
 };
