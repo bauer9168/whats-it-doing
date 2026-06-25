@@ -1823,7 +1823,7 @@
       const actionClass = (isClosed(c) || archived) ? 'reopen-case' : 'close-case';
       const archiveButton = isClosed(c) ? `<button class="archive-btn" data-action-status="archived" data-id="${escapeAttr(c.id)}" data-case-no="${escapeAttr(caseNo)}" type="button">Archive case</button>` : '';
       const isWaitingOnCustomer = String(status || '').toLowerCase() === 'waiting_on_customer';
-      const waitingActionLabel = isWaitingOnCustomer ? 'Waiting on me' : 'Waiting cust.';
+      const waitingActionLabel = isWaitingOnCustomer ? 'Waiting on me' : 'Waiting on cust.';
       const waitingActionStatus = isWaitingOnCustomer ? 'waiting_on_me' : 'waiting_on_customer';
       const firstVoiceUrl = c.voice_note_url || '';
       const firstImageUrl = (imageFiles.find(f => f.url) || {}).url || '';
