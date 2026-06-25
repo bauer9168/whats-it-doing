@@ -22,16 +22,16 @@ function siteOrigin(event) {
 
 function amountForQueue(queueType) {
   const q = String(queueType || "guided").toLowerCase();
-  if (q.includes("priority")) return Number(process.env.CONSULT_PRIORITY_AMOUNT_CENTS || 7900);
-  if (q.includes("extended")) return Number(process.env.CONSULT_EXTENDED_AMOUNT_CENTS || 9900);
-  return Number(process.env.CONSULT_NORMAL_AMOUNT_CENTS || 4900);
+  if (q.includes("priority") || q.includes("rush")) return Number(process.env.CONSULT_PRIORITY_AMOUNT_CENTS || process.env.CONSULT_RUSH_AMOUNT_CENTS || 7900);
+  if (q.includes("extended")) return Number(process.env.CONSULT_EXTENDED_AMOUNT_CENTS || 24900);
+  return Number(process.env.CONSULT_NORMAL_AMOUNT_CENTS || 3900);
 }
 
 function labelForQueue(queueType) {
   const q = String(queueType || "guided").toLowerCase();
-  if (q.includes("priority")) return "Priority diagnostic consult";
-  if (q.includes("extended")) return "Extended diagnostic consult";
-  return "Diagnostic consult";
+  if (q.includes("priority") || q.includes("rush")) return "Rush diagnostic consult";
+  if (q.includes("extended")) return "Extended thread diagnostic consult";
+  return "Normal diagnostic consult";
 }
 
 function normalizeUpload(item, fallbackIndex) {
