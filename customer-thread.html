@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="WID Thread" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#244fbe" />
-  <title>What's it Doing? — Customer Thread v104 customer image send</title>
+  <title>What's it Doing? — Customer Thread v105 attachments</title>
   <style>
     :root{--blue:#244fbe;--blue2:#173a93;--bg:#f7faff;--bg2:#e8eef8;--text:#111114;--muted:#5f6470;--border:#d4dce8;--card:#fff;--soft:#f1f5f9;--warn:#7c4a03;--warnbg:#fff7ed;}
     *{box-sizing:border-box}
@@ -109,11 +109,23 @@
   function renderBubble(m){
     const who=(m.who||m.sender||'customer').toLowerCase();
     const cls=who.includes('operator')||who.includes('bryan')?'operator':who.includes('system')?'system':who.includes('info')?'info':'customer';
-    const img = m.imageData || m.image_data || m.image_url || m.attachment_url || '';
-    const imgHtml = img ? `<img class="bubble-image-thumb" src="${attr(img)}" alt="attached image" data-expand-image="${attr(img)}" />` : '';
+    const attachmentType = String(m.attachment_type || m.attachmentType || '').toLowerCase();
+    const directImage = m.imageData || m.image_data || m.image_url || '';
+    const attachmentUrl = m.attachment_url || m.attachmentUrl || '';
+    const attachmentName = m.attachment_name || m.attachmentName || m.image_name || m.imageName || 'attachment';
+    let attachmentHtml = '';
+    if (directImage) {
+      attachmentHtml = `<img class="bubble-image-thumb" src="${attr(directImage)}" alt="attached image" data-expand-image="${attr(directImage)}" />`;
+    } else if (attachmentUrl && attachmentType === 'image') {
+      attachmentHtml = `<img class="bubble-image-thumb" src="${attr(attachmentUrl)}" alt="attached image" data-expand-image="${attr(attachmentUrl)}" />`;
+    } else if (attachmentUrl && attachmentType === 'audio') {
+      attachmentHtml = `<audio controls src="${attr(attachmentUrl)}" style="width:100%;margin-top:7px;"></audio>`;
+    } else if (attachmentUrl) {
+      attachmentHtml = `<a href="${attr(attachmentUrl)}" target="_blank" rel="noopener" style="display:block;margin-top:7px;font-weight:850;color:inherit;">Open ${esc(attachmentName)}</a>`;
+    }
     const label = cls === 'operator' ? 'Bryan' : (cls === 'customer' ? 'You' : '');
     const meta = [label, fmtTime(m.created_at || m.at)].filter(Boolean).join(' · ');
-    return `<div class="bubble ${cls}">${esc(m.text||m.body||'')}${imgHtml}${meta?`<span class="meta">${esc(meta)}</span>`:''}</div>`;
+    return `<div class="bubble ${cls}">${esc(m.text||m.body||'')}${attachmentHtml}${meta?`<span class="meta">${esc(meta)}</span>`:''}</div>`;
   }
   function intakeBubbles(c){
     const parts=[];
