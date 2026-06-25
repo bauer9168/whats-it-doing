@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +10,7 @@
   <meta name="theme-color" content="#244fbe" />
   <meta name="msapplication-navbutton-color" content="#244fbe" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>What's it Doing? — Operator v88 desktop click patch</title>
+  <title>What's it Doing? — Operator v103 persistent replies</title>
   <style>
     :root {
       --bg:#f7faff;
@@ -1326,6 +1327,7 @@
       const box = document.getElementById(btn.dataset.localSend);
       const thread = document.getElementById(btn.dataset.threadTarget);
       const caseKey = btn.dataset.caseKey;
+      const publicId = btn.dataset.publicId || '';
       const text = (box && box.value || '').trim();
       if (!text) {
         if (box) closeComposeSpace(box);
@@ -1341,7 +1343,7 @@
         const res = await fetch('/.netlify/functions/post-operator-message', {
           method:'POST',
           headers:{ 'Content-Type':'application/json', ...pinHeader() },
-          body:JSON.stringify({ id:caseKey, text })
+          body:JSON.stringify({ id:caseKey, consult_id:caseKey, public_id:publicId, text })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok) throw new Error(data.error || 'Could not save operator message');
@@ -1870,9 +1872,10 @@
 
     function renderTextingPanel(c, index, replyId) {
       const threadId = `thread-${index}`;
-      const key = escapeAttr(c.id || index);
+      const key = escapeAttr(c.id || c.public_id || c.case_id || index);
+      const publicKey = escapeAttr(c.public_id || c.case_number || c.reference || '');
       return `
-        <div class="texting-shell" data-case-key="${key}">
+        <div class="texting-shell" data-case-key="${key}" data-public-id="${publicKey}">
           <div class="texting-head">
             <div class="texting-title">Messages</div>
             <div class="texting-sub">tap to collapse</div>
@@ -1892,8 +1895,8 @@
             <div class="phone-buttons">
               <button class="photo-btn wid-v58-photo" type="button" data-picture-pick="pic-${replyId}" aria-label="Add photo to message">Photo</button>
               <button type="button" data-clear-reply="${replyId}">Clear</button>
-              <button type="button" class="send" data-local-send="${replyId}" data-case-key="${key}" data-thread-target="${threadId}">Send</button>
-              <input id="pic-${replyId}" data-picture-input="1" data-case-key="${key}" data-thread-target="${threadId}" type="file" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp" multiple style="display:none" />
+              <button type="button" class="send" data-local-send="${replyId}" data-case-key="${key}" data-public-id="${publicKey}" data-thread-target="${threadId}">Send</button>
+              <input id="pic-${replyId}" data-picture-input="1" data-case-key="${key}" data-public-id="${publicKey}" data-thread-target="${threadId}" type="file" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp" multiple style="display:none" />
             </div>
           </div>
         </div>`;
@@ -2364,6 +2367,7 @@
         return;
       }
       const caseKey = input.dataset.caseKey;
+      const publicId = input.dataset.publicId || '';
       const thread = document.getElementById(input.dataset.threadTarget);
       let added = 0;
       for (const originalFile of files) {
@@ -2378,7 +2382,7 @@
             const res = await fetch('/.netlify/functions/post-operator-message', {
               method:'POST',
               headers:{ 'Content-Type':'application/json', ...pinHeader() },
-              body:JSON.stringify({ id:caseKey, text:'', imageData:dataUrl, imageName:msg.imageName })
+              body:JSON.stringify({ id:caseKey, consult_id:caseKey, public_id:publicId, text:'', imageData:dataUrl, imageName:msg.imageName })
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || !data.ok) throw new Error(data.error || 'Could not save operator picture');
