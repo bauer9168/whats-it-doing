@@ -973,7 +973,7 @@
     <script>
     const WID_INDEX_VERSION = "v101";
 
-    const WID_CUSTOMER_VERSION = 'v101-github-ready-current-ui';
+    const WID_CUSTOMER_VERSION = 'v105-parser-paid-attachments';
     const WID_BLUE_BAR = '#d3d7dd';
     function widLockBlueBrowserBars() {
       document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
@@ -1280,8 +1280,10 @@
       const phone = els.phoneConsultOk.checked ? formatPhoneDisplay(els.phoneConsultNumber.value) : '';
       const email = normalizeText(els.customerEmail ? els.customerEmail.value : '').toLowerCase();
       const nameOnly = normalizeText((document.activeElement === els.sumNameEdit ? els.sumNameEdit.value : els.customerName.value)) || 'Name needed';
-      const rawCodeMatches = combined.match(/\b[A-Za-z]\d{4,5}\b/g) || [];
-      const codeMatch = rawCodeMatches.filter(v => !/^[CK]\d{4}$/i.test(v));
+      // v105: recognize generic DTC formats from every family, not only P/B.
+      // Examples: C0043, B0012, P0300, U0100, P0300-00, C0043-5A, P123456, P123456-78.
+      const rawCodeMatches = combined.match(/\b([A-Za-z]\d{4}(?:-[A-Za-z0-9]{2})?|[A-Za-z]\d{6}(?:-[A-Za-z0-9]{2})?)\b/g) || [];
+      const codeMatch = Array.from(new Set(rawCodeMatches.map(v => v.toUpperCase())));
       const noLightsMentioned = /no lights? on|no warning lights?|no check engine light|check engine light (?:is )?not on|cel (?:is )?(?:not on|off)/i.test(lower);
       const checkEngineMentioned = /check engine|engine light|\bcel\b|\bmil\b|service engine soon/i.test(lower) && !noLightsMentioned;
       const specificLightHints = [];
@@ -1784,7 +1786,22 @@
       if (filesToSubmit.length) {
         let index = 0;
         for (const file of filesToSubmit) {
-          const prepared = await resizeImageFile(file);
+          const isImage = /^image\//.test(file.type || '') || /\.(heic|heif|jpe?g|png|gif|webp)$/i.test(file.name || '');
+          const isSmallNonImage = (file.size || 0) <= 350000 && /\.(pdf|txt|csv)$/i.test(file.name || '');
+          if (!isImage && !isSmallNonImage) {
+            index += 1;
+            uploads.push({
+              name: safeUploadName(file.name || `upload-${index}`),
+              original_name: safeUploadName(file.name || `upload-${index}`),
+              type: file.type || 'application/octet-stream',
+              size: file.size || 0,
+              client_index: index,
+              skipped_inline: true,
+              note: 'File selected at intake, but not embedded because it is not an image or small document.'
+            });
+            continue;
+          }
+          const prepared = isImage ? await resizeImageFile(file) : file;
           index += 1;
           uploads.push({
             name: safeUploadName(prepared.name || file.name || `upload-${index}`),
@@ -1861,12 +1878,18 @@
           client_upload_payload_version: 'customer-v23-counts-only'
         };
 
-        // v23: do not send full upload/voice blobs through checkout yet.
-        // This keeps Stripe/Supabase submit small and avoids the broken storage/bucket path until upload storage is wired separately.
+        // v105: send prepared original-submission image/audio data through checkout so the paid thread can
+        // auto-populate the customer's initial photos and audio note immediately after payment.
+        // Images are resized by selectedUploadsForSubmit(); audio is sent as a data URL.
+        const preparedUploads = await selectedUploadsForSubmit();
+        const preparedVoiceNote = await voiceNoteForSubmit();
         const payloadForCheckout = {
           ...basePayload,
           upload_count: Array.from(state.uploadFiles || []).length,
-          has_voice_note: !!state.audioBlob
+          has_voice_note: !!state.audioBlob,
+          uploads: preparedUploads,
+          voice_note: preparedVoiceNote,
+          client_upload_payload_version: 'customer-v105-inline-original-attachments'
         };
 
         els.paySubmitBtn.textContent = 'Opening payment...';
@@ -2165,4 +2188,3 @@
   </script>
 </body>
 </html>
- 
