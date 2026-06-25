@@ -1,9 +1,0 @@
-await fetch("/.netlify/functions/post-operator-message", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    pin: operatorPin,
-    consult_id: activeConsult.id,
-    text: replyText
-  })
-});
