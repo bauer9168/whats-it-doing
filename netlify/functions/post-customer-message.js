@@ -1,4 +1,5 @@
 const { createClient } = require("@supabase/supabase-js");
+const { notifyOwner } = require("./_notify-owner");
 
 const responseHeaders = {
   "Content-Type": "application/json",
@@ -22,9 +23,14 @@ exports.handler = async function (event) {
     }
 
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+
     let payload = {};
-    try { payload = JSON.parse(event.body || "{}"); }
-    catch (parseError) { console.error("Invalid JSON body:", parseError); return sendJson(400, { ok: false, error: "Invalid JSON body" }); }
+    try {
+      payload = JSON.parse(event.body || "{}");
+    } catch (parseError) {
+      console.error("Invalid JSON body:", parseError);
+      return sendJson(400, { ok: false, error: "Invalid JSON body" });
+    }
 
     const sessionId = String(payload.session_id || payload.session || "").trim();
     const messageText = String(payload.text || payload.message || payload.body || "").trim();
@@ -39,24 +45,39 @@ exports.handler = async function (event) {
 
     const { data: consultRows, error: lookupError } = await supabase
       .from("consults")
-      .select("id, public_id, status, payment_status, stripe_session_id, stripe_checkout_session_id")
+      .select("id, public_id, customer_name, customer_email, vehicle_summary, issue_summary, queue_type, status, payment_status, stripe_session_id, stripe_checkout_session_id")
       .or("stripe_checkout_session_id.eq." + sessionId + ",stripe_session_id.eq." + sessionId)
       .limit(1);
 
-    if (lookupError) { console.error("Consult lookup failed:", lookupError); return sendJson(500, { ok: false, error: "Could not find consult" }); }
+    if (lookupError) {
+      console.error("Consult lookup failed:", lookupError);
+      return sendJson(500, { ok: false, error: "Could not find consult" });
+    }
+
     const consult = Array.isArray(consultRows) ? consultRows[0] : null;
-    if (!consult) { console.error("No consult found for session_id:", sessionId); return sendJson(404, { ok: false, error: "Consult not found for this session" }); }
+    if (!consult) {
+      console.error("No consult found for session_id:", sessionId);
+      return sendJson(404, { ok: false, error: "Consult not found for this session" });
+    }
 
     const status = String(consult.status || "").toLowerCase();
-    if (status.indexOf("closed") !== -1 || status.indexOf("archiv") !== -1) return sendJson(403, { ok: false, error: "This consult is closed" });
+    if (status.indexOf("closed") !== -1 || status.indexOf("archiv") !== -1) {
+      return sendJson(403, { ok: false, error: "This consult is closed" });
+    }
 
-    const insertPayload = { consult_id: consult.id, who: "customer", text: messageText || "" };
+    const insertPayload = {
+      consult_id: consult.id,
+      who: "customer",
+      text: messageText || ""
+    };
+
     if (imageData) {
       insertPayload.image_data = imageData;
       insertPayload.image_name = imageName || attachmentName || "customer-photo.jpg";
       insertPayload.attachment_type = attachmentType || "image";
       insertPayload.attachment_name = attachmentName || imageName || "customer-photo.jpg";
     }
+
     if (attachmentUrl) {
       insertPayload.attachment_url = attachmentUrl;
       insertPayload.attachment_type = attachmentType || "file";
@@ -69,14 +90,30 @@ exports.handler = async function (event) {
       .select("id, consult_id, who, text, image_data, image_name, attachment_type, attachment_name, attachment_url, created_at")
       .single();
 
-    if (insertError) { console.error("consult_messages insert failed:", insertError); return sendJson(500, { ok: false, error: "Could not send message" }); }
+    if (insertError) {
+      console.error("consult_messages insert failed:", insertError);
+      return sendJson(500, { ok: false, error: "Could not send message" });
+    }
 
-    const lastMessage = messageText || (imageData ? "Picture attached" : "") || (attachmentUrl ? "Attachment added" : "") || "Customer message";
+    const lastMessage =
+      messageText ||
+      (imageData ? "Picture attached" : "") ||
+      (attachmentUrl ? "Attachment added" : "") ||
+      "Customer message";
+
     const { error: updateError } = await supabase
       .from("consults")
-      .update({ last_message: lastMessage, last_message_at: new Date().toISOString(), status: "waiting_on_me", updated_at: new Date().toISOString() })
+      .update({
+        last_message: lastMessage,
+        last_message_at: new Date().toISOString(),
+        status: "waiting_on_me",
+        updated_at: new Date().toISOString()
+      })
       .eq("id", consult.id);
+
     if (updateError) console.error("consults summary update failed:", updateError);
+
+    await notifyOwner("customer_reply", consult, sessionId, lastMessage);
 
     return sendJson(200, { ok: true, message: insertedMessage });
   } catch (err) {
