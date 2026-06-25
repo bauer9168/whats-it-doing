@@ -39,19 +39,45 @@ exports.handler = async function (event) {
     try {
       payload = JSON.parse(event.body || "{}");
     } catch (parseError) {
+      console.error("Invalid JSON body:", parseError);
       return sendJson(400, { ok: false, error: "Invalid JSON body" });
     }
 
     const sessionId = String(payload.session_id || payload.session || "").trim();
     const messageText = String(payload.text || payload.message || payload.body || "").trim();
+
     const imageData = String(payload.imageData || payload.image_data || "").trim();
-    const imageName = String(payload.imageName || payload.image_name || payload.attachment_name || "").trim();
+    const imageName = String(
+      payload.imageName ||
+      payload.image_name ||
+      payload.attachment_name ||
+      ""
+    ).trim();
+
+    const attachmentUrl = String(
+      payload.attachmentUrl ||
+      payload.attachment_url ||
+      ""
+    ).trim();
+
+    const attachmentType = String(
+      payload.attachmentType ||
+      payload.attachment_type ||
+      (imageData ? "image" : "")
+    ).trim();
+
+    const attachmentName = String(
+      payload.attachmentName ||
+      payload.attachment_name ||
+      imageName ||
+      ""
+    ).trim();
 
     if (!sessionId) {
       return sendJson(400, { ok: false, error: "Missing session_id" });
     }
 
-    if (!messageText && !imageData) {
+    if (!messageText && !imageData && !attachmentUrl) {
       return sendJson(400, { ok: false, error: "Missing message text" });
     }
 
@@ -87,15 +113,23 @@ exports.handler = async function (event) {
 
     if (imageData) {
       insertPayload.image_data = imageData;
-      insertPayload.image_name = imageName || "customer-photo.jpg";
-      insertPayload.attachment_type = "image";
-      insertPayload.attachment_name = imageName || "customer-photo.jpg";
+      insertPayload.image_name = imageName || attachmentName || "customer-photo.jpg";
+      insertPayload.attachment_type = attachmentType || "image";
+      insertPayload.attachment_name = attachmentName || imageName || "customer-photo.jpg";
+    }
+
+    if (attachmentUrl) {
+      insertPayload.attachment_url = attachmentUrl;
+      insertPayload.attachment_type = attachmentType || "file";
+      insertPayload.attachment_name = attachmentName || imageName || "customer-attachment";
     }
 
     const { data: insertedMessage, error: insertError } = await supabase
       .from("consult_messages")
       .insert(insertPayload)
-      .select("id, consult_id, who, text, image_data, image_name, attachment_type, attachment_name, created_at")
+      .select(
+        "id, consult_id, who, text, image_data, image_name, attachment_type, attachment_name, attachment_url, created_at"
+      )
       .single();
 
     if (insertError) {
@@ -103,7 +137,11 @@ exports.handler = async function (event) {
       return sendJson(500, { ok: false, error: "Could not send message" });
     }
 
-    const lastMessage = messageText || (imageData ? "Picture attached" : "Customer message");
+    const lastMessage =
+      messageText ||
+      (imageData ? "Picture attached" : "") ||
+      (attachmentUrl ? "Attachment added" : "") ||
+      "Customer message";
 
     const { error: updateError } = await supabase
       .from("consults")
