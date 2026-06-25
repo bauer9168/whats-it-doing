@@ -1,7 +1,7 @@
 const twilio = require("twilio");
 
 function siteUrl() {
-  return String(process.env.SITE_URL || process.env.URL || "https://whatsitdoing.app").replace(/\/$/, "");
+  return String(process.env.SITE_URL || process.env.PUBLIC_SITE_URL || process.env.URL || "https://whatsitdoing.app").replace(/\/$/, "");
 }
 
 function threadUrl(sessionId) {
@@ -56,41 +56,83 @@ function ownerSmsBody(kind, consult, sessionId, messageText) {
   return lines.join("\n").slice(0, 1400);
 }
 
-async function sendOwnerSms(kind, consult, sessionId, messageText) {
+function customerThreadSmsBody(consult, sessionId) {
+  const publicId = publicConsultLabel(consult);
+  const label = publicId ? ` ${publicId}` : "";
+  return `What's it Doing?${label}: your paid consult thread is ready: ${threadUrl(sessionId)} Reply in the thread with updates.`.slice(0, 1400);
+}
+
+function twilioMessageBase() {
+  const messagingServiceSid = String(process.env.TWILIO_MESSAGING_SERVICE_SID || "").trim();
+  const from = cleanPhone(process.env.TWILIO_FROM_NUMBER);
+
+  if (messagingServiceSid) return { messagingServiceSid };
+  if (from) return { from };
+  return null;
+}
+
+async function sendSms(toPhone, body) {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
-  const from = cleanPhone(process.env.TWILIO_FROM_NUMBER);
-  const to = cleanPhone(process.env.OWNER_NOTIFY_PHONE || "3607014808");
+  const to = cleanPhone(toPhone);
+  const base = twilioMessageBase();
 
-  if (!sid || !token || !from || !to) {
-    console.log("Owner SMS skipped: missing TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, or OWNER_NOTIFY_PHONE");
+  if (!sid || !token || !to || !base) {
+    console.log("SMS skipped: missing TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, recipient phone, or TWILIO_MESSAGING_SERVICE_SID/TWILIO_FROM_NUMBER");
     return { ok: false, skipped: true, channel: "sms" };
   }
 
   try {
     const client = twilio(sid, token);
     const sent = await client.messages.create({
-      body: ownerSmsBody(kind, consult, sessionId, messageText),
-      from,
-      to
+      body,
+      to,
+      ...base
     });
     return { ok: true, channel: "sms", sid: sent.sid };
   } catch (err) {
-    console.error("Owner SMS failed:", err);
+    console.error("SMS failed:", err);
     return { ok: false, channel: "sms", error: err && err.message ? err.message : String(err) };
   }
 }
 
+async function sendOwnerSms(kind, consult, sessionId, messageText) {
+  const to = process.env.OWNER_NOTIFY_PHONE;
+  if (!to) {
+    console.log("Owner SMS skipped: missing OWNER_NOTIFY_PHONE");
+    return { ok: false, skipped: true, channel: "sms" };
+  }
+  return sendSms(to, ownerSmsBody(kind, consult, sessionId, messageText));
+}
+
+async function sendCustomerThreadSms(consult, sessionId) {
+  const phoneOk = !!(consult && consult.phone_ok);
+  const to = consult && consult.customer_phone;
+
+  if (!phoneOk || !to) {
+    console.log("Customer SMS skipped: phone_ok false or missing customer_phone");
+    return { ok: false, skipped: true, channel: "customer_sms" };
+  }
+
+  const result = await sendSms(to, customerThreadSmsBody(consult, sessionId));
+  return { ...result, channel: "customer_sms" };
+}
+
 async function sendOwnerEmail(kind, consult, sessionId, messageText) {
   const apiKey = process.env.RESEND_API_KEY;
-  const to = String(process.env.OWNER_NOTIFY_EMAIL || "rodgersservicesllc@hotmail.com").trim();
+  const to = String(process.env.OWNER_NOTIFY_EMAIL || "").trim();
 
   if (!apiKey || !to) {
     console.log("Owner email skipped: missing RESEND_API_KEY or OWNER_NOTIFY_EMAIL");
     return { ok: false, skipped: true, channel: "email" };
   }
 
-  const from = process.env.RESEND_FROM_EMAIL || process.env.FROM_EMAIL || "What's it Doing? <consult@whatsitdoing.app>";
+  const from = process.env.RESEND_FROM_EMAIL || process.env.FROM_EMAIL;
+  if (!from) {
+    console.log("Owner email skipped: missing RESEND_FROM_EMAIL or FROM_EMAIL");
+    return { ok: false, skipped: true, channel: "email" };
+  }
+
   const publicId = publicConsultLabel(consult);
   const customer = String((consult && consult.customer_name) || "Customer").trim();
   const vehicle = String((consult && consult.vehicle_summary) || "Vehicle not clear").trim();
@@ -162,10 +204,7 @@ async function sendOwnerEmail(kind, consult, sessionId, messageText) {
 async function notifyOwner(kind, consult, sessionId, messageText) {
   const results = [];
 
-  // SMS first because it is less likely to be missed.
   results.push(await sendOwnerSms(kind, consult, sessionId, messageText));
-
-  // Email fallback/backup. Leave OWNER_NOTIFY_EMAIL set even after SMS works.
   results.push(await sendOwnerEmail(kind, consult, sessionId, messageText));
 
   return results;
@@ -175,5 +214,6 @@ module.exports = {
   siteUrl,
   threadUrl,
   escapeHtml,
-  notifyOwner
+  notifyOwner,
+  sendCustomerThreadSms
 };
