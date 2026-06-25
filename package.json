@@ -1,12 +1,13 @@
 {
   "name": "whats-it-doing-deploy",
-  "version": "0.82.0",
+  "version": "0.105.0",
   "private": true,
   "description": "What's it Doing? Netlify static pages and serverless functions.",
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4"
+    "@supabase/supabase-js": "^2.45.4",
+    "stripe": "^16.12.0"
   }
 }
