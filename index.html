@@ -777,6 +777,15 @@
     }
     .credibility-footer a { color:var(--muted); text-decoration:none; font-weight:700; }
     .credibility-footer a:active { color:var(--accent-dark); }
+    .business-context {
+      margin-top: 8px;
+      font-size: 11px;
+      line-height: 1.25;
+      color: var(--muted);
+      opacity: .86;
+      max-width: 320px;
+    }
+    .business-context strong { color:#374151; font-weight:800; }
 
 
 
@@ -902,8 +911,15 @@
           <div class="hero-actions">
             <button class="btn dark" id="continueBtn" style="max-width: 210px;">Continue</button>
           </div>
+          <div class="business-context">
+            Operated by <strong>Rodgers Services LLC / Rodgers Auto Repair</strong>, Rochester, WA. Written automotive diagnostic guidance based on customer-submitted vehicle information.
+          </div>
           <div class="credibility-footer">
-            <a href="https://www.google.com/search?q=Rodgers+Auto+Repair+Rochester+WA" target="_blank" rel="noopener noreferrer">Rodgers Services LLC</a>
+            <a href="/about.html">About</a>
+            <span aria-hidden="true"> · </span>
+            <a href="https://www.google.com/search?q=Rodgers+Auto+Repair+Rochester+WA" target="_blank" rel="noopener noreferrer">Business listing</a>
+            <span aria-hidden="true"> · </span>
+            <a href="/sms-consent.html">SMS consent</a>
             <span aria-hidden="true"> · </span>
             <a href="/privacy.html">Privacy</a>
             <span aria-hidden="true"> · </span>
@@ -1056,7 +1072,7 @@
           <div class="bottom-callout">Not live chat or emergency service. If I can’t be meaningfully helpful after review, I’ll say so and make it right.</div>
         </div>
         <div style="font-size:12px; color:var(--muted); line-height:1.35; margin-top:12px;">
-          By continuing, you agree to the <a href="/terms.html">Terms</a> and acknowledge the <a href="/privacy.html">Privacy Policy</a>. If you entered a phone number and selected text updates, you agree to receive transactional consult text messages from What's it Doing? / Rodgers Services LLC about this automotive consult. Message frequency varies. Message and data rates may apply. Reply <strong>STOP</strong> to opt out or <strong>HELP</strong> for help. SMS consent is optional and is not required to purchase.
+          By continuing, you agree to the <a href="/terms.html">Terms</a> and acknowledge the <a href="/privacy.html">Privacy Policy</a>. <a href="/sms-consent.html">SMS consent details</a>. If you entered a phone number and selected text updates, you agree to receive transactional consult text messages from What's it Doing? / Rodgers Services LLC about this automotive consult. Message frequency varies. Message and data rates may apply. Reply <strong>STOP</strong> to opt out or <strong>HELP</strong> for help. SMS consent is optional and is not required to purchase.
         </div>
         <div class="btn-row" style="margin-top:18px;">
           <button class="btn" data-back="3">Back</button>
@@ -1069,7 +1085,7 @@
     <script>
     const WID_INDEX_VERSION = "v101";
 
-    const WID_CUSTOMER_VERSION = 'v110-service-bubble-collapsed-paywall';
+    const WID_CUSTOMER_VERSION = 'v112-a2p-business-context';
     const WID_BLUE_BAR = '#d3d7dd';
     function widLockBlueBrowserBars() {
       document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
