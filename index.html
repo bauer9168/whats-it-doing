@@ -400,12 +400,12 @@
 
     .upload-preview-row {
       display: grid;
-      grid-template-columns: 44px 1fr;
-      gap: 8px;
+      grid-template-columns: 76px minmax(0, 1fr) auto;
+      gap: 10px;
       align-items: center;
-      padding: 7px 8px;
+      padding: 8px;
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 15px;
       background: #fff;
       font-size: 13px;
       color: var(--muted);
@@ -413,21 +413,38 @@
       overflow: hidden;
     }
 
+    .upload-preview-thumb,
     .upload-preview-row img {
-      width: 44px;
-      height: 44px;
+      width: 76px;
+      height: 76px;
       object-fit: cover;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid var(--border);
       background: var(--soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: var(--accent-dark);
+      font-size: 12px;
     }
 
     .upload-preview-name {
-      font-weight: 700;
+      font-weight: 800;
       color: var(--text);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      max-width: 100%;
+    }
+
+    .upload-remove-btn {
+      width: auto !important;
+      min-width: 72px;
+      padding: 8px 10px !important;
+      white-space: nowrap;
+      text-align: center;
+      justify-self: end;
     }
 
     .warning-box {
@@ -949,6 +966,21 @@
     textarea,
     button {
       touch-action:manipulation;
+    }
+    .upload-preview-row {
+      grid-template-columns: 68px minmax(0, 1fr) auto !important;
+      gap: 8px !important;
+      padding: 7px !important;
+    }
+    .upload-preview-thumb,
+    .upload-preview-row img {
+      width: 68px !important;
+      height: 68px !important;
+    }
+    .upload-remove-btn {
+      min-width: 64px !important;
+      padding: 7px 8px !important;
+      font-size: 13px !important;
     }
     @supports (-webkit-touch-callout:none) {
       html, body, .app {
@@ -1939,8 +1971,8 @@
       els.uploadPreview.classList.remove('hidden');
       els.uploadPreview.innerHTML = files.map((file, index) => {
         const isImage = /^image\//.test(file.type || '');
-        const thumb = isImage ? `<img alt="selected upload ${index + 1}" data-upload-preview-img="${index}" />` : `<div style="width:44px;height:44px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;background:var(--soft);font-weight:700;color:var(--accent-dark);">FILE</div>`;
-        return `<div class="upload-preview-row">${thumb}<div style="min-width:0;flex:1;"><div class="upload-preview-name">${escapeHtml(safeUploadName(file.name, 'upload'))}</div><div>${escapeHtml(file.type || 'file')} · ${escapeHtml(readableFileSize(file.size))}</div></div><button class="btn small" type="button" data-remove-upload="${index}" style="width:auto;padding:6px 8px;">Remove</button></div>`;
+        const thumb = isImage ? `<img alt="selected upload ${index + 1}" data-upload-preview-img="${index}" />` : `<div class="upload-preview-thumb">FILE</div>`;
+        return `<div class="upload-preview-row">${thumb}<div style="min-width:0;"><div class="upload-preview-name">${escapeHtml(safeUploadName(file.name, 'upload'))}</div><div>${escapeHtml(file.type || 'file')} · ${escapeHtml(readableFileSize(file.size))}</div></div><button class="btn small upload-remove-btn" type="button" data-remove-upload="${index}">Remove</button></div>`;
       }).join('');
       files.forEach((file, index) => {
         if (!/^image\//.test(file.type || '')) return;
