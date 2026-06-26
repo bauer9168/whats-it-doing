@@ -1027,7 +1027,7 @@
         <h2>Advanced Driveability Technician</h2>
         <p class="section-sub">We'll work through the issue via thread first. If needed, I may call. When completed, the thread contents and final notes are the written diagnostic review.</p>
         <div class="grid">
-          <button class="opt active queue-btn" data-queue="guided">
+          <button class="opt active expanded queue-btn" data-queue="guided">
             <div class="queue-main-line"><span class="queue-title">Guided consult</span><span class="queue-price">$39</span></div>
             <div class="queue-extra">
               <div style="font-size:14px; opacity:.85; text-align:left; margin-top:7px;">Thread-based diagnostic review with clarifying questions; phone consult if necessary/available</div>
@@ -1052,7 +1052,7 @@
         <div class="soft queue-meta">
           <div><strong>Current queue:</strong> 3 ahead of you</div>
           <div style="margin-top:6px;"><strong>Replies during business hours:</strong> Mon–Fri 9am–5pm</div>
-          <div style="margin-top:6px;"><strong>Reply window:</strong> If I ask a follow-up question, please reply within 48 hours when you can. I’ll send a 24-hour reminder before any case auto-close.</div>
+          <div style="margin-top:6px;"><strong>Reply window:</strong> Please reply within 48 hrs. I’ll send a reminder 24 hrs before the consult automatically closes due to inactivity.</div>
           <div class="bottom-callout">Not live chat or emergency service. If I can’t be meaningfully helpful after review, I’ll say so and make it right.</div>
         </div>
         <div style="font-size:12px; color:var(--muted); line-height:1.35; margin-top:12px;">
@@ -2069,7 +2069,6 @@
           other.classList.toggle('active', other === btn);
           other.classList.toggle('expanded', other === btn);
         });
-        scrollToPaySubmit();
       };
     });
 
