@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -106,6 +107,27 @@
     return v || 'Vehicle';
   }
   function issueLine(c){return clean(c.issue_summary || c.symptom_summary || c.summary || '');}
+  function looksLikeAudio(type, url, name){
+    const hay = `${type || ''} ${url || ''} ${name || ''}`.toLowerCase();
+    return hay.includes('audio/') || hay.startsWith('data:audio') || /\.(webm|mp3|m4a|mp4|wav|ogg|aac)(?:$|[?#])/i.test(hay);
+  }
+  function looksLikeImage(type, url, name){
+    const hay = `${type || ''} ${url || ''} ${name || ''}`.toLowerCase();
+    return hay.includes('image/') || hay.startsWith('data:image') || /\.(jpe?g|png|gif|webp|heic|heif)(?:$|[?#])/i.test(hay);
+  }
+  function renderAttachmentHtml({ attachmentType, directImage, attachmentUrl, attachmentName }){
+    if (directImage || (attachmentUrl && looksLikeImage(attachmentType, attachmentUrl, attachmentName))) {
+      const src = directImage || attachmentUrl;
+      return `<img class="bubble-image-thumb" src="${attr(src)}" alt="attached image" data-expand-image="${attr(src)}" />`;
+    }
+    if (attachmentUrl && looksLikeAudio(attachmentType, attachmentUrl, attachmentName)) {
+      return `<div class="attachment-note">Audio note</div><audio controls preload="metadata" src="${attr(attachmentUrl)}" style="width:100%;margin-top:7px;"></audio><a href="${attr(attachmentUrl)}" target="_blank" rel="noopener" style="display:block;margin-top:5px;font-size:11px;font-weight:850;color:inherit;">Open audio</a>`;
+    }
+    if (attachmentUrl) {
+      return `<a href="${attr(attachmentUrl)}" target="_blank" rel="noopener" style="display:block;margin-top:7px;font-weight:850;color:inherit;">Open ${esc(attachmentName || 'attachment')}</a>`;
+    }
+    return '';
+  }
   function renderBubble(m){
     const who=(m.who||m.sender||'customer').toLowerCase();
     const cls=who.includes('operator')||who.includes('bryan')?'operator':who.includes('system')?'system':who.includes('info')?'info':'customer';
@@ -113,16 +135,7 @@
     const directImage = m.imageData || m.image_data || m.image_url || '';
     const attachmentUrl = m.attachment_url || m.attachmentUrl || '';
     const attachmentName = m.attachment_name || m.attachmentName || m.image_name || m.imageName || 'attachment';
-    let attachmentHtml = '';
-    if (directImage) {
-      attachmentHtml = `<img class="bubble-image-thumb" src="${attr(directImage)}" alt="attached image" data-expand-image="${attr(directImage)}" />`;
-    } else if (attachmentUrl && attachmentType === 'image') {
-      attachmentHtml = `<img class="bubble-image-thumb" src="${attr(attachmentUrl)}" alt="attached image" data-expand-image="${attr(attachmentUrl)}" />`;
-    } else if (attachmentUrl && attachmentType === 'audio') {
-      attachmentHtml = `<audio controls src="${attr(attachmentUrl)}" style="width:100%;margin-top:7px;"></audio>`;
-    } else if (attachmentUrl) {
-      attachmentHtml = `<a href="${attr(attachmentUrl)}" target="_blank" rel="noopener" style="display:block;margin-top:7px;font-weight:850;color:inherit;">Open ${esc(attachmentName)}</a>`;
-    }
+    const attachmentHtml = renderAttachmentHtml({ attachmentType, directImage, attachmentUrl, attachmentName });
     const label = cls === 'operator' ? 'Bryan' : (cls === 'customer' ? 'You' : '');
     const meta = [label, fmtTime(m.created_at || m.at)].filter(Boolean).join(' · ');
     return `<div class="bubble ${cls}">${esc(m.text||m.body||'')}${attachmentHtml}${meta?`<span class="meta">${esc(meta)}</span>`:''}</div>`;
@@ -132,12 +145,16 @@
     const intake=String(c.intake_text || c.original_text || c.description || '').trim();
     const follow=String(c.followup_text || c.additional_details || '').trim();
     const uploads=[];
+    const voiceUrl = c.voice_note_url || c.voiceNoteUrl || c.voice_url || '';
     if (Number(c.upload_count||0)>0) uploads.push(`${Number(c.upload_count)} upload${Number(c.upload_count)===1?'':'s'} attached at submit`);
-    if (c.has_voice_note) uploads.push('audio note attached at submit');
+    if (c.has_voice_note || voiceUrl) uploads.push('audio note attached at submit');
     const body=[intake && `Original description:\n${intake}`, follow && `Additional details:\n${follow}`, uploads.length && `Attachments:\n${uploads.join('\n')}`].filter(Boolean).join('\n\n');
     if (body) {
       parts.push('<div class="bubble system"><div class="intake-label">Original intake</div>Submitted with payment</div>');
       parts.push(`<div class="bubble customer">${esc(body)}<span class="meta">You · submitted</span></div>`);
+    }
+    if (voiceUrl) {
+      parts.push(renderBubble({ who:'customer', text:'Original submission audio note', attachment_type:'audio', attachment_url:voiceUrl, attachment_name:'customer-audio-note' }));
     }
     return parts;
   }
@@ -197,9 +214,14 @@
         mediaRecorder=new MediaRecorder(stream);
         mediaRecorder.ondataavailable=e=>{ if(e.data&&e.data.size) audioChunks.push(e.data); };
         mediaRecorder.onstop=()=>{
-          audioBlob=new Blob(audioChunks,{type:'audio/webm'});
+          const recordedType = mediaRecorder.mimeType || (audioChunks[0] && audioChunks[0].type) || 'audio/webm';
+          audioBlob=new Blob(audioChunks,{type:recordedType});
           stream.getTracks().forEach(t=>t.stop());
-          if(els.audio){ els.audio.src=URL.createObjectURL(audioBlob); els.audio.style.display='block'; }
+          if(els.audio){
+            els.audio.src=URL.createObjectURL(audioBlob);
+            els.audio.style.display='block';
+            els.audio.load();
+          }
           updateSelectedNote();
         };
         mediaRecorder.start();
@@ -272,13 +294,9 @@
 
     try{
       let sentAny=false;
-      const noteParts=[];
-      if(otherFiles.length) noteParts.push('Selected non-image file(s): '+otherFiles.map(f=>f.name).join(', '));
-      if(audioBlob) noteParts.push('Audio note recorded on customer thread page');
-      const baseText=[typedText, noteParts.join('\n')].filter(Boolean).join('\n\n');
 
-      if(baseText || !imageFiles.length){
-        await postCustomerPayload({ session_id:sessionId, text:baseText }, 'Could not send message');
+      if(typedText){
+        await postCustomerPayload({ session_id:sessionId, text:typedText }, 'Could not send message');
         sentAny=true;
       }
 
@@ -293,6 +311,31 @@
           attachmentType:'image',
           attachmentName:originalFile.name || resized.name || 'customer-photo.jpg'
         }, 'Could not send photo');
+        sentAny=true;
+      }
+
+      for(const file of otherFiles){
+        const dataUrl=await fileToDataUrl(file);
+        const isAudioFile = looksLikeAudio(file.type || '', dataUrl, file.name || '');
+        await postCustomerPayload({
+          session_id:sessionId,
+          text:isAudioFile ? 'Audio note' : '',
+          attachmentUrl:dataUrl,
+          attachmentType:isAudioFile ? 'audio' : 'file',
+          attachmentName:file.name || (isAudioFile ? 'customer-audio-note' : 'customer-file')
+        }, isAudioFile ? 'Could not send audio' : 'Could not send file');
+        sentAny=true;
+      }
+
+      if(audioBlob){
+        const dataUrl=await fileToDataUrl(new File([audioBlob], 'customer-audio-note.' + (audioBlob.type && audioBlob.type.includes('mp4') ? 'm4a' : 'webm'), { type: audioBlob.type || 'audio/webm' }));
+        await postCustomerPayload({
+          session_id:sessionId,
+          text:'Audio note',
+          attachmentUrl:dataUrl,
+          attachmentType:'audio',
+          attachmentName:'customer-audio-note'
+        }, 'Could not send audio');
         sentAny=true;
       }
 
