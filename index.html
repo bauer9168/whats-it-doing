@@ -1,6 +1,4 @@
 
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -826,6 +824,10 @@
           </div>
           <div class="credibility-footer">
             <a href="https://www.google.com/search?q=Rodgers+Auto+Repair+Rochester+WA" target="_blank" rel="noopener noreferrer">Rodgers Services LLC</a>
+            <span aria-hidden="true"> · </span>
+            <a href="/privacy.html">Privacy</a>
+            <span aria-hidden="true"> · </span>
+            <a href="/terms.html">Terms</a>
           </div>
         </div>
       </div>
@@ -876,8 +878,14 @@
         <input class="input input-accent" id="customerName" placeholder="Your name" style="margin-top:10px;" />
         <input class="input input-accent" id="customerEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email for receipt and case link" style="margin-top:10px;" />
         <div class="soft" style="margin-top:10px;">
-          <label style="display:flex; align-items:center; gap:10px; font-size:14px; line-height:1.35;"><input type="checkbox" id="phoneConsultOk" style="width:18px; height:18px;" /> Willing to accept phone consult if necessary</label>
-          <input class="input input-accent hidden" id="phoneConsultNumber" placeholder="Best phone number" style="margin-top:10px;" />
+          <label style="display:flex; align-items:center; gap:10px; font-size:14px; line-height:1.35;">
+            <input type="checkbox" id="phoneConsultOk" style="width:18px; height:18px;" />
+            <span>Text/call me with my paid consult thread link and case updates if needed.</span>
+          </label>
+          <input class="input input-accent hidden" id="phoneConsultNumber" placeholder="Best phone number for call/text updates" style="margin-top:10px;" />
+          <div style="font-size:12px; color:var(--muted); line-height:1.35; margin-top:8px;">
+            By checking this box and providing your phone number, you agree to receive transactional text messages from What's it Doing? / Rodgers Services LLC about your automotive consult. Message frequency varies. Message and data rates may apply. Reply <strong>STOP</strong> to opt out and <strong>HELP</strong> for help. SMS consent is optional and is not required to purchase a consult. See <a href="/privacy.html">Privacy Policy</a> and <a href="/terms.html">Terms</a>.
+          </div>
         </div>
         <div class="btn-row" style="margin-top:18px;">
           <button class="btn" data-back="1">Back</button>
@@ -962,6 +970,9 @@
           <div style="margin-top:6px;"><strong>Status:</strong> <strong id="availabilityStatus">Available Now</strong></div>
           <div class="bottom-callout">Not live chat or emergency service. If I can’t be meaningfully helpful after review, I’ll say so and make it right.</div>
         </div>
+        <div style="font-size:12px; color:var(--muted); line-height:1.35; margin-top:12px;">
+          By continuing, you agree to the <a href="/terms.html">Terms</a> and acknowledge the <a href="/privacy.html">Privacy Policy</a>. If you opted into texts, message frequency varies and message/data rates may apply. Reply <strong>STOP</strong> to opt out or <strong>HELP</strong> for help.
+        </div>
         <div class="btn-row" style="margin-top:18px;">
           <button class="btn" data-back="3">Back</button>
           <button class="btn dark" type="button" id="paySubmitBtn">Pay &amp; submit</button>
@@ -973,7 +984,7 @@
     <script>
     const WID_INDEX_VERSION = "v101";
 
-    const WID_CUSTOMER_VERSION = 'v105-parser-paid-attachments';
+    const WID_CUSTOMER_VERSION = 'v108-a2p-sms-disclosure';
     const WID_BLUE_BAR = '#d3d7dd';
     function widLockBlueBrowserBars() {
       document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
