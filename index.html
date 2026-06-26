@@ -807,6 +807,81 @@
       background:linear-gradient(180deg,#fffdf2,#f8fafc);
     }
 
+
+    /* v110 service description bubble + collapsed queue option details */
+    .service-link {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: #173a93;
+      font: inherit;
+      font-weight: 800;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+
+    .service-popover {
+      width: 100%;
+      margin: 14px auto 0;
+      max-width: 340px;
+      background: rgba(255,255,255,.96);
+      border: 1px solid rgba(36,79,190,.42);
+      border-radius: 18px;
+      padding: 14px 14px 12px;
+      box-shadow: 0 10px 24px rgba(15,23,42,.10);
+      text-align: left;
+    }
+
+    .service-popover-title {
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .service-popover-text {
+      font-size: 13px;
+      line-height: 1.42;
+      color: #353840;
+    }
+
+    .service-popover-close {
+      margin-top: 10px;
+      width: auto;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #edf2f8;
+    }
+
+    .queue-extra {
+      display: none;
+    }
+
+    .queue-btn.expanded .queue-extra {
+      display: block;
+    }
+
+    .queue-main-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      text-align: left;
+    }
+
+    .queue-main-line .queue-title {
+      font-weight: 700;
+    }
+
+    .queue-main-line .queue-price {
+      margin-top: 0;
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
 </style>
 </head>
 <body>
@@ -816,7 +891,12 @@
         <div class="big-center">
           <div class="brand-banner full-width-banner hero-banner splash-banner">
             <div class="hero-title">What's it Doing?</div>
-            <div class="hero-sub">an Automotive Repair Consultation Service</div>
+            <div class="hero-sub"><button class="service-link" id="serviceInfoBtn" type="button" aria-expanded="false">an Automotive Repair Consultation Service</button></div>
+            <div class="service-popover hidden" id="serviceInfoBubble">
+              <div class="service-popover-title">Service description</div>
+              <div class="service-popover-text">What's it Doing? provides written automotive diagnostic guidance based on the information you submit, including symptoms, vehicle details, trouble codes, repair history, photos, audio notes, estimates, and follow-up messages. The service is intended to help you understand what may be happening, what may be worth checking next, and how to think through repair decisions.</div>
+              <button class="btn service-popover-close" id="serviceInfoCloseBtn" type="button">Close</button>
+            </div>
           </div>
           <div class="hero-lead">I explain what it means, or what I'd do next.</div>
           <div class="hero-actions">
@@ -948,19 +1028,25 @@
         <p class="section-sub">We'll work through the issue via thread first. If needed, I may call. When completed, the thread contents and final notes are the written diagnostic review.</p>
         <div class="grid">
           <button class="opt active queue-btn" data-queue="guided">
-            <div style="font-weight:600; text-align:left;">Guided consult</div>
-            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Thread-based diagnostic review with clarifying questions; phone consult if necessary/available</div>
-            <div class="queue-price" style="text-align:left;">$39 · avg. reply 1–2 business days</div>
+            <div class="queue-main-line"><span class="queue-title">Guided consult</span><span class="queue-price">$39</span></div>
+            <div class="queue-extra">
+              <div style="font-size:14px; opacity:.85; text-align:left; margin-top:7px;">Thread-based diagnostic review with clarifying questions; phone consult if necessary/available</div>
+              <div class="queue-price" style="text-align:left;">avg. reply 1–2 business days</div>
+            </div>
           </button>
           <button class="opt queue-btn" data-queue="priority">
-            <div style="font-weight:600; text-align:left;">Priority</div>
-            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Same diagnostic review, moved ahead in line for faster first response</div>
-            <div class="queue-price" style="text-align:left;">$79 · avg. reply same day / next business day</div>
+            <div class="queue-main-line"><span class="queue-title">Priority</span><span class="queue-price">$79</span></div>
+            <div class="queue-extra">
+              <div style="font-size:14px; opacity:.85; text-align:left; margin-top:7px;">Same diagnostic review, moved ahead in line for faster first response</div>
+              <div class="queue-price" style="text-align:left;">avg. reply same day / next business day</div>
+            </div>
           </button>
           <button class="opt queue-btn" data-queue="extended">
-            <div style="font-weight:600; text-align:left;">Extended vehicle thread · 3 days</div>
-            <div style="font-size:14px; opacity:.85; text-align:left; margin-top:4px;">Priority-level first response plus a 3-day vehicle thread for the same issue; best for follow-up tests, photos, updates, and repair-decision support</div>
-            <div class="queue-price" style="text-align:left;">$249 · avg. first reply same day / next business day</div>
+            <div class="queue-main-line"><span class="queue-title">Extended vehicle thread · 3 days</span><span class="queue-price">$249</span></div>
+            <div class="queue-extra">
+              <div style="font-size:14px; opacity:.85; text-align:left; margin-top:7px;">Priority-level first response plus a 3-day vehicle thread for the same issue; best for follow-up tests, photos, updates, and repair-decision support</div>
+              <div class="queue-price" style="text-align:left;">avg. first reply same day / next business day</div>
+            </div>
           </button>
         </div>
         <div class="soft queue-meta">
@@ -983,7 +1069,7 @@
     <script>
     const WID_INDEX_VERSION = "v101";
 
-    const WID_CUSTOMER_VERSION = 'v108-a2p-sms-disclosure';
+    const WID_CUSTOMER_VERSION = 'v110-service-bubble-collapsed-paywall';
     const WID_BLUE_BAR = '#d3d7dd';
     function widLockBlueBrowserBars() {
       document.querySelectorAll('meta[name="theme-color"], meta[name="msapplication-navbutton-color"]').forEach(meta => meta.setAttribute('content', WID_BLUE_BAR));
@@ -1957,10 +2043,26 @@
       }, 80);
     }
 
+
+    const serviceInfoBtn = document.getElementById('serviceInfoBtn');
+    const serviceInfoBubble = document.getElementById('serviceInfoBubble');
+    const serviceInfoCloseBtn = document.getElementById('serviceInfoCloseBtn');
+    function toggleServiceInfo(forceOpen) {
+      if (!serviceInfoBubble || !serviceInfoBtn) return;
+      const willOpen = typeof forceOpen === 'boolean' ? forceOpen : serviceInfoBubble.classList.contains('hidden');
+      serviceInfoBubble.classList.toggle('hidden', !willOpen);
+      serviceInfoBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }
+    if (serviceInfoBtn) serviceInfoBtn.onclick = () => toggleServiceInfo();
+    if (serviceInfoCloseBtn) serviceInfoCloseBtn.onclick = () => toggleServiceInfo(false);
+
     document.querySelectorAll('.queue-btn').forEach(btn => {
       btn.onclick = () => {
         state.queue = btn.dataset.queue;
-        document.querySelectorAll('.queue-btn').forEach(other => other.classList.toggle('active', other === btn));
+        document.querySelectorAll('.queue-btn').forEach(other => {
+          other.classList.toggle('active', other === btn);
+          other.classList.toggle('expanded', other === btn);
+        });
         scrollToPaySubmit();
       };
     });
