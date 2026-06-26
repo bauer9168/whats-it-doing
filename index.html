@@ -10,7 +10,16 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#d3d7dd" />
   <meta name="msapplication-navbutton-color" content="#d3d7dd" />
-  <title>What's it Doing? — Customer v101 GitHub-ready</title>
+  <title>What's it Doing? — Automotive Diagnostic Consult</title>
+  <meta name="description" content="What's it Doing? provides written automotive diagnostic guidance from Rodgers Services LLC / Rodgers Auto Repair based on customer-submitted symptoms, photos, audio, codes, and repair history." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="What's it Doing?" />
+  <meta property="og:description" content="Automotive diagnostic consults by Rodgers Services LLC / Rodgers Auto Repair. Not AI — real-world, experience-based feedback." />
+  <meta property="og:url" content="https://whatsitdoing.app/" />
+  <meta property="og:site_name" content="What's it Doing?" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="What's it Doing?" />
+  <meta name="twitter:description" content="Automotive diagnostic consults by Rodgers Services LLC / Rodgers Auto Repair. Not AI — real-world, experience-based feedback." />
   <style>
     :root {
       --bg-top: #f5f8fc;
@@ -891,6 +900,62 @@
       white-space: nowrap;
     }
 
+
+
+    /* v113 Android intake scroll + link-preview metadata fix
+       Some Android/Chrome WebView share flows can get stuck when an ancestor uses
+       overflow:hidden plus disabled overscroll behavior. Keep the form page as
+       the browser's normal document scroll so fields below uploads stay reachable. */
+    html, body {
+      height:auto !important;
+      min-height:100% !important;
+      overflow-x:hidden !important;
+      overflow-y:auto !important;
+      overscroll-behavior-y:auto !important;
+      touch-action:pan-y !important;
+    }
+    body {
+      display:block !important;
+      justify-content:initial !important;
+    }
+    .app {
+      height:auto !important;
+      min-height:100dvh !important;
+      overflow-x:hidden !important;
+      overflow-y:visible !important;
+      overscroll-behavior-y:auto !important;
+    }
+    .page-wrap {
+      min-height:100dvh !important;
+      padding-bottom:calc(140px + env(safe-area-inset-bottom, 0px)) !important;
+      overflow:visible !important;
+    }
+    .screen,
+    .screen.active,
+    .card,
+    .soft,
+    .input-helper-wrap,
+    .upload-preview {
+      overflow:visible !important;
+      max-height:none !important;
+    }
+    .screen.active {
+      display:block !important;
+      min-height:auto !important;
+    }
+    .upload-preview-row,
+    .upload-preview-name,
+    .input,
+    textarea,
+    button {
+      touch-action:manipulation;
+    }
+    @supports (-webkit-touch-callout:none) {
+      html, body, .app {
+        height:auto !important;
+        overflow-y:auto !important;
+      }
+    }
 </style>
 </head>
 <body>
