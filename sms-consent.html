@@ -1,0 +1,67 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SMS Consent Flow — What's it Doing?</title>
+
+  <style>
+    :root{--blue:#244fbe;--blue2:#173a93;--bg:#f7faff;--bg2:#e8eef8;--text:#111114;--muted:#5f6470;--border:#d4dce8;--card:#fff;}
+    *{box-sizing:border-box} body{margin:0;background:#244fbe;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.45} .wrap{width:min(880px,100%);min-height:100dvh;margin:0 auto;background:linear-gradient(180deg,var(--bg),var(--bg2));padding:22px 16px 38px;border-left:3px solid #244fbe;border-right:3px solid #244fbe} .hero{background:linear-gradient(180deg,var(--blue),var(--blue2));color:#fff;border-radius:18px;padding:18px 16px;margin-bottom:14px} h1{font-size:34px;line-height:1;margin:0 0 6px;letter-spacing:-.045em} h2{font-size:20px;margin:22px 0 8px} p,li{font-size:16px} .card{background:rgba(255,255,255,.9);border:1px solid var(--border);border-radius:18px;padding:14px;margin:12px 0}.muted{color:var(--muted)} a{color:#173a93;font-weight:800}.links{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.pill{display:inline-block;border:1px solid var(--border);border-radius:999px;background:#fff;padding:8px 10px;text-decoration:none}.small{font-size:13px;color:var(--muted)}
+  </style>
+
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>SMS consent flow</h1>
+      <div>What's it Doing? / Rodgers Services LLC</div>
+    </section>
+
+    <section class="card">
+      <h2>Public opt-in path for reviewers</h2>
+      <p>End users opt in on the public website at <a href="https://whatsitdoing.app/">https://whatsitdoing.app/</a> during paid automotive consult intake. The website does not require a private login to view the intake flow.</p>
+      <ol>
+        <li>User opens <strong>https://whatsitdoing.app/</strong>.</li>
+        <li>User taps <strong>Continue</strong> and answers who is working on the vehicle.</li>
+        <li>User enters vehicle symptoms, vehicle details, and optional files/audio.</li>
+        <li>User may enter a phone number and actively select the optional checkbox: <strong>Text me case updates.</strong></li>
+        <li>The checkbox is optional and should not be preselected.</li>
+        <li>Near the phone field, the user sees that text updates are optional and that details are provided before payment, with links to Privacy and Terms.</li>
+        <li>Before clicking <strong>Pay &amp; submit</strong>, the page shows the full SMS disclosure.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Disclosure shown before payment</h2>
+      <p>By continuing, you agree to the Terms and acknowledge the Privacy Policy. SMS consent details. If you entered a phone number and selected text updates, you agree to receive transactional consult text messages from What's it Doing? / Rodgers Services LLC about this automotive consult. Message frequency varies. Message and data rates may apply. Reply <strong>STOP</strong> to opt out or <strong>HELP</strong> for help. SMS consent is optional and is not required to purchase.</p>
+    </section>
+
+    <section class="card">
+      <h2>Message types</h2>
+      <ul>
+        <li>Paid consult thread link.</li>
+        <li>Case status updates for an active paid consult.</li>
+        <li>Notifications that a new reply or update is available.</li>
+        <li>Transactional owner/operator alerts for managing paid consults.</li>
+      </ul>
+      <p>Messages are not marketing or promotional messages.</p>
+    </section>
+
+    <section class="card">
+      <h2>Required links</h2>
+      <p>Privacy Policy: <a href="https://whatsitdoing.app/privacy.html">https://whatsitdoing.app/privacy.html</a></p>
+      <p>Terms and Conditions: <a href="https://whatsitdoing.app/terms.html">https://whatsitdoing.app/terms.html</a></p>
+      <p class="small">The Privacy Policy states that mobile phone numbers, SMS opt-in information, and messaging consent information are not shared, sold, rented, or otherwise provided to third parties or affiliates for marketing or promotional purposes.</p>
+    </section>
+
+    <div class="links">
+      <a class="pill" href="/">Start consult</a>
+      <a class="pill" href="/about.html">About the service</a>
+      <a class="pill" href="/privacy.html">Privacy Policy</a>
+      <a class="pill" href="/terms.html">Terms</a>
+    </div>
+  </main>
+</body>
+</html>
