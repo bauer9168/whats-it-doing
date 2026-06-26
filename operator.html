@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1901,6 +1902,39 @@
         </div>`;
     }
 
+    function formatMessageTime(value) {
+      if (!value) return '';
+      const d = new Date(value);
+      if (!Number.isNaN(d.getTime())) {
+        return d.toLocaleString([], { month:'numeric', day:'numeric', hour:'numeric', minute:'2-digit' });
+      }
+      return String(value).replace(/\.\d{3}Z$/, '').replace('T', ' ').slice(0, 16);
+    }
+
+    function looksLikeAudioAttachment(type, url, name) {
+      const hay = `${type || ''} ${url || ''} ${name || ''}`.toLowerCase();
+      return hay.includes('audio/') || hay.startsWith('data:audio') || /\.(webm|mp3|m4a|mp4|wav|ogg|aac)(?:$|[?#])/i.test(hay);
+    }
+
+    function looksLikeImageAttachment(type, url, name) {
+      const hay = `${type || ''} ${url || ''} ${name || ''}`.toLowerCase();
+      return hay.includes('image/') || hay.startsWith('data:image') || /\.(jpe?g|png|gif|webp|heic|heif)(?:$|[?#])/i.test(hay);
+    }
+
+    function renderBubbleAttachmentHtml({ attachmentType, directImage, attachmentUrl, attachmentName }) {
+      if (directImage || (attachmentUrl && looksLikeImageAttachment(attachmentType, attachmentUrl, attachmentName))) {
+        const src = directImage || attachmentUrl;
+        return `<img class="bubble-image-thumb" src="${escapeAttr(src)}" alt="${escapeAttr(attachmentName || 'attached image')}" data-expand-image="${escapeAttr(src)}" />`;
+      }
+      if (attachmentUrl && looksLikeAudioAttachment(attachmentType, attachmentUrl, attachmentName)) {
+        return `<div class="pathline">Audio note</div><audio controls preload="metadata" src="${escapeAttr(attachmentUrl)}" style="width:100%;margin-top:7px;"></audio><a href="${escapeAttr(attachmentUrl)}" target="_blank" rel="noopener" style="display:block;margin-top:5px;font-size:11px;font-weight:850;color:inherit;">Open audio</a>`;
+      }
+      if (attachmentUrl) {
+        return `<a href="${escapeAttr(attachmentUrl)}" target="_blank" rel="noopener" style="display:block;margin-top:7px;font-weight:850;color:inherit;">Open ${escapeHtml(attachmentName || 'attachment')}</a>`;
+      }
+      return '';
+    }
+
     function renderThreadBubbles(c, index) {
       const parts = [];
       const serverMessages = Array.isArray(c.messages) ? c.messages : [];
@@ -1910,6 +1944,18 @@
         const intro = [c.intake_text, c.followup_text].filter(Boolean).join('\n\n');
         if (intro) parts.push(`<div class="bubble customer">${escapeHtml(intro)}<span class="bubble-meta">customer</span></div>`);
       }
+
+      const alreadyHasAudio = serverMessages.some(m => {
+        const type = String((m && (m.attachment_type || m.attachmentType)) || '').toLowerCase();
+        const url = m && (m.attachment_url || m.attachmentUrl || '');
+        const name = m && (m.attachment_name || m.attachmentName || m.image_name || m.imageName || '');
+        return looksLikeAudioAttachment(type, url, name);
+      });
+      const voiceUrl = c.voice_note_url || c.voiceNoteUrl || c.voice_url || '';
+      if (voiceUrl && !alreadyHasAudio) {
+        parts.push(renderMessageBubble({ who:'customer', text:'Original submission audio note', attachment_type:'audio', attachment_url:voiceUrl, attachment_name:'customer-audio-note', at:'submitted' }));
+      }
+
       const local = getLocalThread(c.id || index);
       local.forEach(m => parts.push(renderMessageBubble(m)));
       if (!parts.length) parts.push('<div class="bubble system">No message text saved yet.</div>');
@@ -1919,24 +1965,18 @@
     function renderMessageBubble(m) {
       const rawWho = String((m && (m.who || m.sender)) || 'operator').toLowerCase();
       const who = rawWho === 'system' ? 'system' : (rawWho === 'info' ? 'info' : (rawWho === 'customer' ? 'customer' : 'operator'));
-      const at = (m && (m.at || m.created_at)) || '';
-      const meta = who === 'system' || who === 'info' ? (at || who) : (who === 'customer' ? ('customer · ' + at) : ('you · ' + at));
+      const rawAt = (m && (m.at || m.created_at)) || '';
+      const prettyAt = rawAt === 'submitted' ? 'submitted' : formatMessageTime(rawAt);
+      const meta = who === 'system' || who === 'info'
+        ? (prettyAt || who)
+        : (who === 'customer' ? ['customer', prettyAt].filter(Boolean).join(' · ') : ['you', prettyAt].filter(Boolean).join(' · '));
       const text = escapeHtml((m && (m.text || m.body)) || '');
       const attachmentType = String((m && (m.attachment_type || m.attachmentType)) || '').toLowerCase();
       const directImage = m && (m.imageData || m.image_data || m.image_url || '');
       const attachmentUrl = m && (m.attachment_url || m.attachmentUrl || '');
       const attachmentName = m && (m.imageName || m.image_name || m.attachment_name || m.attachmentName || 'attachment');
-      let attachmentHtml = '';
-      if (directImage) {
-        attachmentHtml = `<img class="bubble-image-thumb" src="${escapeAttr(directImage)}" alt="${escapeAttr(attachmentName)}" data-expand-image="${escapeAttr(directImage)}" />`;
-      } else if (attachmentUrl && attachmentType === 'image') {
-        attachmentHtml = `<img class="bubble-image-thumb" src="${escapeAttr(attachmentUrl)}" alt="${escapeAttr(attachmentName)}" data-expand-image="${escapeAttr(attachmentUrl)}" />`;
-      } else if (attachmentUrl && attachmentType === 'audio') {
-        attachmentHtml = `<audio controls src="${escapeAttr(attachmentUrl)}" style="width:100%;margin-top:7px;"></audio>`;
-      } else if (attachmentUrl) {
-        attachmentHtml = `<a href="${escapeAttr(attachmentUrl)}" target="_blank" rel="noopener" style="display:block;margin-top:7px;font-weight:850;color:inherit;">Open ${escapeHtml(attachmentName)}</a>`;
-      }
-      return `<div class="bubble ${who}">${text}${attachmentHtml}<span class="bubble-meta">${escapeHtml(meta)}</span></div>`;
+      const attachmentHtml = renderBubbleAttachmentHtml({ attachmentType, directImage, attachmentUrl, attachmentName });
+      return `<div class="bubble ${who}">${text}${attachmentHtml}${meta ? `<span class="bubble-meta">${escapeHtml(meta)}</span>` : ''}</div>`;
     }
 
     function getLastMessagePreview(c, index) {
@@ -1949,7 +1989,7 @@
       }
       const serverMessages = Array.isArray(c.messages) ? c.messages : [];
       const last = local.length ? local[local.length - 1] : (serverMessages.length ? serverMessages[serverMessages.length - 1] : null);
-      const raw = last ? (last.text || last.body || (last.imageData ? 'Picture attached' : '')) : (c.last_message || c.last_message_body || c.latest_message || c.operator_reply || '');
+      const raw = last ? (last.text || last.body || (last.imageData ? 'Picture attached' : (looksLikeAudioAttachment(last.attachment_type || last.attachmentType, last.attachment_url || last.attachmentUrl, last.attachment_name || last.attachmentName) ? 'Audio note' : ''))) : (c.last_message || c.last_message_body || c.latest_message || c.operator_reply || '');
       const text = String(raw || '').replace(/\s+/g, ' ').trim();
       if (!text) return '';
       const words = text.split(' ').slice(0, 9).join(' ');
