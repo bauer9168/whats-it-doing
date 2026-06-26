@@ -1397,7 +1397,8 @@
       const lightMentioned = rawLightMentioned && !noLightsMentioned;
       const unknownCodeMentioned = /don\'t know what code|do not know what code|not sure what code|can\'t scan|cannot scan|no scanner|don\'t have a scanner/i.test(lower);
       const hasCodeInfo = /code|codes/i.test(lower) || rawLightMentioned || noLightsMentioned || (codeMatch && codeMatch.length);
-      const { vehicle, mileage } = detectVehicle(combined);
+      const detectedVehicle = detectVehicle(combined);
+      const { vehicle, mileage, year, make, model } = detectedVehicle;
 
       const issueHints = [];
       if (/a\/c| ac |ac compressor|air conditioning/i.test(' ' + lower + ' ') && /noise|click/i.test(lower)) issueHints.push('ac noise / price concern');
@@ -1487,6 +1488,11 @@
       else if (lightMentioned && !codeMatch.length && !noLightsMentioned && !unknownCodeMentioned) suggestionBits.push('what code is it?');
 
       const explicitMileageMentioned = /\b\d{2,3}\s*k\b|\b\d{4,6}\s*miles?\b|\b\d{2,3}k\b/i.test(lower);
+      const missingVehicleBasics = [];
+      if (!year) missingVehicleBasics.push('year');
+      if (!make) missingVehicleBasics.push('make');
+      if (!model) missingVehicleBasics.push('model');
+      if (missingVehicleBasics.length) suggestionBits.push('vehicle ' + missingVehicleBasics.join(' / '));
       if (!mileage && !explicitMileageMentioned) suggestionBits.push('mileage');
       if (done == 'Nothing specific listed yet') suggestionBits.push("what's been done?");
       if (state.ability === 'I just need advice') suggestionBits.unshift('I just need advice');
