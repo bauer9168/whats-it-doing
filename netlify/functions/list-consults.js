@@ -3,8 +3,10 @@ const { json, supabaseRequest } = require('./_wid-shared');
 function requireOperator(event) {
   const expected = process.env.OPERATOR_PIN || '';
   if (!expected) return;
+
   const headers = event.headers || {};
   const got = headers['x-operator-pin'] || headers['X-Operator-Pin'] || '';
+
   if (String(got) !== String(expected)) {
     const err = new Error('Bad operator PIN');
     err.statusCode = 401;
@@ -18,53 +20,95 @@ function safeLimit(value) {
   return Math.max(1, Math.min(250, Math.floor(n)));
 }
 
+const LIST_FIELDS = [
+  'id',
+  'created_at',
+  'updated_at',
+  'customer_name',
+  'phone_ok',
+  'customer_phone',
+  'customer_email',
+  'vehicle_summary',
+  'issue_summary',
+  'work_done_summary',
+  'diy_status',
+  'ability_level',
+  'queue_type',
+  'payment_status',
+  'status',
+  'paid_at',
+  'closed_at',
+  'public_id',
+  'last_workflow_status',
+  'last_message',
+  'last_message_at',
+  'upload_count',
+  'has_voice_note'
+].join(',');
+
 exports.handler = async (event) => {
   try {
-    if (event.httpMethod && event.httpMethod !== 'GET') return json(405, { ok: false, error: 'Method not allowed' });
+    if (event.httpMethod && event.httpMethod !== 'GET') {
+      return json(405, { ok: false, error: 'Method not allowed' });
+    }
+
     requireOperator(event);
 
     const qs = event.queryStringParameters || {};
     const requestedStatus = String(qs.status || 'all').toLowerCase();
     const limit = safeLimit(qs.limit);
 
-    let path = `consults?select=*&order=updated_at.desc&limit=${limit}`;
+    const params = new URLSearchParams();
+    params.set('select', LIST_FIELDS);
+    params.set('order', 'updated_at.desc');
+    params.set('limit', String(limit));
+
     if (requestedStatus && requestedStatus !== 'all') {
-      path = `consults?status=eq.${encodeURIComponent(requestedStatus)}&select=*&order=updated_at.desc&limit=${limit}`;
+      params.set('status', `eq.${requestedStatus}`);
     }
 
-    const consults = await supabaseRequest(path, { method: 'GET' });
-    const rows = Array.isArray(consults) ? consults : [];
-
-    let messages = [];
-    try {
-      messages = await supabaseRequest('consult_messages?select=*&order=created_at.asc', { method: 'GET' });
-    } catch (_) {
-      messages = [];
-    }
-
-    const grouped = new Map();
-    for (const m of Array.isArray(messages) ? messages : []) {
-      const key = String(m.consult_id || '');
-      if (!key) continue;
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key).push(m);
-    }
-
-    const enriched = rows.map(c => {
-      const caseMessages = grouped.get(String(c.id || '')) || [];
-      const last = caseMessages.length ? caseMessages[caseMessages.length - 1] : null;
-      const lastText = last ? (last.text || last.body || (last.image_data || last.attachment_url ? 'Picture attached' : '')) : (c.last_message || '');
-      return {
-        ...c,
-        messages: caseMessages,
-        last_message: lastText,
-        last_message_at: last ? (last.created_at || '') : (c.last_message_at || '')
-      };
+    const consults = await supabaseRequest(`consults?${params.toString()}`, {
+      method: 'GET'
     });
 
-    return json(200, { ok: true, consults: enriched });
+    const rows = Array.isArray(consults) ? consults : [];
+
+    const lightweightRows = rows.map((c) => ({
+      id: c.id,
+      created_at: c.created_at || null,
+      updated_at: c.updated_at || null,
+      customer_name: c.customer_name || '',
+      phone_ok: !!c.phone_ok,
+      customer_phone: c.customer_phone || '',
+      customer_email: c.customer_email || '',
+      vehicle_summary: c.vehicle_summary || 'Vehicle not clear yet',
+      issue_summary: c.issue_summary || 'Issue path still needs review',
+      work_done_summary: c.work_done_summary || '',
+      diy_status: c.diy_status || '',
+      ability_level: c.ability_level || '',
+      queue_type: c.queue_type || '',
+      payment_status: c.payment_status || '',
+      status: c.status || '',
+      paid_at: c.paid_at || null,
+      closed_at: c.closed_at || null,
+      public_id: c.public_id || null,
+      last_workflow_status: c.last_workflow_status || null,
+      last_message: c.last_message || '',
+      last_message_at: c.last_message_at || c.updated_at || c.created_at || '',
+      upload_count: Number(c.upload_count || 0),
+      has_voice_note: !!c.has_voice_note
+    }));
+
+    return json(200, {
+      ok: true,
+      consults: lightweightRows
+    });
   } catch (err) {
     console.error(err);
-    return json(err.statusCode || 500, { ok: false, error: err.message || String(err), details: err.details || undefined });
+    return json(err.statusCode || 500, {
+      ok: false,
+      error: err.message || String(err),
+      details: err.details || undefined
+    });
   }
 };
