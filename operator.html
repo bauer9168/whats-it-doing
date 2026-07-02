@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +9,7 @@
   <meta name="theme-color" content="#244fbe" />
   <meta name="msapplication-navbutton-color" content="#244fbe" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>What's it Doing? — Operator v103 persistent replies</title>
+  <title>What's it Doing? — Operator v104 thread fetch</title>
   <style>
     :root {
       --bg:#f7faff;
@@ -1599,15 +1598,7 @@
           };
         }
       });
-      document.querySelectorAll('.bubble').forEach(bubble => {
-        bubble.onclick = (event) => event.stopPropagation();
-        bubble.ondblclick = (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          const shell = bubble.closest('.texting-shell');
-          if (shell) toggleMessageZoom(shell);
-        };
-      });
+      bindThreadBubbleEvents(document);
       document.querySelectorAll('[data-clear-waiting-workflow]').forEach(btn => btn.onclick = (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -1686,7 +1677,97 @@
       recenterShell();
       lockBlueBrowserBarsSoon();
       openDetails(card.dataset.detailId);
+      loadFocusedCaseThread(card);
       setTimeout(() => card.scrollTo({ top:0, behavior:'auto' }), 0);
+    }
+
+    async function loadFocusedCaseThread(card, options = {}) {
+      if (!card) return;
+
+      const force = options && options.force === true;
+      if (!force && (card.dataset.threadLoaded === '1' || card.dataset.threadLoading === '1')) return;
+
+      const caseKey = card.dataset.caseKey || card.dataset.threadId || '';
+      const threadId = card.dataset.threadId || caseKey;
+      const shell = card.querySelector('.texting-shell');
+      const thread = card.querySelector('.thread');
+
+      if (!threadId || !thread) return;
+
+      card.dataset.threadLoading = '1';
+
+      const originalHtml = thread.innerHTML;
+      if (!card.dataset.threadLoaded || card.dataset.threadLoaded !== '1') {
+        thread.innerHTML = '<div class="bubble system">Loading messages...</div>';
+      }
+
+      try {
+        const params = new URLSearchParams();
+        params.set('id', threadId);
+        params.set('consult_id', threadId);
+        if (caseKey && caseKey !== threadId) params.set('case_key', caseKey);
+        if (shell && shell.dataset.publicId) params.set('public_id', shell.dataset.publicId);
+
+        const res = await fetch('/.netlify/functions/get-customer-thread?' + params.toString(), {
+          method:'GET',
+          headers:{ ...pinHeader() }
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load thread');
+
+        const full = data.consult || data.thread || data.case || data;
+        const messages = Array.isArray(full.messages)
+          ? full.messages
+          : (Array.isArray(data.messages) ? data.messages : []);
+
+        const merged = {
+          ...full,
+          id: full.id || threadId || caseKey,
+          public_id: full.public_id || (shell && shell.dataset.publicId) || '',
+          messages
+        };
+
+        thread.innerHTML = renderThreadBubbles(merged, caseKey || threadId);
+        thread.scrollTop = thread.scrollHeight;
+
+        card.dataset.threadLoaded = '1';
+
+        if (shell) {
+          shell.classList.remove('collapsed');
+          updateMessageShellSubtext(shell);
+        }
+
+        bindThreadBubbleEvents(thread);
+        statusLine.textContent = `Thread loaded ${new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}`;
+      } catch (err) {
+        if (originalHtml && card.dataset.threadLoaded === '1') {
+          thread.innerHTML = originalHtml;
+        } else {
+          thread.innerHTML = '<div class="bubble system">Could not load messages: ' + escapeHtml(err.message || String(err)) + '</div>';
+        }
+        statusLine.textContent = err.message || 'Could not load thread';
+      } finally {
+        card.dataset.threadLoading = '0';
+      }
+    }
+
+    function bindThreadBubbleEvents(root) {
+      const scope = root || document;
+      scope.querySelectorAll('[data-expand-image]').forEach(img => img.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openMessageImage(img.dataset.expandImage || img.src);
+      });
+      scope.querySelectorAll('.bubble').forEach(bubble => {
+        bubble.onclick = (event) => event.stopPropagation();
+        bubble.ondblclick = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const shell = bubble.closest('.texting-shell');
+          if (shell) toggleMessageZoom(shell);
+        };
+      });
     }
 
     function exitFocusMode(options = {}) {
