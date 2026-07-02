@@ -20,8 +20,11 @@ function safeLimit(value) {
   return Math.max(1, Math.min(250, Math.floor(n)));
 }
 
-// Keep this list lightweight enough for the dashboard, but include the session/stripe
-// identifiers needed for operator.html to fetch one selected thread on demand.
+// v111-safe lightweight dashboard query.
+// This preserves the working small list response and adds only session/stripe fields
+// proven to exist in the existing consult rows. Do not add year/make/model here
+// unless those columns are confirmed in Supabase, because PostgREST returns 400
+// when select= includes a non-existent column.
 const LIST_FIELDS = [
   'id',
   'created_at',
@@ -54,10 +57,7 @@ const LIST_FIELDS = [
   'last_message',
   'last_message_at',
   'upload_count',
-  'has_voice_note',
-  'year',
-  'make',
-  'model'
+  'has_voice_note'
 ].join(',');
 
 exports.handler = async (event) => {
@@ -119,10 +119,7 @@ exports.handler = async (event) => {
       last_message: c.last_message || '',
       last_message_at: c.last_message_at || c.updated_at || c.created_at || '',
       upload_count: Number(c.upload_count || 0),
-      has_voice_note: !!c.has_voice_note,
-      year: c.year || '',
-      make: c.make || '',
-      model: c.model || ''
+      has_voice_note: !!c.has_voice_note
     }));
 
     return json(200, {
