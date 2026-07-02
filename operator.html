@@ -1,4 +1,7 @@
 
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +12,7 @@
   <meta name="theme-color" content="#244fbe" />
   <meta name="msapplication-navbutton-color" content="#244fbe" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>What's it Doing? — Operator v104 thread fetch</title>
+  <title>What's it Doing? — Operator v111 selected-thread fetch</title>
   <style>
     :root {
       --bg:#f7faff;
@@ -1598,7 +1601,15 @@
           };
         }
       });
-      bindThreadBubbleEvents(document);
+      document.querySelectorAll('.bubble').forEach(bubble => {
+        bubble.onclick = (event) => event.stopPropagation();
+        bubble.ondblclick = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const shell = bubble.closest('.texting-shell');
+          if (shell) toggleMessageZoom(shell);
+        };
+      });
       document.querySelectorAll('[data-clear-waiting-workflow]').forEach(btn => btn.onclick = (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -1681,32 +1692,30 @@
       setTimeout(() => card.scrollTo({ top:0, behavior:'auto' }), 0);
     }
 
-    async function loadFocusedCaseThread(card, options = {}) {
-      if (!card) return;
-
-      const force = options && options.force === true;
-      if (!force && (card.dataset.threadLoaded === '1' || card.dataset.threadLoading === '1')) return;
+    async function loadFocusedCaseThread(card) {
+      if (!card || card.dataset.threadLoaded === '1' || card.dataset.threadLoading === '1') return;
 
       const caseKey = card.dataset.caseKey || card.dataset.threadId || '';
-      const threadId = card.dataset.threadId || caseKey;
+      const consultId = card.dataset.threadId || caseKey || '';
+      const sessionId = card.dataset.sessionId || card.dataset.publicId || consultId || '';
+      const publicId = card.dataset.publicId || '';
       const shell = card.querySelector('.texting-shell');
       const thread = card.querySelector('.thread');
 
-      if (!threadId || !thread) return;
+      if (!thread || !sessionId) return;
 
       card.dataset.threadLoading = '1';
-
-      const originalHtml = thread.innerHTML;
-      if (!card.dataset.threadLoaded || card.dataset.threadLoaded !== '1') {
-        thread.innerHTML = '<div class="bubble system">Loading messages...</div>';
-      }
+      const priorHtml = thread.innerHTML;
+      thread.innerHTML = '<div class="bubble system">Loading messages...</div>';
 
       try {
         const params = new URLSearchParams();
-        params.set('id', threadId);
-        params.set('consult_id', threadId);
-        if (caseKey && caseKey !== threadId) params.set('case_key', caseKey);
-        if (shell && shell.dataset.publicId) params.set('public_id', shell.dataset.publicId);
+        params.set('session_id', sessionId);
+        if (consultId) {
+          params.set('id', consultId);
+          params.set('consult_id', consultId);
+        }
+        if (publicId) params.set('public_id', publicId);
 
         const res = await fetch('/.netlify/functions/get-customer-thread?' + params.toString(), {
           method:'GET',
@@ -1714,52 +1723,73 @@
         });
 
         const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load thread');
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load messages');
 
-        const full = data.consult || data.thread || data.case || data;
-        const messages = Array.isArray(full.messages)
-          ? full.messages
-          : (Array.isArray(data.messages) ? data.messages : []);
+        const full = data.consult || data.thread || data.case || data.session || data;
+        const messages = firstArray(
+          full && full.messages,
+          data.messages,
+          full && full.thread_messages,
+          data.thread_messages,
+          full && full.consult_messages,
+          data.consult_messages
+        );
 
-        const merged = {
-          ...full,
-          id: full.id || threadId || caseKey,
-          public_id: full.public_id || (shell && shell.dataset.publicId) || '',
-          messages
-        };
+        const parts = [];
+        messages.forEach(m => parts.push(renderMessageBubble(m)));
 
-        thread.innerHTML = renderThreadBubbles(merged, caseKey || threadId);
+        const alreadyHasAudio = messages.some(m => {
+          const type = String((m && (m.attachment_type || m.attachmentType)) || '').toLowerCase();
+          const url = m && (m.attachment_url || m.attachmentUrl || '');
+          const name = m && (m.attachment_name || m.attachmentName || m.image_name || m.imageName || '');
+          return looksLikeAudioAttachment(type, url, name);
+        });
+        const voiceUrl = (full && (full.voice_note_url || full.voiceNoteUrl || full.voice_url)) || '';
+        if (voiceUrl && !alreadyHasAudio) {
+          parts.push(renderMessageBubble({ who:'customer', text:'Original submission audio note', attachment_type:'audio', attachment_url:voiceUrl, attachment_name:'customer-audio-note', at:'submitted' }));
+        }
+
+        const local = getLocalThread(caseKey);
+        local.forEach(m => parts.push(renderMessageBubble(m)));
+
+        if (!parts.length) {
+          const intro = [full && full.intake_text, full && full.followup_text].filter(Boolean).join('\n\n');
+          if (intro) parts.push(`<div class="bubble customer">${escapeHtml(intro)}<span class="bubble-meta">customer</span></div>`);
+        }
+        if (!parts.length) parts.push('<div class="bubble system">No message text saved yet.</div>');
+
+        thread.innerHTML = parts.join('');
         thread.scrollTop = thread.scrollHeight;
-
         card.dataset.threadLoaded = '1';
 
         if (shell) {
           shell.classList.remove('collapsed');
           updateMessageShellSubtext(shell);
         }
-
         bindThreadBubbleEvents(thread);
-        statusLine.textContent = `Thread loaded ${new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}`;
       } catch (err) {
-        if (originalHtml && card.dataset.threadLoaded === '1') {
-          thread.innerHTML = originalHtml;
-        } else {
-          thread.innerHTML = '<div class="bubble system">Could not load messages: ' + escapeHtml(err.message || String(err)) + '</div>';
-        }
-        statusLine.textContent = err.message || 'Could not load thread';
+        thread.innerHTML = priorHtml || '<div class="bubble system">No message text saved yet.</div>';
+        statusLine.textContent = 'Could not load messages: ' + (err.message || String(err));
       } finally {
         card.dataset.threadLoading = '0';
       }
     }
 
+    function firstArray(...values) {
+      for (const value of values) {
+        if (Array.isArray(value)) return value;
+      }
+      return [];
+    }
+
     function bindThreadBubbleEvents(root) {
-      const scope = root || document;
-      scope.querySelectorAll('[data-expand-image]').forEach(img => img.onclick = (event) => {
+      if (!root) return;
+      root.querySelectorAll('[data-expand-image]').forEach(img => img.onclick = (event) => {
         event.preventDefault();
         event.stopPropagation();
         openMessageImage(img.dataset.expandImage || img.src);
       });
-      scope.querySelectorAll('.bubble').forEach(bubble => {
+      root.querySelectorAll('.bubble').forEach(bubble => {
         bubble.onclick = (event) => event.stopPropagation();
         bubble.ondblclick = (event) => {
           event.preventDefault();
@@ -1914,7 +1944,7 @@
       const preview = getLastMessagePreview(c, index);
       const caseKey = getCaseKey(c, index);
       return `
-        <section class="case ${priority ? 'priority' : ''} ${extended ? 'extended' : ''} ${waitingOnMeVisual ? 'waiting-me' : ''}" data-thread-id="${escapeAttr(c.id)}" data-case-key="${escapeAttr(caseKey)}" data-detail-id="${detailId}">
+        <section class="case ${priority ? 'priority' : ''} ${extended ? 'extended' : ''} ${waitingOnMeVisual ? 'waiting-me' : ''}" data-thread-id="${escapeAttr(c.id)}" data-session-id="${escapeAttr(c.stripe_session_id || c.stripe_checkout_session_id || c.session_id || c.sessionId || c.public_id || c.id || '')}" data-public-id="${escapeAttr(c.public_id || '')}" data-case-key="${escapeAttr(caseKey)}" data-detail-id="${detailId}">
           <div class="case-head">
             <div class="left-lines">
               <div class="customer-name">${escapeHtml(name)}</div>
