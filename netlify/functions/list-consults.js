@@ -20,6 +20,8 @@ function safeLimit(value) {
   return Math.max(1, Math.min(250, Math.floor(n)));
 }
 
+// Keep this list lightweight enough for the dashboard, but include the session/stripe
+// identifiers needed for operator.html to fetch one selected thread on demand.
 const LIST_FIELDS = [
   'id',
   'created_at',
@@ -31,19 +33,31 @@ const LIST_FIELDS = [
   'vehicle_summary',
   'issue_summary',
   'work_done_summary',
+  'intake_text',
+  'followup_text',
   'diy_status',
   'ability_level',
   'queue_type',
   'payment_status',
   'status',
+  'stripe_session_id',
+  'stripe_checkout_session_id',
+  'stripe_payment_intent_id',
+  'voice_note_path',
+  'upload_paths',
+  'public_id',
   'paid_at',
   'closed_at',
-  'public_id',
+  'file_links',
+  'voice_note_url',
   'last_workflow_status',
   'last_message',
   'last_message_at',
   'upload_count',
-  'has_voice_note'
+  'has_voice_note',
+  'year',
+  'make',
+  'model'
 ].join(',');
 
 exports.handler = async (event) => {
@@ -84,19 +98,31 @@ exports.handler = async (event) => {
       vehicle_summary: c.vehicle_summary || 'Vehicle not clear yet',
       issue_summary: c.issue_summary || 'Issue path still needs review',
       work_done_summary: c.work_done_summary || '',
+      intake_text: c.intake_text || '',
+      followup_text: c.followup_text || '',
       diy_status: c.diy_status || '',
       ability_level: c.ability_level || '',
       queue_type: c.queue_type || '',
       payment_status: c.payment_status || '',
       status: c.status || '',
+      stripe_session_id: c.stripe_session_id || '',
+      stripe_checkout_session_id: c.stripe_checkout_session_id || '',
+      stripe_payment_intent_id: c.stripe_payment_intent_id || '',
+      voice_note_path: c.voice_note_path || '',
+      upload_paths: Array.isArray(c.upload_paths) ? c.upload_paths : [],
+      public_id: c.public_id || null,
       paid_at: c.paid_at || null,
       closed_at: c.closed_at || null,
-      public_id: c.public_id || null,
+      file_links: Array.isArray(c.file_links) ? c.file_links : [],
+      voice_note_url: c.voice_note_url || null,
       last_workflow_status: c.last_workflow_status || null,
       last_message: c.last_message || '',
       last_message_at: c.last_message_at || c.updated_at || c.created_at || '',
       upload_count: Number(c.upload_count || 0),
-      has_voice_note: !!c.has_voice_note
+      has_voice_note: !!c.has_voice_note,
+      year: c.year || '',
+      make: c.make || '',
+      model: c.model || ''
     }));
 
     return json(200, {
