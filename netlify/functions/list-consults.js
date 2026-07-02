@@ -20,11 +20,9 @@ function safeLimit(value) {
   return Math.max(1, Math.min(250, Math.floor(n)));
 }
 
-// v111-safe lightweight dashboard query.
-// This preserves the working small list response and adds only session/stripe fields
-// proven to exist in the existing consult rows. Do not add year/make/model here
-// unless those columns are confirmed in Supabase, because PostgREST returns 400
-// when select= includes a non-existent column.
+// Columns verified against the current consults export. Do not add year/make/model here;
+// those are not current consults columns and will cause a Supabase/PostgREST 400.
+// This stays lightweight by not selecting consult_messages or inline image_data.
 const LIST_FIELDS = [
   'id',
   'created_at',
@@ -60,6 +58,38 @@ const LIST_FIELDS = [
   'has_voice_note'
 ].join(',');
 
+function normalized(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function isClosedOrArchived(c) {
+  const status = normalized(c.status);
+  return status === 'closed' || status === 'archived';
+}
+
+function isPaidOrManual(c) {
+  const paymentStatus = normalized(c.payment_status);
+  return (
+    paymentStatus === 'paid' ||
+    paymentStatus === 'manual' ||
+    paymentStatus === 'comped' ||
+    paymentStatus === 'no_charge' ||
+    paymentStatus === 'waived' ||
+    !!c.paid_at ||
+    !!c.stripe_payment_intent_id ||
+    !!c.public_id
+  );
+}
+
+function shouldShowInOperator(c) {
+  // Keep unpaid/abandoned intake rows saved in Supabase, but keep them out of
+  // active operator queues even if a local/status action accidentally moved them
+  // to waiting_on_customer or waiting_on_me.
+  // Closed/archived rows are still allowed through so the archive view remains usable.
+  if (isClosedOrArchived(c)) return true;
+  return isPaidOrManual(c);
+}
+
 exports.handler = async (event) => {
   try {
     if (event.httpMethod && event.httpMethod !== 'GET') {
@@ -69,7 +99,7 @@ exports.handler = async (event) => {
     requireOperator(event);
 
     const qs = event.queryStringParameters || {};
-    const requestedStatus = String(qs.status || 'all').toLowerCase();
+    const requestedStatus = normalized(qs.status || 'all');
     const limit = safeLimit(qs.limit);
 
     const params = new URLSearchParams();
@@ -86,8 +116,9 @@ exports.handler = async (event) => {
     });
 
     const rows = Array.isArray(consults) ? consults : [];
+    const operatorRows = rows.filter(shouldShowInOperator);
 
-    const lightweightRows = rows.map((c) => ({
+    const lightweightRows = operatorRows.map((c) => ({
       id: c.id,
       created_at: c.created_at || null,
       updated_at: c.updated_at || null,
